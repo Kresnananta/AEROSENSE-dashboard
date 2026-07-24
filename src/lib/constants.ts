@@ -17,10 +17,13 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   DASHBOARD: '/dashboard',
+  SENSOR_MAP: '/sensor-map',
+  NODE_MONITORING: '/nodes',
+  NODE_DETAIL: '/nodes/:id',
   ANALYTICS: '/analytics',
-  SENSORS: '/sensors',
-  SENSOR_DETAIL: '/sensors/:id',
-  SETTINGS: '/settings',
+  ALERTS: '/alerts',
+  ESG_REPORTS: '/esg-reports',
+  SYSTEM: '/system',
 } as const
 
 /** Navigation items for sidebar */
@@ -31,18 +34,33 @@ export const NAV_ITEMS = [
     icon: 'LayoutDashboard',
   },
   {
-    label: 'Analytics',
+    label: 'Peta Sensor',
+    path: ROUTES.SENSOR_MAP,
+    icon: 'MapPin',
+  },
+  {
+    label: 'Monitoring Node',
+    path: ROUTES.NODE_MONITORING,
+    icon: 'Radio',
+  },
+  {
+    label: 'Tren & Analitik',
     path: ROUTES.ANALYTICS,
     icon: 'BarChart3',
   },
   {
-    label: 'Sensors',
-    path: ROUTES.SENSORS,
-    icon: 'Radio',
+    label: 'Notifikasi',
+    path: ROUTES.ALERTS,
+    icon: 'Bell',
   },
   {
-    label: 'Settings',
-    path: ROUTES.SETTINGS,
+    label: 'Laporan ESG',
+    path: ROUTES.ESG_REPORTS,
+    icon: 'FileText',
+  },
+  {
+    label: 'Pengaturan',
+    path: ROUTES.SYSTEM,
     icon: 'Settings',
   },
 ] as const

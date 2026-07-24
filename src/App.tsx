@@ -1,5 +1,6 @@
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { AppRouter } from '@/config/routes'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 /**
  * Root application component.
@@ -8,7 +9,9 @@ import { AppRouter } from '@/config/routes'
 function App() {
   return (
     <ErrorBoundary>
-      <AppRouter />
+      <TooltipProvider>
+        <AppRouter />
+      </TooltipProvider>
     </ErrorBoundary>
   )
 }
