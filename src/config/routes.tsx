@@ -8,9 +8,10 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
+import { SensorMapPage } from '@/pages/sensor-map/SensorMapPage'
 import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
-import { SensorsPage } from '@/pages/sensors/SensorsPage'
-import { SensorDetailPage } from '@/pages/sensors/SensorDetailPage'
+import { NodeMonitoringPage } from '@/pages/node-monitoring/NodeMonitoringPage'
+import { NodeDetailPage } from '@/pages/node-monitoring/NodeDetailPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { NotFoundPage } from '@/pages/not-found/NotFoundPage'
 
@@ -30,9 +31,10 @@ export function AppRouter() {
         {/* Protected routes — wrapped in dashboard layout */}
         <Route element={<DashboardLayout />}>
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+          <Route path={ROUTES.SENSOR_MAP} element={<SensorMapPage />} />
           <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
-          <Route path={ROUTES.SENSORS} element={<SensorsPage />} />
-          <Route path={ROUTES.SENSOR_DETAIL} element={<SensorDetailPage />} />
+          <Route path={ROUTES.NODE_MONITORING} element={<NodeMonitoringPage />} />
+          <Route path={ROUTES.NODE_DETAIL} element={<NodeDetailPage />} />
           <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
         </Route>
 
