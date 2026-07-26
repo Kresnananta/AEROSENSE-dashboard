@@ -12,7 +12,9 @@ import { SensorMapPage } from '@/pages/sensor-map/SensorMapPage'
 import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
 import { NodeMonitoringPage } from '@/pages/node-monitoring/NodeMonitoringPage'
 import { NodeDetailPage } from '@/pages/node-monitoring/NodeDetailPage'
-import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { AlertsPage } from '@/pages/alerts/AlertsPage'
+import { ESGReportsPage } from '@/pages/esg-reports/ESGReportsPage'
+import { SystemPage } from '@/pages/system/SystemPage'
 import { NotFoundPage } from '@/pages/not-found/NotFoundPage'
 
 /**
@@ -35,7 +37,9 @@ export function AppRouter() {
           <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
           <Route path={ROUTES.NODE_MONITORING} element={<NodeMonitoringPage />} />
           <Route path={ROUTES.NODE_DETAIL} element={<NodeDetailPage />} />
-          <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+          <Route path={ROUTES.ALERTS} element={<AlertsPage />} />
+          <Route path={ROUTES.ESG_REPORTS} element={<ESGReportsPage />} />
+          <Route path={ROUTES.SYSTEM} element={<SystemPage />} />
         </Route>
 
         {/* Redirects & fallback */}
