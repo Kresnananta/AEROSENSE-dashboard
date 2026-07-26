@@ -119,10 +119,10 @@ export function ESGReportsPage() {
         </TabsList>
         
         <TabsContent value="emissions">
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-border/50 shadow-sm overflow-hidden p-0">
             <CardContent className="p-0">
               <Table>
-                <TableHeader className="bg-slate-50/50">
+                <TableHeader>
                   <TableRow>
                     <TableHead>Tanggal</TableHead>
                     <TableHead>Lokasi</TableHead>
@@ -154,10 +154,10 @@ export function ESGReportsPage() {
         </TabsContent>
 
         <TabsContent value="audit">
-          <Card className="border-border/50 shadow-sm">
+          <Card className="border-border/50 shadow-sm overflow-hidden p-0">
             <CardContent className="p-0">
               <Table>
-                <TableHeader className="bg-slate-50/50">
+                <TableHeader>
                   <TableRow>
                     <TableHead className="w-[100px]">ID Audit</TableHead>
                     <TableHead>Waktu</TableHead>

@@ -85,15 +85,15 @@ export function SystemPage() {
         
         <div className="flex-1">
           <TabsContent value="users" className="mt-0 border-none p-0 outline-none">
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card className="border-border/50 shadow-sm overflow-hidden p-0">
+              <CardHeader className="flex flex-row items-center justify-between p-6">
                 <div>
                   <CardTitle>Pengguna Terdaftar</CardTitle>
                   <CardDescription>Kelola hak akses dan peran pengguna dashboard</CardDescription>
                 </div>
                 <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Tambah Pengguna</Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -125,15 +125,15 @@ export function SystemPage() {
           </TabsContent>
 
           <TabsContent value="nodes" className="mt-0 border-none p-0 outline-none">
-            <Card className="border-border/50 shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
+            <Card className="border-border/50 shadow-sm overflow-hidden p-0">
+              <CardHeader className="flex flex-row items-center justify-between p-6">
                 <div>
                   <CardTitle>Daftar Perangkat Node</CardTitle>
                   <CardDescription>Manajemen hardware sensor yang terhubung</CardDescription>
                 </div>
                 <Button size="sm"><Plus className="w-4 h-4 mr-2" /> Tambah Node</Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>

@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { ROUTES } from '@/lib/constants'
 import { Search, Filter, ChevronRight } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const MOCK_NODES = [
   {
@@ -107,32 +108,44 @@ export function NodeMonitoringPage() {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Cari nama node..." 
-            className="pl-9 bg-background"
-          />
+      <Card className="border-border/50 shadow-sm overflow-hidden p-0">
+        <div className="p-4 border-b border-border/50 bg-slate-50/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="relative w-full sm:max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Cari nama node..." 
+              className="pl-9 bg-white"
+            />
+          </div>
+          <div className="flex w-full sm:w-auto items-center gap-2">
+            <Select defaultValue="all">
+              <SelectTrigger className="w-[140px] bg-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="online">Online</SelectItem>
+                <SelectItem value="warning">Warning</SelectItem>
+                <SelectItem value="critical">Critical</SelectItem>
+                <SelectItem value="offline">Offline</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" size="icon" className="bg-white">
+              <Filter className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
-          <Filter className="h-4 w-4" />
-          Filter
-        </Button>
-      </div>
-
-      <Card className="border-border/50 shadow-sm overflow-hidden">
         <Table>
-          <TableHeader className="bg-slate-50/80">
+          <TableHeader>
             <TableRow className="hover:bg-transparent">
-              <TableHead className="pl-6 py-4 font-semibold text-slate-600">Nama Node</TableHead>
-              <TableHead className="font-semibold text-slate-600">Status</TableHead>
-              <TableHead className="font-semibold text-slate-600">PM2.5</TableHead>
-              <TableHead className="font-semibold text-slate-600">TVOC</TableHead>
-              <TableHead className="font-semibold text-slate-600">eCO2</TableHead>
-              <TableHead className="font-semibold text-slate-600">Suhu</TableHead>
-              <TableHead className="font-semibold text-slate-600">Lembap</TableHead>
-              <TableHead className="font-semibold text-slate-600">Pembaruan</TableHead>
+              <TableHead className="pl-6">Nama Node</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>PM2.5</TableHead>
+              <TableHead>TVOC</TableHead>
+              <TableHead>eCO2</TableHead>
+              <TableHead>Suhu</TableHead>
+              <TableHead>Lembap</TableHead>
+              <TableHead>Pembaruan</TableHead>
               <TableHead className="pr-6"></TableHead>
             </TableRow>
           </TableHeader>
@@ -143,7 +156,7 @@ export function NodeMonitoringPage() {
                 className={getRowClassName(node.status)}
                 onClick={() => handleRowClick(node.id)}
               >
-                <TableCell className="pl-6 py-4 font-semibold text-slate-800 text-base">{node.name}</TableCell>
+                <TableCell className="pl-6 font-semibold text-slate-800 text-base">{node.name}</TableCell>
                 <TableCell>{getStatusBadge(node.status)}</TableCell>
                 <TableCell className={getValueClassName(node.status, "font-medium text-base")}>{node.pm25}</TableCell>
                 <TableCell className={getValueClassName(node.status, "text-base")}>{node.tvoc}</TableCell>

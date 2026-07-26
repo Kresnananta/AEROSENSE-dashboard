@@ -101,7 +101,7 @@ export function AlertsPage() {
         </p>
       </div>
 
-      <Card className="border-border/50 shadow-sm">
+      <Card className="border-border/50 shadow-sm overflow-hidden p-0">
         <div className="p-4 border-b border-border/50 bg-slate-50/50 flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -140,7 +140,7 @@ export function AlertsPage() {
         </div>
         <CardContent className="p-0">
           <Table>
-            <TableHeader className="bg-slate-50/50">
+            <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">ID</TableHead>
                 <TableHead>Prioritas</TableHead>
