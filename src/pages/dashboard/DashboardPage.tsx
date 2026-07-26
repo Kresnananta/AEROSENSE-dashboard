@@ -5,7 +5,6 @@ import { RealtimeMetrics } from '@/components/dashboard/RealtimeMetrics'
 import { NodeSummary } from '@/components/dashboard/NodeSummary'
 import { TrendChart } from '@/components/dashboard/TrendChart'
 import { MiniMap } from '@/components/dashboard/MiniMap'
-import { RecentAlerts } from '@/components/dashboard/RecentAlerts'
 
 /**
  * Dashboard Page
@@ -25,12 +24,12 @@ export function DashboardPage() {
             Selamat datang kembali, Kresna 👋
           </p>
         </div>
-        
+
         {/* Search */}
         <div className="relative w-full sm:w-64 md:w-80">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input 
-            placeholder="Cari node, laporan..." 
+          <Input
+            placeholder="Cari node, laporan..."
             className="rounded-full bg-white/60 backdrop-blur-sm pl-9 border-transparent focus-visible:border-primary-500 shadow-sm"
           />
         </div>
@@ -39,11 +38,11 @@ export function DashboardPage() {
       {/* KPI cards grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div className="lg:col-span-1">
-          <AirQualityGauge 
-            aqi={42} 
-            status="Baik" 
-            activeNodes={12} 
-            lastUpdated="2 menit lalu" 
+          <AirQualityGauge
+            aqi={42}
+            status="Baik"
+            activeNodes={12}
+            lastUpdated="2 menit lalu"
           />
         </div>
         <div className="lg:col-span-2">
@@ -59,9 +58,6 @@ export function DashboardPage() {
         <TrendChart />
         <MiniMap />
       </div>
-
-      {/* Alerts section */}
-      <RecentAlerts />
     </div>
   )
 }

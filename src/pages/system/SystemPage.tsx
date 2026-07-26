@@ -42,9 +42,9 @@ export function SystemPage() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 flex flex-col md:flex-row gap-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="flex flex-col md:flex-row gap-6">
         <div className="md:w-64 flex-shrink-0">
-          <TabsList className="flex flex-col h-auto bg-transparent space-y-1 p-0">
+          <TabsList className="flex flex-col h-auto w-full bg-transparent space-y-1 p-0">
             <TabsTrigger 
               value="users" 
               className="w-full justify-start py-2.5 px-4 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:border border-border/50 rounded-lg"
