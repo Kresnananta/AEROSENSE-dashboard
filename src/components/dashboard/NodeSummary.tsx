@@ -1,6 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export function NodeSummary() {
+interface NodeSummaryProps {
+  total?: number
+  online?: number
+  warning?: number
+  critical?: number
+}
+
+export function NodeSummary({ 
+  total = 12, 
+  online = 9, 
+  warning = 2, 
+  critical = 1 
+}: NodeSummaryProps) {
   return (
     <Card className="flex flex-col h-full border-border/50 shadow-sm">
       <CardHeader className="pb-2">
@@ -10,22 +22,22 @@ export function NodeSummary() {
       </CardHeader>
       <CardContent className="flex flex-col justify-between flex-1">
         <div className="mb-4">
-          <div className="text-4xl font-bold text-foreground mb-1">12</div>
+          <div className="text-4xl font-bold text-foreground mb-1">{total}</div>
           <div className="text-sm text-muted-foreground">Node aktif terpasang</div>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500" />
-            <span className="text-sm text-muted-foreground flex-1">9 Aman</span>
+            <span className="text-sm text-muted-foreground flex-1">{online} Aman</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-yellow-500" />
-            <span className="text-sm text-muted-foreground flex-1">2 Waspada</span>
+            <span className="text-sm text-muted-foreground flex-1">{warning} Waspada</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span className="text-sm text-muted-foreground flex-1">1 Bahaya</span>
+            <span className="text-sm text-muted-foreground flex-1">{critical} Bahaya</span>
           </div>
         </div>
       </CardContent>

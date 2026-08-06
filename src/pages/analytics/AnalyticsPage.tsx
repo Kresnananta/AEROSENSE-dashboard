@@ -7,7 +7,7 @@ import { AISoftSensing } from '@/components/analytics/AISoftSensing'
 
 export function AnalyticsPage() {
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col space-y-6 pb-12">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Analytics
@@ -33,7 +33,6 @@ export function AnalyticsPage() {
         <TabsContent value="comparison" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <ComparisonChart />
-            {/* Can add another chart here later if needed */}
           </div>
         </TabsContent>
 

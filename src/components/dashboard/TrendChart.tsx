@@ -1,29 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-
-// Dummy data for 24 hours
-const hourlyData = [
-  { time: '00:00', pm25: 18 },
-  { time: '04:00', pm25: 22 },
-  { time: '08:00', pm25: 35 },
-  { time: '12:00', pm25: 28 },
-  { time: '16:00', pm25: 42 },
-  { time: '20:00', pm25: 30 },
-  { time: '24:00', pm25: 24 },
-]
-
-// Dummy data for 7 days
-const dailyData = [
-  { time: 'Sen', pm25: 25 },
-  { time: 'Sel', pm25: 32 },
-  { time: 'Rab', pm25: 28 },
-  { time: 'Kam', pm25: 45 },
-  { time: 'Jum', pm25: 35 },
-  { time: 'Sab', pm25: 22 },
-  { time: 'Min', pm25: 18 },
-]
+import { supabase } from '@/services/supabase'
 
 const chartConfig = {
   pm25: {
@@ -34,7 +13,41 @@ const chartConfig = {
 
 export function TrendChart() {
   const [timeRange, setTimeRange] = useState<'24h' | '7d'>('24h')
-  const data = timeRange === '24h' ? hourlyData : dailyData
+  const [chartData, setChartData] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchTrendData() {
+      try {
+        const { data, error } = await supabase
+          .from('node_readings')
+          .select('timestamp, pm25')
+          .order('timestamp', { ascending: true })
+          .limit(timeRange === '24h' ? 24 : 7)
+
+        if (error) throw error
+
+        if (data && data.length > 0) {
+          const formatted = data.map((item) => {
+            const date = new Date(item.timestamp)
+            const timeString = timeRange === '24h' 
+              ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : date.toLocaleDateString('id-ID', { weekday: 'short' })
+            return {
+              time: timeString,
+              pm25: Number(item.pm25)
+            }
+          })
+          setChartData(formatted)
+        } else {
+          setChartData([])
+        }
+      } catch (err) {
+        console.error('Gagal memuat tren data:', err)
+      }
+    }
+
+    fetchTrendData()
+  }, [timeRange])
 
   return (
     <Card className="flex flex-col h-full border-border/50 shadow-sm col-span-full md:col-span-2">
@@ -63,7 +76,7 @@ export function TrendChart() {
       </CardHeader>
       <CardContent className="flex-1 min-h-[250px] p-4 pt-0">
         <ChartContainer config={chartConfig} className="h-full w-full">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorPm25" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-pm25)" stopOpacity={0.3} />
@@ -91,6 +104,8 @@ export function TrendChart() {
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#colorPm25)"
+              dot={false}
+              activeDot={{ r: 4, strokeWidth: 2 }}
             />
           </AreaChart>
         </ChartContainer>
