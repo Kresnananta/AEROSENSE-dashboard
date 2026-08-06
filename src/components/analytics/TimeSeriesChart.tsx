@@ -1,24 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-
-const data = [
-  { time: '00:00', value: 25 },
-  { time: '02:00', value: 28 },
-  { time: '04:00', value: 35 },
-  { time: '06:00', value: 45 },
-  { time: '08:00', value: 85 },
-  { time: '10:00', value: 92 },
-  { time: '12:00', value: 65 },
-  { time: '14:00', value: 55 },
-  { time: '16:00', value: 58 },
-  { time: '18:00', value: 72 },
-  { time: '20:00', value: 48 },
-  { time: '22:00', value: 38 },
-  { time: '24:00', value: 32 },
-]
+import { supabase } from '@/services/supabase'
 
 const chartConfig = {
   value: {
@@ -30,6 +15,46 @@ const chartConfig = {
 export function TimeSeriesChart() {
   const [metric, setMetric] = useState('pm25')
   const [timeRange, setTimeRange] = useState('24h')
+  const [chartData, setChartData] = useState<{ time: string; value: number }[]>([])
+
+  useEffect(() => {
+    async function fetchChartData() {
+      try {
+        const { data, error } = await supabase
+          .from('node_readings')
+          .select('*')
+
+        if (error || !data) {
+          console.error('Error chart data:', error)
+          return
+        }
+
+        const formatted = data.map((item: any, index: number) => {
+          let val = 0
+          if (metric === 'pm25') val = Number(item.pm25 ?? 0)
+          else if (metric === 'tvoc') val = Number(item.tvoc ?? 0)
+          else if (metric === 'eco2') val = Number(item.co2 ?? item.eco2 ?? 0)
+          else if (metric === 'temp') val = Number(item.temperature ?? 0)
+          else if (metric === 'humidity') val = Number(item.humidity ?? 0)
+
+          const timeString = item.timestamp 
+            ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            : `Data #${index + 1}`
+
+          return {
+            time: timeString,
+            value: val
+          }
+        })
+
+        setChartData(formatted)
+      } catch (err) {
+        console.error('Gagal memuat grafik:', err)
+      }
+    }
+
+    fetchChartData()
+  }, [metric, timeRange])
 
   return (
     <Card className="flex flex-col border-border/50 shadow-sm">
@@ -39,7 +64,7 @@ export function TimeSeriesChart() {
             Analisis Deret Waktu
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Tren pengukuran dari waktu ke waktu
+            Tren pengukuran dari waktu ke waktu berdasarkan database
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -69,7 +94,7 @@ export function TimeSeriesChart() {
       </CardHeader>
       <CardContent className="flex-1 min-h-[350px] p-4 pt-0">
         <ChartContainer config={chartConfig} className="h-full w-full">
-          <AreaChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorTimeSeries" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-value)" stopOpacity={0.3} />
