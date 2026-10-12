@@ -221,3 +221,41 @@
   object-position: 50% 10%;
   transform: scale(1.65) translateY(3px);
 }
+
+/* Sound Wave Graphics */
+.intro-wave {
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.intro-wave span {
+  width: 9px;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, #33aafe, #0d74ea);
+  height: 30%;
+  transition: height 0.3s ease;
+}
+
+.intro-wave span:nth-child(2),
+.intro-wave span:nth-child(8) {
+  height: 60%;
+}
+
+.intro-wave span:nth-child(3),
+.intro-wave span:nth-child(7) {
+  height: 85%;
+}
+
+.intro-wave span:nth-child(4),
+.intro-wave span:nth-child(6) {
+  height: 55%;
+}
+
+.intro-wave span:nth-child(5) {
+  height: 100%;
+}
+
