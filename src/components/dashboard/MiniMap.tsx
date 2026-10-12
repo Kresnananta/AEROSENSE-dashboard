@@ -45,7 +45,8 @@ export function MiniMap() {
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/">OSM</a>'
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              className="map-tiles"
             />
             {NODES.map((node) => {
               let color = '#22c55e' // green-500

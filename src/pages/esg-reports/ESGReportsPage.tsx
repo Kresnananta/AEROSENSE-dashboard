@@ -38,7 +38,7 @@ export function ESGReportsPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
             Laporan ESG & Jejak Karbon
           </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Pantau kepatuhan lingkungan dan rekam jejak emisi untuk pelaporan
           </p>
         </div>
@@ -67,13 +67,13 @@ export function ESGReportsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="border-border/50 shadow-sm bg-primary-900 text-white">
+        <Card className="border-border/50 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium text-primary-100">Total Emisi CO₂e (Bulan Ini)</CardTitle>
-            <Factory className="h-4 w-4 text-primary-200" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Emisi CO₂e (Bulan Ini)</CardTitle>
+            <Factory className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,245 <span className="text-lg font-normal text-primary-200">ton</span></div>
+            <div className="text-2xl font-bold text-foreground">1,245 <span className="text-lg font-normal text-muted-foreground">ton</span></div>
             <p className="text-xs text-green-400 font-medium mt-1">↓ 12% dari bulan lalu</p>
           </CardContent>
         </Card>
@@ -117,7 +117,7 @@ export function ESGReportsPage() {
           <TabsTrigger value="emissions">Log Emisi Harian</TabsTrigger>
           <TabsTrigger value="audit">Jejak Audit (Audit Trail)</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="emissions">
           <Card className="border-border/50 shadow-sm overflow-hidden p-0">
             <CardContent className="p-0">
@@ -137,11 +137,10 @@ export function ESGReportsPage() {
                       <TableCell>{log.nodeName}</TableCell>
                       <TableCell>{log.co2e}</TableCell>
                       <TableCell className="text-right">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          log.compliance === 'Patuh' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-amber-100 text-amber-700'
-                        }`}>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${log.compliance === 'Patuh'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-amber-100 text-amber-700'
+                          }`}>
                           {log.compliance}
                         </span>
                       </TableCell>

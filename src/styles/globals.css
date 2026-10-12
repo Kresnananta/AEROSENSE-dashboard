@@ -189,3 +189,8 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Map tiles styling (simulate CartoDB Positron) */
+.map-tiles {
+  filter: grayscale(100%) opacity(0.6) contrast(0.9) brightness(1.1);
+}
