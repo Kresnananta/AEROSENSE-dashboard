@@ -73,7 +73,7 @@ const getSeverityIcon = (severity: string) => {
 const getSeverityBadge = (severity: string) => {
   switch (severity) {
     case 'critical': return <Badge variant="destructive">Kritis</Badge>
-    case 'warning': return <Badge variant="warning" className="bg-amber-100 text-amber-800 border-amber-200">Waspada</Badge>
+    case 'warning': return <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-200">Waspada</Badge>
     case 'info': return <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200">Info</Badge>
     default: return <Badge variant="outline">{severity}</Badge>
   }

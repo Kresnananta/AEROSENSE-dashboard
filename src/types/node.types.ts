@@ -65,3 +65,22 @@ export interface NodeQueryParams {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
 }
+
+/** Helper to get citizen-friendly category, label, and colors from AQI value */
+export function getAqiCategory(aqi: number): {
+  level: 'good' | 'moderate' | 'warning' | 'critical'
+  label: string
+  color: string
+  bg: string
+} {
+  if (aqi <= 50) {
+    return { level: 'good', label: 'Baik', color: '#19A679', bg: '#E6FAEF' }
+  }
+  if (aqi <= 100) {
+    return { level: 'moderate', label: 'Sedang', color: '#BB8823', bg: '#FFF2DC' }
+  }
+  if (aqi <= 150) {
+    return { level: 'warning', label: 'Perlu perhatian', color: '#EF7454', bg: '#FFF0E9' }
+  }
+  return { level: 'critical', label: 'Kritis', color: '#E34C26', bg: '#FFEBE5' }
+}
