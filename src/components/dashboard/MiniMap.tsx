@@ -1,45 +1,52 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/lib/constants'
+import { GRESIK_NODES_DATA } from '@/lib/mock-data'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { ChevronRight } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
-
-// Fix leaflet icon issue in React
-import L from 'leaflet'
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-})
-
-const NODES = [
-  { id: 1, lat: -7.2504, lng: 112.7688, status: 'good', name: 'Node 01' },
-  { id: 2, lat: -7.2520, lng: 112.7710, status: 'warning', name: 'Node 02' },
-  { id: 3, lat: -7.2490, lng: 112.7700, status: 'good', name: 'Node 03' },
-  { id: 4, lat: -7.2515, lng: 112.7675, status: 'hazardous', name: 'Node 04' },
-]
 
 export function MiniMap() {
   const [isMounted, setIsMounted] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  if (!isMounted) return <div className="h-full min-h-[300px] bg-secondary/20 rounded-xl" />
-
   return (
-    <Card className="flex flex-col h-full border-border/50 shadow-sm overflow-hidden">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-bold text-foreground">
-          Peta Ringkas
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex flex-col flex-1 p-0 px-4 pb-4">
-        <div className="flex-1 rounded-xl overflow-hidden min-h-[240px] relative z-0">
-          <MapContainer 
-            center={[-7.2504, 112.7688]} 
-            zoom={15} 
+    <article className="bg-white border border-[#e5eef8] rounded-[20px] shadow-sm p-5 flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-center gap-4 mb-3.5">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-[1.6px] text-[#6fa0ca] mb-1">
+            PANTAU LOKASI
+          </p>
+          <h2 className="text-base font-black text-[#11223D]">
+            Peta sensor
+          </h2>
+          <p className="text-[10px] text-[#8c9db1] mt-0.5">
+            Titik pemantauan kawasan Gresik dan sekitarnya
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate(ROUTES.SENSOR_MAP)}
+          className="text-[#086df0] text-[10px] font-extrabold flex items-center gap-1 hover:underline cursor-pointer shrink-0"
+        >
+          Lihat semua node <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Map stage */}
+      <div className="rounded-[14px] overflow-hidden h-[295px] relative z-0 border border-[#dceef8]">
+        {!isMounted ? (
+          <div className="w-full h-full bg-[#eef7ff] animate-pulse" />
+        ) : (
+          <MapContainer
+            center={[-7.17, 112.59]}
+            zoom={11}
             className="w-full h-full"
             zoomControl={false}
           >
@@ -48,30 +55,59 @@ export function MiniMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               className="map-tiles"
             />
-            {NODES.map((node) => {
-              let color = '#22c55e' // green-500
-              if (node.status === 'warning') color = '#eab308' // yellow-500
-              if (node.status === 'hazardous') color = '#ef4444' // red-500
+            {GRESIK_NODES_DATA.map((node) => {
+              const color = node.uiStatus === 'baik' ? '#33c6a2' : '#f5bf42'
 
               return (
                 <CircleMarker
-                  key={node.id}
+                  key={node.code}
                   center={[node.lat, node.lng]}
-                  pathOptions={{ color, fillColor: color, fillOpacity: 0.7 }}
-                  radius={8}
+                  pathOptions={{
+                    color: '#ffffff',
+                    fillColor: color,
+                    fillOpacity: 0.9,
+                    weight: 3,
+                  }}
+                  radius={7}
                 >
                   <Popup>
-                    <span className="font-bold">{node.name}</span>
+                    <div className="p-1 text-center">
+                      <strong className="block text-xs font-black text-[#11223D]">
+                        {node.name}
+                      </strong>
+                      <span className="block text-[10px] text-[#687b95]">
+                        AQI {node.aqi} • {node.uiStatus === 'baik' ? 'Baik' : 'Perlu perhatian'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`${ROUTES.SENSOR_MAP}?node=${encodeURIComponent(node.name)}`)}
+                        className="mt-1 text-[9px] font-bold text-[#086cfb] hover:underline cursor-pointer"
+                      >
+                        Detail &rarr;
+                      </button>
+                    </div>
                   </Popup>
                 </CircleMarker>
               )
             })}
           </MapContainer>
+        )}
+
+        {/* Legend */}
+        <div className="absolute right-2.5 bottom-2.5 z-400 bg-white/95 backdrop-blur-xs px-2.5 py-1.5 rounded-lg shadow-sm border border-[#e5eef8] flex items-center gap-2.5 text-[8.5px] font-bold text-[#627787] pointer-events-none">
+          <span className="flex items-center gap-1">
+            <i className="w-2 h-2 rounded-full bg-[#33c6a2] inline-block" /> Baik
+          </span>
+          <span className="flex items-center gap-1">
+            <i className="w-2 h-2 rounded-full bg-[#f5bf42] inline-block" /> Perlu perhatian
+          </span>
         </div>
-        <div className="text-xs text-muted-foreground mt-3 px-1">
-          4 titik aktif di sekitar Sidomoro
+
+        {/* Location Note */}
+        <div className="absolute left-2.5 bottom-2.5 z-400 bg-white/90 backdrop-blur-xs px-2 py-1 rounded text-[8.5px] font-semibold text-[#617b8a] pointer-events-none">
+          10 titik sensor terhubung
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   )
 }
