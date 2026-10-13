@@ -1,50 +1,32 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TimeSeriesChart } from '@/components/analytics/TimeSeriesChart'
-import { StatsSummary } from '@/components/analytics/StatsSummary'
-import { ComparisonChart } from '@/components/analytics/ComparisonChart'
-import { CorrelationMatrix } from '@/components/analytics/CorrelationMatrix'
-import { AISoftSensing } from '@/components/analytics/AISoftSensing'
+import { PageHeading } from '@/components/shared/PageHeading'
+import { ModelStatTiles } from '@/components/analytics/ModelStatTiles'
+import { RawVsEstimateChart } from '@/components/analytics/RawVsEstimateChart'
+import { MethodStepsCard } from '@/components/analytics/MethodStepsCard'
 
 export function AnalyticsPage() {
   return (
-    <div className="flex flex-col space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Analytics
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Analisis mendalam, tren historis, dan AI Soft-Sensing kualitas udara
-        </p>
+    <div className="space-y-4">
+      {/* Page Heading */}
+      <PageHeading
+        eyebrow="ANALITIK • EDGE AI"
+        title="Data yang bisa"
+        titleAccent="Anda percaya."
+        description="Bandingkan pembacaan sensor mentah dengan estimasi setelah koreksi AI."
+        badge={
+          <span className="rounded-full bg-[#eef7ff] text-[#3883bf] border border-[#d6ebfc] text-[10px] font-bold px-3 py-1.5 whitespace-nowrap">
+            Visualisasi data contoh
+          </span>
+        }
+      />
+
+      {/* 4 Performance Metric Tiles */}
+      <ModelStatTiles />
+
+      {/* 2-Column Analytics Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(260px,0.9fr)] gap-4 items-stretch">
+        <RawVsEstimateChart />
+        <MethodStepsCard />
       </div>
-
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="bg-secondary/50">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="comparison">Perbandingan</TabsTrigger>
-          <TabsTrigger value="correlation">Korelasi</TabsTrigger>
-          <TabsTrigger value="ai-soft-sensing" className="text-primary-600 font-medium">AI Soft-Sensing</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="space-y-4">
-          <StatsSummary />
-          <TimeSeriesChart />
-        </TabsContent>
-        
-        <TabsContent value="comparison" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <ComparisonChart />
-            {/* Can add another chart here later if needed */}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="correlation" className="space-y-4">
-          <CorrelationMatrix />
-        </TabsContent>
-
-        <TabsContent value="ai-soft-sensing" className="space-y-4">
-          <AISoftSensing />
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }

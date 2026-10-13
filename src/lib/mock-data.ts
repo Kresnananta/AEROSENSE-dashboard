@@ -1,179 +1,339 @@
-import { Node, NodeReading } from '@/types/node.types'
-import { Alert } from '@/types/alert.types'
-import { CarbonSummary, EmissionLog } from '@/types/esg.types'
+import type { Node, NodeReading } from '@/types/node.types'
+import type { Alert } from '@/types/alert.types'
+import type { CarbonSummary, EmissionLog } from '@/types/esg.types'
 
 /**
  * ============================================
  * Mock Data for AEROSENSE Dashboard
+ * 10 Gresik Regional Sensor Nodes & Readings
  * ============================================
  */
 
-export const mockNodes: Node[] = [
-  {
-    id: 'node-01',
-    name: 'Node #01',
-    location: { lat: -7.2504, lng: 112.7688, address: 'Sidomoro Sector A' },
-    status: 'online',
-    batteryLevel: 98,
-    uptime: 99.9,
-    latency: 24,
-    createdAt: '2026-01-10T10:00:00Z',
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'node-02',
-    name: 'Node #02',
-    location: { lat: -7.2510, lng: 112.7695, address: 'Sidomoro Sector B' },
-    status: 'warning',
-    batteryLevel: 85,
-    uptime: 99.5,
-    latency: 45,
-    createdAt: '2026-01-15T10:00:00Z',
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'node-03',
-    name: 'Node #03',
-    location: { lat: -7.2525, lng: 112.7670, address: 'Sidomoro Sector C' },
-    status: 'online',
-    batteryLevel: 92,
-    uptime: 99.8,
-    latency: 30,
-    createdAt: '2026-02-01T10:00:00Z',
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'node-04',
-    name: 'Node #04',
-    location: { lat: -7.2490, lng: 112.7710, address: 'Perimeter Fence' },
-    status: 'offline',
-    batteryLevel: 0,
-    uptime: 85.0,
-    latency: 0,
-    createdAt: '2026-02-20T10:00:00Z',
-    updatedAt: '2026-07-20T10:00:00Z',
-  },
-]
+export interface PrototypeNodeInfo {
+  name: string
+  code: string
+  lat: number
+  lng: number
+  address: string
+  aqi: number
+  pm25: number
+  eco2: number
+  tvoc: number
+  temperature: number
+  humidity: number
+  status: 'online' | 'warning' | 'offline'
+  uiStatus: 'baik' | 'perhatian'
+  lastUpdate: string
+}
 
-export const mockReadings: NodeReading[] = [
+export const GRESIK_NODES_DATA: PrototypeNodeInfo[] = [
   {
-    id: 'read-001',
-    nodeId: 'node-01',
+    name: 'Cerme',
+    code: 'AS-CRM-01',
+    lat: -7.2280,
+    lng: 112.5620,
+    address: 'Kecamatan Cerme, Gresik',
+    aqi: 38,
+    pm25: 12.1,
+    eco2: 552,
+    tvoc: 74,
+    temperature: 29.8,
+    humidity: 72,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Gresik Kota',
+    code: 'AS-GRK-02',
+    lat: -7.1620,
+    lng: 112.6540,
+    address: 'Pusat Kota Gresik',
+    aqi: 44,
     pm25: 15.2,
-    tvoc: 120,
-    eco2: 410,
-    temperature: 28.5,
-    humidity: 65,
-    aqi: 42,
-    quality: 'good',
-    timestamp: new Date().toISOString(),
-    estimations: {
-      eco2: {
-        rawValue: undefined, // Purely estimated
-        estimatedValue: 410,
-        correction: 0,
-        confidence: 92,
-      },
-    },
+    eco2: 590,
+    tvoc: 89,
+    temperature: 30.2,
+    humidity: 70,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
   },
   {
-    id: 'read-002',
-    nodeId: 'node-02',
-    pm25: 55.4,
-    tvoc: 450,
-    eco2: 680,
-    temperature: 29.2,
+    name: 'Manyar',
+    code: 'AS-MYR-03',
+    lat: -7.1240,
+    lng: 112.5970,
+    address: 'Kawasan Industri Manyar',
+    aqi: 65,
+    pm25: 25.8,
+    eco2: 688,
+    tvoc: 221,
+    temperature: 31.1,
     humidity: 68,
-    aqi: 85,
-    quality: 'moderate',
-    timestamp: new Date().toISOString(),
-    estimations: {
-      eco2: {
-        rawValue: 700,
-        estimatedValue: 680,
-        correction: -20,
-        confidence: 88,
-      },
-    },
+    status: 'warning',
+    uiStatus: 'perhatian',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Bungah',
+    code: 'AS-BGH-04',
+    lat: -7.0540,
+    lng: 112.5710,
+    address: 'Kecamatan Bungah',
+    aqi: 41,
+    pm25: 13.6,
+    eco2: 568,
+    tvoc: 81,
+    temperature: 29.4,
+    humidity: 74,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Sidayu',
+    code: 'AS-SDY-05',
+    lat: -6.9940,
+    lng: 112.5620,
+    address: 'Zona Buffer Industri Sidayu',
+    aqi: 84,
+    pm25: 32.4,
+    eco2: 714,
+    tvoc: 168,
+    temperature: 31.5,
+    humidity: 66,
+    status: 'warning',
+    uiStatus: 'perhatian',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Driyorejo',
+    code: 'AS-DRY-06',
+    lat: -7.3480,
+    lng: 112.6240,
+    address: 'Perbatasan Gresik-Surabaya Selatan',
+    aqi: 48,
+    pm25: 16.8,
+    eco2: 602,
+    tvoc: 92,
+    temperature: 30.7,
+    humidity: 71,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Kebomas',
+    code: 'AS-KBM-07',
+    lat: -7.1720,
+    lng: 112.6170,
+    address: 'Kecamatan Kebomas',
+    aqi: 43,
+    pm25: 14.7,
+    eco2: 584,
+    tvoc: 86,
+    temperature: 30.0,
+    humidity: 73,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Menganti',
+    code: 'AS-MGT-08',
+    lat: -7.2760,
+    lng: 112.5890,
+    address: 'Kecamatan Menganti',
+    aqi: 46,
+    pm25: 15.9,
+    eco2: 598,
+    tvoc: 90,
+    temperature: 30.3,
+    humidity: 69,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Ujungpangkah',
+    code: 'AS-UJP-09',
+    lat: -6.9180,
+    lng: 112.5490,
+    address: 'Pesisir Ujungpangkah',
+    aqi: 36,
+    pm25: 11.8,
+    eco2: 540,
+    tvoc: 71,
+    temperature: 29.6,
+    humidity: 76,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
+  },
+  {
+    name: 'Wringinanom',
+    code: 'AS-WRN-10',
+    lat: -7.3820,
+    lng: 112.5280,
+    address: 'Kecamatan Wringinanom',
+    aqi: 47,
+    pm25: 16.3,
+    eco2: 606,
+    tvoc: 95,
+    temperature: 30.4,
+    humidity: 70,
+    status: 'online',
+    uiStatus: 'baik',
+    lastUpdate: '09.41 WIB',
   },
 ]
 
-// Add last reading to mock nodes
-mockNodes[0].lastReading = mockReadings[0]
-mockNodes[1].lastReading = mockReadings[1]
+export const mockReadings: NodeReading[] = GRESIK_NODES_DATA.map((item, index) => ({
+  id: `read-${index + 1}`,
+  nodeId: item.code,
+  pm25: item.pm25,
+  tvoc: item.tvoc,
+  eco2: item.eco2,
+  temperature: item.temperature,
+  humidity: item.humidity,
+  aqi: item.aqi,
+  quality: item.aqi <= 50 ? 'good' : 'moderate',
+  timestamp: new Date().toISOString(),
+  estimations: {
+    eco2: {
+      estimatedValue: item.eco2,
+      correction: -15,
+      confidence: 94.8,
+    },
+    tvoc: {
+      estimatedValue: item.tvoc,
+      correction: -8,
+      confidence: 93.2,
+    },
+  },
+}))
+
+export const mockNodes: Node[] = GRESIK_NODES_DATA.map((item, index) => ({
+  id: item.code,
+  name: item.name,
+  location: {
+    lat: item.lat,
+    lng: item.lng,
+    address: item.address,
+  },
+  status: item.status,
+  batteryLevel: 95 - index * 3,
+  uptime: 99.8,
+  latency: 22 + index * 4,
+  createdAt: '2026-01-10T10:00:00Z',
+  updatedAt: new Date().toISOString(),
+  lastReading: mockReadings[index],
+}))
 
 export const mockAlerts: Alert[] = [
   {
     id: 'alert-1',
-    timestamp: new Date(Date.now() - 10 * 60000).toISOString(), // 10 mins ago
-    nodeId: 'node-02',
-    nodeName: 'Node #02',
+    timestamp: '09.25 WIB',
+    nodeId: 'AS-SDY-05',
+    nodeName: 'Sidayu',
     sensor: 'PM2.5',
     severity: 'warning',
-    description: 'PM2.5 meningkat, gunakan masker saat beraktivitas di luar ruangan.',
+    description: 'Partikel debu sedang meningkat (32,4 µg/m³). Anak-anak dan orang dengan masalah pernapasan sebaiknya membatasi aktivitas luar ruangan.',
     status: 'active',
-    value: 55.4,
-    threshold: 50.0,
+    value: 32.4,
+    threshold: 25.0,
   },
   {
     id: 'alert-2',
-    timestamp: new Date(Date.now() - 60 * 60000).toISOString(), // 1 hr ago
-    nodeId: 'node-01',
-    nodeName: 'Node #01',
-    sensor: 'System',
-    severity: 'info',
-    description: 'Kondisi udara kembali aman, tidak diperlukan tindakan.',
-    status: 'resolved',
+    timestamp: '08.50 WIB',
+    nodeId: 'AS-MYR-03',
+    nodeName: 'Manyar',
+    sensor: 'TVOC',
+    severity: 'warning',
+    description: 'Nilai TVOC mendekati batas perhatian (221 ppb). Pantau perkembangan sebelum aktivitas di area terbuka berlangsung lama.',
+    status: 'active',
+    value: 221,
+    threshold: 200,
   },
-  {
-    id: 'alert-3',
-    timestamp: new Date(Date.now() - 24 * 3600000).toISOString(), // 1 day ago
-    nodeId: 'system',
-    nodeName: 'System',
-    sensor: 'System',
-    severity: 'info',
-    description: 'Kualitas udara membaik 12% dibanding minggu sebelumnya.',
-    status: 'acknowledged',
-  }
 ]
 
 export const mockCarbonSummary: CarbonSummary = {
-  estimatedCO2e: 12450.5, // kg
-  avgTVOC: 185.4,
-  avgPM25: 24.2,
+  estimatedCO2e: 10240,
+  avgTVOC: 117.4,
+  avgPM25: 18.4,
   complianceScore: 92,
 }
 
 export const mockEmissionLogs: EmissionLog[] = [
   {
     id: 'log-1',
-    date: '2026-07-23',
-    nodeId: 'node-01',
-    nodeName: 'Node #01',
-    co2: 45.2,
-    tvoc: 110,
-    pm25: 18.5,
+    date: '30 Sep, 09.25',
+    nodeId: 'AS-SDY-05',
+    nodeName: 'Sidayu',
+    co2: 714,
+    tvoc: 168,
+    pm25: 32.4,
   },
   {
     id: 'log-2',
-    date: '2026-07-23',
-    nodeId: 'node-02',
-    nodeName: 'Node #02',
-    co2: 68.5,
-    tvoc: 350,
-    pm25: 45.2,
+    date: '30 Sep, 08.50',
+    nodeId: 'AS-MYR-03',
+    nodeName: 'Manyar',
+    co2: 688,
+    tvoc: 221,
+    pm25: 25.8,
+  },
+  {
+    id: 'log-3',
+    date: '30 Sep, 08.30',
+    nodeId: 'AS-GRK-02',
+    nodeName: 'Gresik Kota',
+    co2: 590,
+    tvoc: 89,
+    pm25: 15.2,
+  },
+  {
+    id: 'log-4',
+    date: '30 Sep, 08.15',
+    nodeId: 'AS-CRM-01',
+    nodeName: 'Cerme',
+    co2: 552,
+    tvoc: 74,
+    pm25: 12.1,
   },
 ]
 
-// Trend chart mock data
-export const mockTrendData24h = Array.from({ length: 24 }, (_, i) => {
-  const hour = new Date()
-  hour.setHours(hour.getHours() - (23 - i))
-  
-  return {
-    time: `${hour.getHours().toString().padStart(2, '0')}:00`,
-    pm25: Math.floor(Math.random() * 30) + 15,
-    tvoc: Math.floor(Math.random() * 200) + 100,
-    eco2: Math.floor(Math.random() * 100) + 400,
-  }
-})
+export const mockTrendData24h = [
+  { time: '00.00', raw: 16.4, estimate: 15.7, threshold: 35 },
+  { time: '02.00', raw: 15.0, estimate: 15.2, threshold: 35 },
+  { time: '04.00', raw: 16.4, estimate: 14.5, threshold: 35 },
+  { time: '06.00', raw: 12.4, estimate: 13.9, threshold: 35 },
+  { time: '08.00', raw: 15.3, estimate: 14.3, threshold: 35 },
+  { time: '10.00', raw: 13.8, estimate: 12.8, threshold: 35 },
+  { time: '12.00', raw: 9.2,  estimate: 11.8, threshold: 35 },
+  { time: '14.00', raw: 12.0, estimate: 11.1, threshold: 35 },
+  { time: '16.00', raw: 7.0,  estimate: 10.2, threshold: 35 },
+  { time: '18.00', raw: 10.4, estimate: 9.8,  threshold: 35 },
+  { time: '20.00', raw: 8.5,  estimate: 10.2, threshold: 35 },
+  { time: '22.00', raw: 12.3, estimate: 11.4, threshold: 35 },
+  { time: '24.00', raw: 15.1, estimate: 14.6, threshold: 35 },
+]
+
+export const mockTrendData7d = [
+  { time: 'Sen', raw: 15.1, estimate: 14.5, threshold: 35 },
+  { time: 'Sel', raw: 13.0, estimate: 13.8, threshold: 35 },
+  { time: 'Rab', raw: 14.1, estimate: 12.9, threshold: 35 },
+  { time: 'Kam', raw: 8.5,  estimate: 11.9, threshold: 35 },
+  { time: 'Jum', raw: 11.3, estimate: 11.8, threshold: 35 },
+  { time: 'Sab', raw: 11.5, estimate: 12.1, threshold: 35 },
+  { time: 'Min', raw: 9.0,  estimate: 9.8,  threshold: 35 },
+]
+
+export const SAMPLE_RECOMMENDATIONS = [
+  'Kalau keluar rumah hari ini, cek kondisi udara di lokasi terdekat. Bawa masker sebagai langkah siap siaga.',
+  'Semangat menjalani hari! Mulai dengan melihat kualitas udara sebelum berangkat, lalu pilih aktivitas yang paling nyaman.',
+  'Jaga napas, jaga semangat. Saat udara terasa kurang nyaman, beri diri Anda waktu untuk beristirahat di dalam ruangan.',
+  'Langkah kecil juga berarti: ingatkan keluarga untuk memeriksa kondisi udara sebelum beraktivitas di luar.',
+  'Udara yang lebih sehat dimulai dari kebiasaan bersama. Terus pantau, saling peduli, dan tetap semangat!',
+]

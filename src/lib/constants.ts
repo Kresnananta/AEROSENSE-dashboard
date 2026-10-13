@@ -18,50 +18,63 @@ export const ROUTES = {
   REGISTER: '/register',
   DASHBOARD: '/dashboard',
   SENSOR_MAP: '/sensor-map',
+  ANALYTICS: '/analytics',
+  ESG_REPORTS: '/esg-reports',
+  ALERTS: '/alerts',
+  AEROBOT: '/aerobot',
   NODE_MONITORING: '/nodes',
   NODE_DETAIL: '/nodes/:id',
-  ANALYTICS: '/analytics',
-  ALERTS: '/alerts',
-  ESG_REPORTS: '/esg-reports',
   SYSTEM: '/system',
 } as const
 
-/** Navigation items for sidebar */
-export const NAV_ITEMS = [
+export interface NavItemConfig {
+  label: string
+  path: string
+  icon: string
+  badge?: string
+  badgeType?: 'count' | 'pill'
+}
+
+/** Navigation items for citizen-centric sidebar */
+export const NAV_ITEMS: readonly NavItemConfig[] = [
   {
-    label: 'Dashboard',
+    label: 'Beranda',
     path: ROUTES.DASHBOARD,
-    icon: 'LayoutDashboard',
+    icon: 'LayoutGrid',
   },
   {
-    label: 'Peta Sensor',
+    label: 'Peta sensor',
     path: ROUTES.SENSOR_MAP,
-    icon: 'MapPin',
+    icon: 'Map',
   },
   {
-    label: 'Monitoring Node',
-    path: ROUTES.NODE_MONITORING,
-    icon: 'Radio',
-  },
-  {
-    label: 'Tren & Analitik',
+    label: 'Analitik AI',
     path: ROUTES.ANALYTICS,
-    icon: 'BarChart3',
+    icon: 'LineChart',
   },
   {
-    label: 'Notifikasi',
-    path: ROUTES.ALERTS,
-    icon: 'Bell',
-  },
-  {
-    label: 'Laporan ESG',
+    label: 'Audit ESG',
     path: ROUTES.ESG_REPORTS,
     icon: 'FileText',
   },
   {
-    label: 'Pengaturan',
-    path: ROUTES.SYSTEM,
-    icon: 'Settings',
+    label: 'Peringatan',
+    path: ROUTES.ALERTS,
+    icon: 'Bell',
+    badge: '2',
+    badgeType: 'count',
+  },
+  {
+    label: 'Tanya AERO-BOT',
+    path: ROUTES.AEROBOT,
+    icon: 'MessageCircle',
+    badge: 'BARU',
+    badgeType: 'pill',
+  },
+  {
+    label: 'Monitoring node',
+    path: ROUTES.NODE_MONITORING,
+    icon: 'Radio',
   },
 ] as const
 
