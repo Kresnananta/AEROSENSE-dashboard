@@ -1,229 +1,78 @@
 # AEROSENSE Dashboard
 
-> Air Quality Monitoring Dashboard — Real-time sensor data visualization and management.
+AEROSENSE menggabungkan pemantauan sensor, hasil model GRU, dan informasi lingkungan publik. AERO-BOT menjelaskan data yang tersedia melalui chat web dan layar robot. Pemrosesan pertanyaan serta notifikasi dijalankan di n8n.
 
-## Tech Stack
+## Fitur
 
-| Category | Technology |
-|----------|------------|
-| Framework | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
-| Build Tool | [Vite 8](https://vite.dev/) |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com/) |
-| UI Components | [shadcn/ui](https://ui.shadcn.com/) (New York style) |
-| Routing | [React Router v7](https://reactrouter.com/) |
-| Icons | [Lucide React](https://lucide.dev/) |
-| Linter | [Oxlint](https://oxc.rs/) |
-| Package Manager | [pnpm](https://pnpm.io/) |
+- Hub lingkungan Surabaya: cuaca, udara, tanah, titik panas, sungai, gempa, dan keanekaragaman hayati.
+- Peta mengikuti koordinat asli setiap node.
+- Pembacaan terbaru, historis input, hasil GRU, dan ekspor JSON.
+- Chat melalui backend, dengan jawaban dibaca dari job milik pengguna.
+- Login Supabase, akses lokasi berdasarkan keanggotaan, dan aturan peringatan untuk operator.
+- Penghubung langganan WhatsApp dan perintah mendengarkan pada layar robot.
 
-## Getting Started
+Jika sensor belum mengirim data, dashboard menampilkan kondisi kosong. Informasi publik tidak dimasukkan sebagai pembacaan sensor.
 
-### Prerequisites
+## Alur sistem
 
-- [Node.js](https://nodejs.org/) >= 18
-- [pnpm](https://pnpm.io/) >= 9
+```text
+ESP32 / LoRa → gateway → API → Supabase
+                                   ↓
+                      event job → n8n → Gemini
+                                   ↓
+Web / layar robot ← API ← hasil di Supabase
 
-### Installation
+API publik → n8n Hub lingkungan → cache Supabase → API → web dan konteks AERO-BOT
+```
+
+Web memakai tabel `ae_` yang sama dengan workflow yang sudah ada. Dokumen skema lama di root menyimpan rancangan awal. Skema integrasi saat ini ada di [server/supabase](server/supabase) dan dijelaskan dalam [panduan integrasi](docs/INTEGRATION.md).
+
+## Menjalankan lokal
+
+Gunakan Node.js 22 dan pnpm.
 
 ```bash
-# Clone the repository
-git clone https://github.com/Kresnananta/AEROSENSE-dashboard.git
-cd aerosense-web
-
-# Install dependencies
-pnpm install
-
-# Start development server
-pnpm dev
+pnpm install --frozen-lockfile
+cp server/.env.example server/.env
 ```
 
-### Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start dev server with HMR |
-| `pnpm build` | Type-check + production build |
-| `pnpm preview` | Preview production build locally |
-| `pnpm lint` | Run Oxlint |
-
-## Project Structure
-
-```
-aerosense-web/
-├── public/                         # Static public assets
-├── src/
-│   ├── assets/                     # Static assets bundled by Vite
-│   │   ├── images/                 # Image files (PNG, JPG, SVG)
-│   │   └── icons/                  # Icon files
-│   │
-│   ├── components/                 # Reusable UI components
-│   │   ├── ui/                     # shadcn/ui components (auto-generated)
-│   │   ├── layout/                 # App shell & layout components
-│   │   │   ├── DashboardLayout.tsx # Main shell (sidebar + header + content)
-│   │   │   ├── Sidebar.tsx         # Navigation sidebar
-│   │   │   └── Header.tsx          # Top header bar
-│   │   ├── charts/                 # Chart & data visualization components
-│   │   ├── data-table/             # Table components with sorting/filtering
-│   │   └── shared/                 # Common reusable components
-│   │       ├── Logo.tsx            # Brand logo
-│   │       ├── ThemeToggle.tsx     # Dark/light mode switch
-│   │       ├── LoadingSpinner.tsx  # Loading indicator
-│   │       ├── ErrorBoundary.tsx   # Error catcher with retry
-│   │       └── EmptyState.tsx      # Empty data placeholder
-│   │
-│   ├── pages/                      # Route-level page components
-│   │   ├── auth/                   # Authentication pages
-│   │   │   ├── LoginPage.tsx
-│   │   │   └── RegisterPage.tsx
-│   │   ├── dashboard/
-│   │   │   └── DashboardPage.tsx   # Main overview with KPI cards
-│   │   ├── analytics/
-│   │   │   └── AnalyticsPage.tsx   # Data analysis & trends
-│   │   ├── sensors/
-│   │   │   ├── SensorsPage.tsx     # Sensor list & management
-│   │   │   └── SensorDetailPage.tsx# Individual sensor data
-│   │   ├── settings/
-│   │   │   └── SettingsPage.tsx    # User & app settings
-│   │   └── not-found/
-│   │       └── NotFoundPage.tsx    # 404 page
-│   │
-│   ├── hooks/                      # Custom React hooks
-│   │   ├── useAuth.ts              # Authentication state & actions
-│   │   ├── useTheme.ts             # Theme (dark/light) management
-│   │   └── useMediaQuery.ts        # Responsive breakpoint detection
-│   │
-│   ├── services/                   # API layer & external integrations
-│   │   ├── api.ts                  # Base HTTP client (fetch wrapper)
-│   │   ├── auth.service.ts         # Auth API calls (login, register)
-│   │   └── sensor.service.ts       # Sensor CRUD API calls
-│   │
-│   ├── store/                      # Global state management (Zustand-ready)
-│   │   ├── auth.store.ts           # Auth state (user, tokens)
-│   │   └── theme.store.ts          # Theme preferences
-│   │
-│   ├── types/                      # TypeScript type definitions
-│   │   ├── auth.types.ts           # User, LoginCredentials, AuthResponse
-│   │   ├── sensor.types.ts         # Sensor, SensorReading, AirQualityLevel
-│   │   └── api.types.ts            # ApiResponse, PaginatedResponse, ApiError
-│   │
-│   ├── lib/                        # Utility functions & helpers
-│   │   ├── utils.ts                # cn() class name merger (shadcn utility)
-│   │   └── constants.ts            # Routes, nav items, app config, API config
-│   │
-│   ├── config/                     # App-level configuration
-│   │   └── routes.tsx              # Centralized route definitions
-│   │
-│   ├── styles/                     # Global styles & design tokens
-│   │   └── globals.css             # Tailwind imports + shadcn CSS variables
-│   │
-│   ├── App.tsx                     # Root component (ErrorBoundary + Router)
-│   ├── main.tsx                    # Entry point
-│   └── vite-env.d.ts               # Vite type declarations
-│
-├── components.json                 # shadcn/ui configuration
-├── tsconfig.json                   # TypeScript root config
-├── tsconfig.app.json               # App TypeScript config (strict mode)
-├── tsconfig.node.json              # Node TypeScript config (vite.config.ts)
-├── vite.config.ts                  # Vite config with @ path alias
-└── package.json
-```
-
-### Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────┐
-│                      App.tsx                        │
-│                   (ErrorBoundary)                    │
-│  ┌───────────────────────────────────────────────┐  │
-│  │               AppRouter                       │  │
-│  │  ┌─────────────────────────────────────────┐  │  │
-│  │  │  Auth Pages (no layout)                 │  │  │
-│  │  │  /login  →  LoginPage                   │  │  │
-│  │  │  /register  →  RegisterPage             │  │  │
-│  │  └─────────────────────────────────────────┘  │  │
-│  │  ┌─────────────────────────────────────────┐  │  │
-│  │  │  DashboardLayout                        │  │  │
-│  │  │  ┌──────────┬──────────────────────┐    │  │  │
-│  │  │  │ Sidebar  │  Header              │    │  │  │
-│  │  │  │          ├──────────────────────┤    │  │  │
-│  │  │  │  Nav     │  <Outlet />          │    │  │  │
-│  │  │  │  Links   │  /dashboard          │    │  │  │
-│  │  │  │          │  /analytics          │    │  │  │
-│  │  │  │          │  /sensors            │    │  │  │
-│  │  │  │          │  /sensors/:id        │    │  │  │
-│  │  │  │          │  /settings           │    │  │  │
-│  │  │  └──────────┴──────────────────────┘    │  │  │
-│  │  └─────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
-```
-
-### Key Design Decisions
-
-#### Path Aliases
-
-Import menggunakan `@/` alias yang di-resolve ke `src/`. Ini menghindari relative path yang panjang dan membuat import lebih bersih:
-
-```tsx
-// ✅ Clean
-import { cn } from '@/lib/utils'
-import { useAuth } from '@/hooks/useAuth'
-
-// ❌ Avoid
-import { cn } from '../../../lib/utils'
-```
-
-#### Component Organization
-
-Components dibagi menjadi 5 kategori:
-
-| Folder | Fungsi | Contoh |
-|--------|--------|--------|
-| `ui/` | Primitif shadcn/ui (auto-generated) | Button, Card, Input |
-| `layout/` | Struktur halaman & navigasi | Sidebar, Header, DashboardLayout |
-| `charts/` | Komponen visualisasi data | AreaChart, BarChart, LineChart |
-| `data-table/` | Tabel data dengan fitur lengkap | DataTable, Pagination, Toolbar |
-| `shared/` | Komponen umum yang reusable | Logo, ThemeToggle, LoadingSpinner |
-
-#### Separation of Concerns
-
-```
-Pages       → Apa yang user lihat (komposisi komponen + layout)
-Components  → Bagaimana sesuatu terlihat (UI reusable)
-Hooks       → Logika React yang reusable (state, effects)
-Services    → Komunikasi dengan API/backend
-Store       → State global yang di-share antar komponen
-Types       → Kontrak data (TypeScript interfaces)
-Lib         → Fungsi utility murni (tanpa React)
-Config      → Konfigurasi aplikasi (routes, settings)
-```
-
-## Adding shadcn/ui Components
-
-shadcn/ui sudah dikonfigurasi. Tambah komponen via CLI:
+Isi credential backend dalam `server/.env`. Kemudian, dari dua terminal:
 
 ```bash
-# Tambah komponen individual
-npx shadcn@latest add button
-npx shadcn@latest add card
-npx shadcn@latest add input
-npx shadcn@latest add table
-
-# Atau tambah beberapa sekaligus
-npx shadcn@latest add button card input table dialog
+cd server
+node --env-file=.env api/server.mjs
 ```
 
-Komponen akan otomatis di-generate ke `src/components/ui/`.
-
-## Environment Variables
-
-Buat file `.env.local` di root project:
-
-```env
-VITE_API_BASE_URL=http://localhost:3000/api
+```bash
+pnpm dev --host 127.0.0.1
 ```
 
-Akses di kode melalui `import.meta.env.VITE_API_BASE_URL` atau via `API_CONFIG` constant di `src/lib/constants.ts`.
+Vite meneruskan `/api` ke `http://127.0.0.1:8080`. Browser mengambil URL Supabase dan publishable key melalui konfigurasi publik backend. Service-role key, credential perangkat, dan internal key tetap di server. Gemini serta WhatsApp memakai credential n8n.
 
-## License
+## Pemeriksaan
 
-Private — All rights reserved.
+```bash
+pnpm test
+pnpm lint
+pnpm build
+```
+
+Untuk pemeriksaan browser tanpa layanan produksi, jalankan `node server/tests/preview.mjs`, lalu jalankan Vite dengan variabel shell `API_PROXY_TARGET=http://127.0.0.1:8081`. Login pengujian: `preview@example.test` dengan password `fixture-password`. Seluruh data pada mode ini sintetis dan hanya berada di proses lokal. Jangan mengarahkan domain produksi ke server fixture.
+
+## Deploy
+
+Panduan lengkap: [DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+- Backend memakai `server/compose.yaml`, hostname Docker `aerosense-api:8080`.
+- Web memakai `compose.yaml` di root dan proxy nginx dalam `deploy/nginx.conf`.
+- Keduanya berada pada network `n8n_default`.
+- Container web baru mendengarkan di `127.0.0.1:8082`, sehingga dashboard lama di port 80 dapat tetap digunakan sampai pengujian selesai.
+- Jalur `/api/internal/` ditutup pada proxy publik.
+
+Integrasi produksi memerlukan credential server, akses pengguna Supabase, worker n8n yang aktif, dan pengalihan domain ke container web baru. Build lokal tidak membuktikan layanan produksi sudah terhubung.
+
+## Data publik
+
+Daftar penyedia dan kebutuhannya ada di [PUBLIC_APIS.md](docs/PUBLIC_APIS.md). IQAir memerlukan key. BMKG cuaca memerlukan kode kelurahan. SoilGrids REST sedang tidak tersedia.
+
+Prakiraan dan estimasi wilayah ditampilkan bersama sumber serta waktu datanya. US AQI berbeda dari ISPU. eCO₂ bukan pengukuran CO₂ langsung, dan sinyal debu optik memerlukan validasi sebelum disebut PM2.5. Laporan pemantauan tidak menghitung emisi atau menyatakan kepatuhan ESG.

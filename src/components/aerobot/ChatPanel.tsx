@@ -1,216 +1,269 @@
-import { useState, useRef, useEffect } from 'react'
-import { ArrowUp, Loader2 } from 'lucide-react'
-import { replyFor, PROMPT_SUGGESTIONS } from '@/lib/aerobot-replies'
+import { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowUp, Loader2, RefreshCw } from "lucide-react";
+import { chatService } from "@/services/chat.service";
+import { useAuth } from "@/hooks/useAuth";
+import { useLiveData } from "@/hooks/useLiveData";
+import type { LiveNode } from "@/types/live.types";
 
 interface Message {
-  id: string
-  sender: 'bot' | 'user'
-  text: string
-  time: string
+  id: string;
+  sender: "bot" | "user";
+  text: string;
 }
-
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: 'msg-init',
-    sender: 'bot',
-    text: 'Halo! Saya AERO-BOT. Saya bisa membantu menjelaskan kondisi udara dengan bahasa yang mudah. Mau mulai dari mana?',
-    time: 'Contoh',
-  },
-]
-
+const suggestions = [
+  "Bagaimana cuaca Surabaya hari ini?",
+  "Bagaimana mengurangi polusi udara?",
+  "Apa beda data sensor dan data publik?",
+];
 export function ChatPanel() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES)
-  const [input, setInput] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
-  const [showSuggestions, setShowSuggestions] = useState(true)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
-
+  const { user, error: authError } = useAuth();
+  const userId = user?.id;
+  const [params] = useSearchParams();
+  const robotId = params.get("robot_id") || undefined;
+  const nodes = useLiveData<{ nodes: LiveNode[] }>(
+    user ? "/v1/dashboard" : null,
+    60000,
+  );
+  const [nodeId, setNodeId] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome",
+      sender: "bot",
+      text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+    },
+  ]);
+  const [input, setInput] = useState(params.get("question") || "");
+  const [pending, setPending] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [pollRun, setPollRun] = useState(0);
+  const sending = useRef(false);
+  const submission = useRef<{ scope: string; key: string } | null>(null);
+  const end = useRef<HTMLDivElement>(null);
+  const owner = useRef<string | undefined>(undefined);
+  const active = useRef(true);
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, isTyping])
-
-  const handleSend = (textToSend?: string) => {
-    const raw = textToSend ?? input
-    const clean = raw.trim()
-    if (!clean || isTyping) return
-
-    const userMessage: Message = {
-      id: `user-${Date.now()}`,
-      sender: 'user',
-      text: clean,
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    if (owner.current !== user?.id) {
+      setMessages([
+        {
+          id: "welcome",
+          sender: "bot",
+          text: "Halo! Saya AERO-BOT. Tanyakan tentang udara, cuaca, tanah, atau cara menjaga lingkungan.",
+        },
+      ]);
+      setPending(null);
+      setBusy(false);
+      setError("");
+      setNodeId("");
+      owner.current = user?.id;
     }
-
-    setMessages((prev) => [...prev, userMessage])
-    setInput('')
-    setShowSuggestions(false)
-    setIsTyping(true)
-
-    // Simulate 450ms response time
-    setTimeout(() => {
-      const botResponse: Message = {
-        id: `bot-${Date.now()}`,
-        sender: 'bot',
-        text: replyFor(clean),
-        time: 'Contoh',
+  }, [user?.id]);
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [messages, busy]);
+  useEffect(() => {
+    if (!pending || !userId) return;
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    const started = Date.now();
+    setBusy(true);
+    setError("");
+    async function poll() {
+      try {
+        const job = await chatService.result(pending!, controller.signal);
+        if (controller.signal.aborted) return;
+        if (job.status === "done") {
+          if (!job.result?.text)
+            throw new Error(
+              "Jawaban belum berisi teks. Periksa eksekusi worker di n8n.",
+            );
+          setMessages((prev) =>
+            prev.some((m) => m.id === job.id)
+              ? prev
+              : [
+                  ...prev,
+                  { id: job.id, sender: "bot", text: job.result!.text! },
+                ],
+          );
+          setPending(null);
+          setBusy(false);
+          return;
+        }
+        if (job.status === "failed") {
+          setPending(null);
+          throw new Error(
+            job.error ||
+              "Permintaan gagal diproses. Silakan kirim ulang pertanyaan.",
+          );
+        }
+        if (Date.now() - started > 120000)
+          throw new Error(
+            "Jawaban masih diproses. Tekan Cek jawaban untuk melanjutkan tanpa mengirim pertanyaan baru.",
+          );
+        timer = setTimeout(poll, 2000);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          setBusy(false);
+          setError(
+            e instanceof Error
+              ? e.message
+              : "Koneksi terputus. Cek jawaban lagi.",
+          );
+        }
       }
-      setMessages((prev) => [...prev, botResponse])
-      setIsTyping(false)
-    }, 450)
+    }
+    void poll();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [pending, userId, pollRun]);
+  async function send(text = input) {
+    if (!text.trim() || sending.current || pending || !user) return;
+    sending.current = true;
+    setBusy(true);
+    setError("");
+    const sender = user.id;
+    const scope = JSON.stringify([sender, text.trim(), nodeId, robotId]);
+    if (submission.current?.scope !== scope)
+      submission.current = { scope, key: crypto.randomUUID() };
+    try {
+      const job = await chatService.send(
+        text.trim(),
+        submission.current!.key,
+        nodeId,
+        robotId,
+      );
+      if (!active.current || owner.current !== sender) return;
+      submission.current = null;
+      setMessages((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), sender: "user", text: text.trim() },
+      ]);
+      setInput("");
+      setPending(job.id);
+    } catch (e) {
+      if (active.current) {
+        setError(e instanceof Error ? e.message : "Pesan belum terkirim.");
+        setBusy(false);
+      }
+    } finally {
+      sending.current = false;
+    }
   }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    handleSend()
-  }
-
   return (
-    <section
-      className="card h-[600px] flex flex-col overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm"
-      aria-label="Percakapan AERO-BOT"
-    >
-      {/* Header */}
-      <div className="h-[68px] border-b border-slate-100 dark:border-slate-800 flex items-center gap-3 px-5 shrink-0 bg-white dark:bg-slate-900">
-        <span className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0a72ec] to-[#4ac4ff] grid place-items-center shadow-md shrink-0 overflow-hidden">
-          <img
-            src="/assets/aerobot.svg"
-            alt="AERO-BOT"
-            className="w-7 h-7 object-contain"
-          />
-        </span>
-        <div className="flex-1 min-w-0">
-          <strong className="block text-xs font-bold text-slate-900 dark:text-white leading-tight">
-            AERO-BOT
-          </strong>
-          <small className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-            Asisten kualitas udara AEROSENSE
+    <section className="live-chat" aria-label="Percakapan AERO-BOT">
+      <header>
+        <img src="/assets/aerobot.svg" alt="" />
+        <div>
+          <strong>AERO-BOT</strong>
+          <small>
+            {robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}
           </small>
         </div>
-        <span className="text-[10px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-1.5 shrink-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Mode contoh
+        <span className="live-tag">
+          {busy
+            ? "Memproses"
+            : user
+              ? "Siap menerima pesan"
+              : "Masuk untuk bertanya"}
         </span>
-      </div>
-
-      {/* Messages Scroll Area */}
-      <div
-        className="flex-1 overflow-y-auto p-4 sm:p-5 bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-900 dark:to-slate-950/40 flex flex-col gap-4"
-        role="log"
-        aria-live="polite"
-        aria-label="Pesan percakapan"
-      >
-        {messages.map((msg) => {
-          const isBot = msg.sender === 'bot'
-          return (
-            <div
-              key={msg.id}
-              className={`flex items-start gap-2.5 max-w-[85%] ${
-                isBot ? '' : 'self-end flex-row-reverse'
-              }`}
-            >
-              {isBot && (
-                <span className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-sky-950/60 grid place-items-center shrink-0 overflow-hidden">
-                  <img
-                    src="/assets/aerobot.svg"
-                    alt=""
-                    className="w-5 h-5 object-contain"
-                  />
-                </span>
-              )}
-              <div className="space-y-1">
-                <div
-                  className={`p-3 sm:p-3.5 rounded-2xl text-xs sm:text-[13px] leading-relaxed shadow-xs whitespace-pre-wrap ${
-                    isBot
-                      ? 'bg-[#edf6ff] dark:bg-slate-800 text-[#365b7c] dark:text-slate-200 rounded-tl-xs'
-                      : 'bg-[#0b77ef] text-white rounded-tr-xs'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-                <small
-                  className={`block text-[9px] text-slate-400 ${
-                    isBot ? 'text-left' : 'text-right'
-                  }`}
-                >
-                  {msg.time}
-                </small>
-              </div>
-            </div>
-          )
-        })}
-
-        {isTyping && (
-          <div className="flex items-start gap-2.5 max-w-[85%] animate-fade-in">
-            <span className="w-6 h-6 rounded-lg bg-sky-100 dark:bg-sky-950/60 grid place-items-center shrink-0 overflow-hidden">
-              <img
-                src="/assets/aerobot.svg"
-                alt=""
-                className="w-5 h-5 object-contain"
-              />
-            </span>
-            <div className="bg-[#edf6ff] dark:bg-slate-800 px-4 py-2.5 rounded-2xl rounded-tl-xs flex items-center gap-1.5 text-sky-600 dark:text-sky-300">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span className="text-[11px] font-medium">AERO-BOT sedang mengetik...</span>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Prompt Suggestions */}
-      {showSuggestions && (
-        <div className="flex gap-2 px-4 sm:px-5 py-2 overflow-x-auto shrink-0 border-t border-slate-100 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs">
-          {PROMPT_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => handleSend(suggestion)}
-              className="shrink-0 border border-sky-200 dark:border-sky-800/60 rounded-full bg-sky-50/70 hover:bg-sky-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-primary-600 dark:text-primary-300 text-[11px] font-bold px-3 py-1.5 transition-colors cursor-pointer"
-            >
-              {suggestion}
-            </button>
+      </header>
+      <label className="chat-scope">
+        Sumber sensor
+        <select
+          aria-label="Sumber sensor percakapan"
+          value={nodeId}
+          onChange={(e) => setNodeId(e.target.value)}
+          disabled={!!robotId || busy || !!pending}
+        >
+          <option value="">Informasi lingkungan umum dan API publik</option>
+          {nodes.data?.nodes.map((n) => (
+            <option key={n.id} value={n.id}>
+              {n.name}
+            </option>
           ))}
+        </select>
+      </label>
+      {nodes.error && <p className="live-notice">{nodes.error}</p>}
+      <div className="live-messages" role="log" aria-live="polite">
+        {messages.map((m) => (
+          <div className={"live-message " + m.sender} key={m.id}>
+            {m.text}
+          </div>
+        ))}
+        {busy && (
+          <p className="chat-progress">
+            <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang
+            menyiapkan jawaban…
+          </p>
+        )}
+        <div ref={end} />
+      </div>
+      {!user && (
+        <p className="live-notice">
+          {authError ||
+            "Masuk agar pertanyaan dan jawaban hanya dapat diakses oleh akun Anda."}{" "}
+          <Link to="/login">Masuk akun</Link>
+        </p>
+      )}
+      {error && (
+        <div className="live-notice" role="alert">
+          {error}
+          {pending && (
+            <button
+              className="live-button secondary"
+              onClick={() => setPollRun((n) => n + 1)}
+            >
+              <RefreshCw size={14} />
+              Cek jawaban
+            </button>
+          )}
         </div>
       )}
-
-      {/* Composer */}
+      <div className="chat-suggestions">
+        {suggestions.map((s) => (
+          <button key={s} onClick={() => setInput(s)}>
+            {s}
+          </button>
+        ))}
+      </div>
       <form
-        onSubmit={handleSubmit}
-        className="flex items-center gap-2 m-3 sm:mx-5 mb-2 border border-slate-200 dark:border-slate-700 rounded-xl p-1.5 pl-3.5 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 dark:focus-within:ring-primary-950/50 bg-white dark:bg-slate-800/80 transition-all"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send();
+        }}
       >
-        <label htmlFor="chatInput" className="sr-only">
-          Tulis pertanyaan untuk AERO-BOT
+        <label className="sr-only" htmlFor="chatInput">
+          Pertanyaan lingkungan
         </label>
         <input
           id="chatInput"
-          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Tulis pertanyaan Anda tentang kualitas udara..."
-          maxLength={300}
+          maxLength={2000}
+          disabled={!user || busy || !!pending}
+          placeholder="Tanyakan tentang lingkungan…"
           autoComplete="off"
-          disabled={isTyping}
-          className="flex-1 min-w-0 bg-transparent text-xs text-slate-800 dark:text-white placeholder:text-slate-400 focus:outline-none"
         />
         <button
-          type="submit"
-          disabled={!input.trim() || isTyping}
           aria-label="Kirim pesan"
-          className="w-8 h-8 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-40 disabled:cursor-not-allowed text-white grid place-items-center transition-colors cursor-pointer shrink-0"
+          disabled={!user || !input.trim() || busy || !!pending}
         >
-          <ArrowUp className="w-4 h-4" />
+          <ArrowUp size={18} />
         </button>
       </form>
-
-      {/* Footnote Disclaimer */}
-      <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center px-4 pb-2.5 leading-normal shrink-0">
-        Jawaban pada demo ini sudah disiapkan untuk menunjukkan pengalaman chat. Belum terhubung ke Gemini API dan bukan saran medis.
-      </p>
+      <small className="chat-note">
+        Angka mengikuti data yang tersedia. Pembacaan sensor dan estimasi dari
+        API publik dijelaskan terpisah.
+      </small>
     </section>
-  )
+  );
 }

@@ -24,4 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+.env.*
+!.env.example
+artifacts/
 reference-ui

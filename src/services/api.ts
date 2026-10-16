@@ -1,71 +1,42 @@
-import { API_CONFIG } from '@/lib/constants'
-import type { ApiResponse, ApiError } from '@/types/api.types'
+import { API_CONFIG } from "@/lib/constants";
+import { getSupabase } from "./supabase";
 
-/**
- * Base API client.
- * Centralized fetch wrapper with auth headers and error handling.
- *
- * TODO: Add interceptors for token refresh, error logging.
- */
-
-/** Build full URL from endpoint path */
-function buildUrl(endpoint: string): string {
-  return `${API_CONFIG.baseUrl}${endpoint}`
-}
-
-/** Get auth headers if token exists */
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem('aerosense-token')
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
-
-/** Generic request handler */
-async function request<T>(
+export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
-): Promise<ApiResponse<T>> {
-  const url = buildUrl(endpoint)
-
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
-  })
-
-  if (!response.ok) {
-    const error: ApiError = await response.json()
-    throw error
+  authenticated = true,
+): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body) headers.set("Content-Type", "application/json");
+  if (authenticated) {
+    const { data, error } = await (await getSupabase()).auth.getSession();
+    if (error || !data.session)
+      throw new Error(
+        "Masuk terlebih dahulu untuk mengakses data sensor dan AERO-BOT.",
+      );
+    headers.set("Authorization", `Bearer ${data.session.access_token}`);
   }
-
-  return response.json()
+  const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
+    ...options,
+    headers,
+    signal: options.signal ?? AbortSignal.timeout(20000),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok)
+    throw new Error(
+      body?.error ||
+        body?.message ||
+        `Layanan belum dapat diakses (${response.status}).`,
+    );
+  return body as T;
 }
-
-/** HTTP method helpers */
 export const api = {
-  get: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: 'GET' }),
-
-  post: <T>(endpoint: string, data: unknown) =>
-    request<T>(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  put: <T>(endpoint: string, data: unknown) =>
-    request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
-  patch: <T>(endpoint: string, data: unknown) =>
-    request<T>(endpoint, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
-
-  delete: <T>(endpoint: string) =>
-    request<T>(endpoint, { method: 'DELETE' }),
-}
+  get: <T>(path: string) => apiRequest<T>(path),
+  post: <T>(path: string, data: unknown) =>
+    apiRequest<T>(path, { method: "POST", body: JSON.stringify(data) }),
+  put: <T>(path: string, data: unknown) =>
+    apiRequest<T>(path, { method: "PUT", body: JSON.stringify(data) }),
+  patch: <T>(path: string, data: unknown) =>
+    apiRequest<T>(path, { method: "PATCH", body: JSON.stringify(data) }),
+  delete: <T>(path: string) => apiRequest<T>(path, { method: "DELETE" }),
+};

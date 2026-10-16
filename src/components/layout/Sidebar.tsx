@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { NAV_ITEMS, ROUTES } from '@/lib/constants'
+import { NavLink, useNavigate } from "react-router-dom";
+import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import {
   LayoutGrid,
   Map,
@@ -11,9 +11,11 @@ import {
   ChevronRight,
   Sparkles,
   MoreHorizontal,
-} from 'lucide-react'
+  Leaf,
+} from "lucide-react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
+  Leaf,
   LayoutGrid,
   Map,
   LineChart,
@@ -21,14 +23,14 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Bell,
   MessageCircle,
   Radio,
-}
+};
 
 interface SidebarProps {
-  onClose?: () => void
+  onClose?: () => void;
 }
 
 export function Sidebar({ onClose }: SidebarProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <aside className="w-[242px] shrink-0 bg-white border-r border-[#e8eff8] flex flex-col h-screen sticky top-0 z-30 select-none overflow-hidden">
@@ -48,7 +50,9 @@ export function Sidebar({ onClose }: SidebarProps) {
           <div className="leading-tight">
             <span className="text-base font-black tracking-[-0.9px] text-[#59aae8]">
               AERO<span className="text-[#277afa]">SENSE</span>
-              <sup className="text-[8px] font-bold text-[#59aae8] ml-0.5">™</sup>
+              <sup className="text-[8px] font-bold text-[#59aae8] ml-0.5">
+                ™
+              </sup>
             </span>
             <small className="block text-[7.5px] font-semibold text-[#537496] tracking-[0.3px] uppercase mt-0.5">
               Pantau Udara, Lindungi Warga
@@ -63,10 +67,10 @@ export function Sidebar({ onClose }: SidebarProps) {
           </span>
           <div className="min-w-0 flex-1">
             <strong className="block text-[11px] text-[#1b3154] font-bold truncate">
-              Kawasan Gresik
+              AEROSENSE
             </strong>
             <small className="block text-[9.5px] text-[#8b9ab0] truncate">
-              Ruang kerja demo
+              Sensor dan hub lingkungan
             </small>
           </div>
           <ChevronRight className="w-3.5 h-3.5 text-[#9aacbf] shrink-0" />
@@ -84,7 +88,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           {/* Main Navigation */}
           <nav className="space-y-0.5">
             {NAV_ITEMS.map((item) => {
-              const Icon = ICON_MAP[item.icon] || LayoutGrid
+              const Icon = ICON_MAP[item.icon] || LayoutGrid;
 
               return (
                 <NavLink
@@ -92,27 +96,28 @@ export function Sidebar({ onClose }: SidebarProps) {
                   to={item.path}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `h-10 w-full rounded-xl flex items-center gap-2.5 px-3 text-xs transition-all duration-200 ${isActive
-                      ? 'bg-[#e7f2ff] text-[#0569ed] font-extrabold shadow-2xs'
-                      : 'text-[#687b95] font-semibold hover:bg-[#f2f8ff] hover:text-[#056afa] hover:translate-x-0.5'
+                    `h-10 w-full rounded-xl flex items-center gap-2.5 px-3 text-xs transition-all duration-200 ${
+                      isActive
+                        ? "bg-[#e7f2ff] text-[#0569ed] font-extrabold shadow-2xs"
+                        : "text-[#687b95] font-semibold hover:bg-[#f2f8ff] hover:text-[#056afa] hover:translate-x-0.5"
                     }`
                   }
                 >
                   <Icon className="w-[16px] h-[16px] shrink-0 stroke-[2]" />
                   <span className="truncate">{item.label}</span>
 
-                  {item.badge && item.badgeType === 'count' && (
+                  {item.badge && item.badgeType === "count" && (
                     <span className="ml-auto rounded-lg px-2 py-0.5 bg-[#fff0ec] text-[#ef704f] text-[9.5px] font-black">
                       {item.badge}
                     </span>
                   )}
-                  {item.badge && item.badgeType === 'pill' && (
+                  {item.badge && item.badgeType === "pill" && (
                     <span className="ml-auto text-[8px] tracking-[0.5px] bg-[#e9f7ff] text-[#008bd0] px-1.5 py-0.5 rounded-md font-extrabold">
                       {item.badge}
                     </span>
                   )}
                 </NavLink>
-              )
+              );
             })}
           </nav>
         </div>
@@ -138,8 +143,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             <button
               type="button"
               onClick={() => {
-                navigate(ROUTES.AEROBOT)
-                onClose?.()
+                navigate(ROUTES.AEROBOT);
+                onClose?.();
               }}
               className="text-[10px] font-extrabold text-[#086cfb] hover:underline flex items-center gap-1 cursor-pointer"
             >
@@ -161,14 +166,14 @@ export function Sidebar({ onClose }: SidebarProps) {
               Tim AEROSENSE
             </strong>
             <small className="block text-[9.5px] text-[#8b9ab0] truncate">
-              Pratinjau antarmuka
+              Pemantauan lingkungan
             </small>
           </div>
           <button
             type="button"
             onClick={() => {
-              navigate(ROUTES.SYSTEM)
-              onClose?.()
+              navigate(ROUTES.SYSTEM);
+              onClose?.();
             }}
             title="Buka Pengaturan Sistem"
             className="p-1.5 rounded-lg text-[#8c9cb0] hover:text-[#086cfb] hover:bg-[#f2f8ff] transition-colors cursor-pointer"
@@ -178,5 +183,5 @@ export function Sidebar({ onClose }: SidebarProps) {
         </div>
       </div>
     </aside>
-  )
+  );
 }

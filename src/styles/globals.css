@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./aerosense.css";
+@import "./live.css";
 
 /*
  * ============================================
@@ -12,110 +13,110 @@
 
 @theme {
   /* ---------- Brand / Primary (Blue) ---------- */
-  --color-brand:       #086cfb;
-  --color-brand-dark:  #0758d3;
+  --color-brand: #086cfb;
+  --color-brand-dark: #0758d3;
   --color-brand-light: #47b9ff;
 
-  --color-primary-50:  #EFF6FF;
-  --color-primary-100: #DBEAFE;
-  --color-primary-200: #BFDBFE;
-  --color-primary-300: #93C5FD;
-  --color-primary-400: #60A5FA;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
   --color-primary-500: #086cfb;
   --color-primary-600: #0569ed;
   --color-primary-700: #0758d3;
 
   /* ---------- Neutral / Surface ---------- */
-  --color-bg-app:       #F3F8FF;  /* soft pastel blue */
-  --color-bg-card:      #FFFFFF;
-  --color-bg-sidebar:   #FFFFFF;
-  --color-border:       #E5EEF8;
-  --color-line:         #E5EEF8;
-  --color-border-soft:  #F0F6FC;
+  --color-bg-app: #f3f8ff; /* soft pastel blue */
+  --color-bg-card: #ffffff;
+  --color-bg-sidebar: #ffffff;
+  --color-border: #e5eef8;
+  --color-line: #e5eef8;
+  --color-border-soft: #f0f6fc;
 
   /* ---------- Text ---------- */
-  --color-text-primary:   #11223D;  /* headings, values */
-  --color-text-secondary: #687B95;  /* labels, subtext */
-  --color-text-muted:     #74849D;  /* timestamps, placeholders */
-  --color-text-on-primary:#FFFFFF;
+  --color-text-primary: #11223d; /* headings, values */
+  --color-text-secondary: #687b95; /* labels, subtext */
+  --color-text-muted: #74849d; /* timestamps, placeholders */
+  --color-text-on-primary: #ffffff;
 
   /* ---------- Status Levels ---------- */
-  --color-status-good:       #19A679;  /* Baik */
-  --color-status-moderate:   #BB8823;  /* Sedang / Perhatian */
-  --color-status-warning:    #EF7454;  /* Perlu Perhatian */
-  --color-status-critical:   #E34C26;  /* Kritis */
+  --color-status-good: #19a679; /* Baik */
+  --color-status-moderate: #bb8823; /* Sedang / Perhatian */
+  --color-status-warning: #ef7454; /* Perlu Perhatian */
+  --color-status-critical: #e34c26; /* Kritis */
 
-  --color-status-good-bg:    #E6FAEF;
-  --color-status-moderate-bg:#FFF2DC;
-  --color-status-warning-bg: #FFF0E9;
-  --color-status-critical-bg:#FFEBE5;
+  --color-status-good-bg: #e6faef;
+  --color-status-moderate-bg: #fff2dc;
+  --color-status-warning-bg: #fff0e9;
+  --color-status-critical-bg: #ffebe5;
 
   /* ---------- Shadows ---------- */
   --shadow-soft: 0 12px 40px rgba(29, 81, 148, 0.055);
   --shadow-card: 0 10px 27px rgba(21, 115, 187, 0.06);
 
   /* ---------- Radius ---------- */
-  --radius-card:  20px;
+  --radius-card: 20px;
   --radius-input: 12px;
-  --radius-pill:  999px;
+  --radius-pill: 999px;
 }
 
 :root {
   --radius: 0.75rem;
 
   /* Base colors */
-  --background: #F3F8FF;
-  --foreground: #11223D;
+  --background: #f3f8ff;
+  --foreground: #11223d;
 
   /* Card surfaces */
-  --card: #FFFFFF;
-  --card-foreground: #11223D;
+  --card: #ffffff;
+  --card-foreground: #11223d;
 
   /* Popover surfaces */
-  --popover: #FFFFFF;
-  --popover-foreground: #11223D;
+  --popover: #ffffff;
+  --popover-foreground: #11223d;
 
   /* Primary brand color */
-  --primary: #086CFB;
-  --primary-foreground: #FFFFFF;
+  --primary: #086cfb;
+  --primary-foreground: #ffffff;
 
   /* Secondary color */
-  --secondary: #EAF4FF;
-  --secondary-foreground: #086CFB;
+  --secondary: #eaf4ff;
+  --secondary-foreground: #086cfb;
 
   /* Muted elements */
-  --muted: #EAF4FF;
-  --muted-foreground: #74849D;
+  --muted: #eaf4ff;
+  --muted-foreground: #74849d;
 
   /* Accent color */
-  --accent: #E7F2FF;
-  --accent-foreground: #0569ED;
+  --accent: #e7f2ff;
+  --accent-foreground: #0569ed;
 
   /* Destructive/error states */
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
   /* Borders & inputs */
-  --border: #E5EEF8;
-  --input: #DFE9F4;
-  --ring: #76BCFF;
+  --border: #e5eef8;
+  --input: #dfe9f4;
+  --ring: #76bcff;
 
   /* Charts */
-  --chart-1: #0875FF;
-  --chart-2: #33C6A2;
-  --chart-3: #F2B352;
-  --chart-4: #F27854;
-  --chart-5: #756BE9;
+  --chart-1: #0875ff;
+  --chart-2: #33c6a2;
+  --chart-3: #f2b352;
+  --chart-4: #f27854;
+  --chart-5: #756be9;
 
   /* Sidebar */
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #687B95;
-  --sidebar-primary: #0569ED;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #E7F2FF;
-  --sidebar-accent-foreground: #0569ED;
-  --sidebar-border: #E8EFF8;
-  --sidebar-ring: #76BCFF;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #687b95;
+  --sidebar-primary: #0569ed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e7f2ff;
+  --sidebar-accent-foreground: #0569ed;
+  --sidebar-border: #e8eff8;
+  --sidebar-ring: #76bcff;
 }
 
 @theme inline {
@@ -155,7 +156,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 

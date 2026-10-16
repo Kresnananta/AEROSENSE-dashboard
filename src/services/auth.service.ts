@@ -1,30 +1,20 @@
-import { api } from './api'
-import type {
-  LoginCredentials,
-  RegisterPayload,
-  AuthResponse,
-} from '@/types/auth.types'
-
-/**
- * Authentication service.
- * Handles login, register, logout, and token management.
- *
- * TODO: Implement actual API calls.
- */
+import { getSupabase } from "./supabase";
 export const authService = {
-  /** Authenticate user with credentials */
-  login: (credentials: LoginCredentials) =>
-    api.post<AuthResponse>('/auth/login', credentials),
-
-  /** Register a new user */
-  register: (payload: RegisterPayload) =>
-    api.post<AuthResponse>('/auth/register', payload),
-
-  /** Refresh the access token */
-  refresh: (refreshToken: string) =>
-    api.post<AuthResponse>('/auth/refresh', { refreshToken }),
-
-  /** Logout and invalidate token */
-  logout: () =>
-    api.post<void>('/auth/logout', {}),
-}
+  async login(email: string, password: string) {
+    const { error } = await (
+      await getSupabase()
+    ).auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  },
+  async register(name: string, email: string, password: string) {
+    const { data, error } = await (
+      await getSupabase()
+    ).auth.signUp({ email, password, options: { data: { name } } });
+    if (error) throw error;
+    return !!data.session;
+  },
+  async logout() {
+    const { error } = await (await getSupabase()).auth.signOut();
+    if (error) throw error;
+  },
+};
