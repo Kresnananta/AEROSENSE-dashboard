@@ -1,29 +1,31 @@
-import { useLocation, useNavigate } from 'react-router-dom'
-import { NAV_ITEMS, ROUTES } from '@/lib/constants'
-import { Menu, ChevronRight, Bell } from 'lucide-react'
+import { useLocation, useNavigate } from "react-router-dom";
+import { NAV_ITEMS, ROUTES } from "@/lib/constants";
+import { Menu, ChevronRight, Bell } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TopbarProps {
-  onMenuClick: () => void
+  onMenuClick: () => void;
 }
 
 export function Topbar({ onMenuClick }: TopbarProps) {
-  const location = useLocation()
-  const navigate = useNavigate()
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Find active nav item or fallback label
-  const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname)
+  const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
   const currentLabel = currentItem
     ? currentItem.label
-    : location.pathname.startsWith('/nodes/')
-    ? 'Detail node'
-    : location.pathname === ROUTES.SYSTEM
-    ? 'Pengaturan'
-    : 'Workspace'
+    : location.pathname.startsWith("/nodes/")
+      ? "Detail node"
+      : location.pathname === ROUTES.SYSTEM
+        ? "Pengaturan"
+        : "Workspace";
 
   return (
     <header className="h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
       {/* Left: Mobile hamburger & Breadcrumb */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
           onClick={onMenuClick}
@@ -33,9 +35,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           <Menu className="w-4 h-4 stroke-[2]" />
         </button>
 
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[#97a7bb] text-xs font-semibold">
-          <span>Workspace</span>
-          <ChevronRight className="w-3.5 h-3.5 text-[#97a7bb]" />
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-2 text-[#97a7bb] text-xs font-semibold"
+        >
+          <span className="hidden sm:inline">Workspace</span>
+          <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#97a7bb]" />
           <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
         </nav>
       </div>
@@ -45,7 +50,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         {/* Data simulation badge */}
         <span className="flex items-center gap-2 bg-[#f0f8ff] text-[#2170bd] border border-[#d7ebff] px-3 py-1.5 rounded-full text-[10px] font-black tracking-wider">
           <span className="w-1.5 h-1.5 rounded-full bg-[#2586ff] animate-pulse" />
-          DATA CONTOH
+          {user ? "AKUN AKTIF" : "AKSES PUBLIK"}
         </span>
 
         {/* Quick alerts button with notification indicator */}
@@ -56,7 +61,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
           className="relative w-8 h-8 rounded-lg text-[#59718e] hover:bg-[#f0f6fc] hover:text-[#086cfb] grid place-items-center transition-colors cursor-pointer"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ff735b] ring-2 ring-white" />
         </button>
 
         {/* User avatar */}
@@ -65,5 +69,5 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </div>
       </div>
     </header>
-  )
+  );
 }

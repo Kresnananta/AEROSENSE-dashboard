@@ -1,4 +1,4 @@
-import { Sparkles, Check } from 'lucide-react'
+import { Sparkles, Check } from "lucide-react";
 
 export function ChatSide() {
   return (
@@ -16,7 +16,8 @@ export function ChatSide() {
           Teman memahami udara, tanpa istilah yang bikin bingung.
         </h2>
         <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-          AERO-BOT mengubah data sensor menjadi penjelasan singkat dan langkah praktis untuk warga Indonesia.
+          AERO-BOT mengubah data sensor menjadi penjelasan singkat dan langkah
+          praktis untuk warga Indonesia.
         </p>
 
         {/* Audio Wave Visualizer */}
@@ -50,13 +51,13 @@ export function ChatSide() {
             <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
               <Check className="w-3 h-3 stroke-[3]" />
             </span>
-            <span>Status node dan peringatan</span>
+            <span>Status node, cuaca, tanah, dan peringatan</span>
           </li>
           <li className="py-2.5 flex items-center gap-2.5 text-slate-700 dark:text-slate-200 font-medium">
             <span className="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 grid place-items-center shrink-0">
               <Check className="w-3 h-3 stroke-[3]" />
             </span>
-            <span>Langkah umum menjaga kenyamanan napas</span>
+            <span>Hal terkait lingkungan dan pengurangan polusi</span>
           </li>
         </ul>
 
@@ -65,5 +66,5 @@ export function ChatSide() {
         </p>
       </article>
     </aside>
-  )
+  );
 }

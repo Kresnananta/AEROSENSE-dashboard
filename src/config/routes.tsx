@@ -1,22 +1,71 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ROUTES } from '@/lib/constants'
+import { lazy, Suspense } from "react";
+import { DataState } from "@/components/shared/DataState";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
 
 // Layout
-import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Pages
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { DashboardPage } from '@/pages/dashboard/DashboardPage'
-import { SensorMapPage } from '@/pages/sensor-map/SensorMapPage'
-import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
-import { NodeMonitoringPage } from '@/pages/node-monitoring/NodeMonitoringPage'
-import { NodeDetailPage } from '@/pages/node-monitoring/NodeDetailPage'
-import { AlertsPage } from '@/pages/alerts/AlertsPage'
-import { ESGReportsPage } from '@/pages/esg-reports/ESGReportsPage'
-import { SystemPage } from '@/pages/system/SystemPage'
-import { AeroBotPage } from '@/pages/aerobot/AeroBotPage'
-import { NotFoundPage } from '@/pages/not-found/NotFoundPage'
+const LoginPage = lazy(() =>
+  import("@/pages/auth/LoginPage").then((m) => ({ default: m.LoginPage })),
+);
+const RegisterPage = lazy(() =>
+  import("@/pages/auth/RegisterPage").then((m) => ({
+    default: m.RegisterPage,
+  })),
+);
+const DashboardPage = lazy(() =>
+  import("@/pages/dashboard/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const SensorMapPage = lazy(() =>
+  import("@/pages/sensor-map/SensorMapPage").then((m) => ({
+    default: m.SensorMapPage,
+  })),
+);
+const AnalyticsPage = lazy(() =>
+  import("@/pages/analytics/AnalyticsPage").then((m) => ({
+    default: m.AnalyticsPage,
+  })),
+);
+const NodeMonitoringPage = lazy(() =>
+  import("@/pages/node-monitoring/NodeMonitoringPage").then((m) => ({
+    default: m.NodeMonitoringPage,
+  })),
+);
+const NodeDetailPage = lazy(() =>
+  import("@/pages/node-monitoring/NodeDetailPage").then((m) => ({
+    default: m.NodeDetailPage,
+  })),
+);
+const AlertsPage = lazy(() =>
+  import("@/pages/alerts/AlertsPage").then((m) => ({ default: m.AlertsPage })),
+);
+const ESGReportsPage = lazy(() =>
+  import("@/pages/esg-reports/ESGReportsPage").then((m) => ({
+    default: m.ESGReportsPage,
+  })),
+);
+const SystemPage = lazy(() =>
+  import("@/pages/system/SystemPage").then((m) => ({ default: m.SystemPage })),
+);
+const AeroBotPage = lazy(() =>
+  import("@/pages/aerobot/AeroBotPage").then((m) => ({
+    default: m.AeroBotPage,
+  })),
+);
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found/NotFoundPage").then((m) => ({
+    default: m.NotFoundPage,
+  })),
+);
+const EnvironmentPage = lazy(() =>
+  import("@/pages/environment/EnvironmentPage").then((m) => ({
+    default: m.EnvironmentPage,
+  })),
+);
 
 /**
  * Application route configuration.
@@ -26,28 +75,37 @@ import { NotFoundPage } from '@/pages/not-found/NotFoundPage'
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Public routes — no sidebar */}
-        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-        <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+      <Suspense fallback={<DataState loading />}>
+        <Routes>
+          {/* Public routes — no sidebar */}
+          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
 
-        {/* Protected routes — wrapped in dashboard layout */}
-        <Route element={<DashboardLayout />}>
-          <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-          <Route path={ROUTES.SENSOR_MAP} element={<SensorMapPage />} />
-          <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
-          <Route path={ROUTES.NODE_MONITORING} element={<NodeMonitoringPage />} />
-          <Route path={ROUTES.NODE_DETAIL} element={<NodeDetailPage />} />
-          <Route path={ROUTES.ALERTS} element={<AlertsPage />} />
-          <Route path={ROUTES.ESG_REPORTS} element={<ESGReportsPage />} />
-          <Route path={ROUTES.AEROBOT} element={<AeroBotPage />} />
-          <Route path={ROUTES.SYSTEM} element={<SystemPage />} />
-        </Route>
+          {/* Protected routes — wrapped in dashboard layout */}
+          <Route element={<DashboardLayout />}>
+            <Route path={ROUTES.ENVIRONMENT} element={<EnvironmentPage />} />
+            <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+            <Route path={ROUTES.SENSOR_MAP} element={<SensorMapPage />} />
+            <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
+            <Route
+              path={ROUTES.NODE_MONITORING}
+              element={<NodeMonitoringPage />}
+            />
+            <Route path={ROUTES.NODE_DETAIL} element={<NodeDetailPage />} />
+            <Route path={ROUTES.ALERTS} element={<AlertsPage />} />
+            <Route path={ROUTES.ESG_REPORTS} element={<ESGReportsPage />} />
+            <Route path={ROUTES.AEROBOT} element={<AeroBotPage />} />
+            <Route path={ROUTES.SYSTEM} element={<SystemPage />} />
+          </Route>
 
-        {/* Redirects & fallback */}
-        <Route path={ROUTES.HOME} element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+          {/* Redirects & fallback */}
+          <Route
+            path={ROUTES.HOME}
+            element={<Navigate to={ROUTES.DASHBOARD} replace />}
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
-  )
+  );
 }

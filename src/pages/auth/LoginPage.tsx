@@ -1,18 +1,29 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ROUTES } from '@/lib/constants'
-import { ArrowRight, Lock, Mail } from 'lucide-react'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
+import { ArrowRight, Lock, Mail } from "lucide-react";
+import { authService } from "@/services/auth.service";
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('demo@aerosense.id')
-  const [password, setPassword] = useState('password123')
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // For demo/prototype, directly navigate to dashboard
-    navigate(ROUTES.DASHBOARD)
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await authService.login(email, password);
+      navigate(ROUTES.DASHBOARD);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login belum berhasil.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f2f8fc] via-[#e8f3fc] to-[#deeeff] dark:from-slate-950 dark:to-slate-900 flex items-center justify-center p-4">
@@ -29,14 +40,21 @@ export function LoginPage() {
               />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              Selamat Datang di <span className="text-primary-600">AEROSENSE</span>
+              Selamat Datang di{" "}
+              <span className="text-primary-600">AEROSENSE</span>
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">
-              Masuk untuk memantau kualitas udara, sensor IoT, dan audit kepatuhan ESG.
+              Masuk untuk memantau sensor, membaca historis, dan bertanya kepada
+              AERO-BOT.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <p className="live-notice" role="alert">
+                {error}
+              </p>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
                 Email
@@ -59,9 +77,6 @@ export function LoginPage() {
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
                   Kata Sandi
                 </label>
-                <a href="#forgot" className="text-[11px] font-semibold text-primary-600 hover:underline">
-                  Lupa kata sandi?
-                </a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -78,17 +93,27 @@ export function LoginPage() {
 
             <button
               type="submit"
+              disabled={busy}
               className="w-full mt-2 py-3 px-4 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-extrabold text-xs shadow-md shadow-primary-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
             >
-              <span>Masuk ke Dashboard</span>
+              <span>{busy ? "Memeriksa akun…" : "Masuk ke Dashboard"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
           <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
+            <Link
+              to={ROUTES.ENVIRONMENT}
+              className="block mb-3 text-xs text-primary-600 hover:underline"
+            >
+              Lihat informasi lingkungan publik
+            </Link>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Belum memiliki akun?{' '}
-              <Link to={ROUTES.REGISTER} className="font-bold text-primary-600 hover:underline">
+              Belum memiliki akun?{" "}
+              <Link
+                to={ROUTES.REGISTER}
+                className="font-bold text-primary-600 hover:underline"
+              >
                 Daftar sekarang
               </Link>
             </p>
@@ -96,5 +121,5 @@ export function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
