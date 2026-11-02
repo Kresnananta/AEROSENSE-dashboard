@@ -23,6 +23,7 @@ export interface HandsFreeCallbacks {
   fetchSpeech(jobId: string, part: number, signal: AbortSignal): Promise<Blob>;
   onQuestion(text: string): Promise<boolean>;
   onState(state: HandsFreeState): void;
+  onPlayback?(audio: Blob | null, text: string): void;
 }
 
 export interface HandsFreeEngine {
@@ -488,12 +489,13 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     });
   }
 
-  function playBlob(blob: Blob, controller: AbortController): Promise<void> {
+  function playBlob(blob: Blob, controller: AbortController, text = ''): Promise<void> {
     if (!blob.type.startsWith("audio/")) return Promise.reject(new Error("Respons suara tidak valid."));
     if (playerUrl) URL.revokeObjectURL(playerUrl);
     playerUrl = URL.createObjectURL(blob);
     const audio = new Audio(playerUrl);
     player = audio;
+    audio.onplaying = () => callbacks.onPlayback?.(blob, text);
     return new Promise<void>((resolve, reject) => {
       finishSpeech = () => { controller.abort(); resolve(); };
       audio.onended = () => resolve();
@@ -526,7 +528,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
         const blob = await next;
         if (controller.signal.aborted || token !== run) break;
         if (index + 1 < parts.length) next = fetchPart(index + 1);
-        await playBlob(blob, controller);
+        await playBlob(blob, controller, parts[index]);
         spoken = index + 1;
         if (controller.signal.aborted || token !== run) break;
       }
@@ -540,6 +542,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       player = null;
       if (playerUrl) URL.revokeObjectURL(playerUrl);
       playerUrl = null;
+      callbacks.onPlayback?.(null, '');
     }
     // stop() may have run while audio was playing; the run token covers that case.
     if (token === run) enterListening(FOLLOW_UP_MS, true, "Ada pertanyaan lanjutan? Langsung bicara saja.");

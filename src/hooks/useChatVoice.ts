@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "@/services/api";
 import { answerChunks } from "@/lib/handsfree";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { publishRobotFace } from '@/lib/robot-face-bus';
 
 export function useChatVoice(userId: string | undefined, onTranscript: (text: string) => void) {
   const [configured, setConfigured] = useState(false);
@@ -24,6 +25,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     audioController.current?.abort();
     player.current?.pause();
     player.current = null;
+    publishRobotFace(userId, { action: 'stop' });
     if (audioUrl.current) URL.revokeObjectURL(audioUrl.current);
     audioUrl.current = null;
     setSpeaking(null);
@@ -139,6 +141,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
         audioUrl.current = URL.createObjectURL(blob);
         const audio = new Audio(audioUrl.current);
         player.current = audio;
+        audio.onplaying = () => publishRobotFace(userId, { action: 'speak', text: parts[part], audio: blob });
         setPreparingSpeech(false);
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve();

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest } from "@/services/api";
+import { publishRobotFace } from '@/lib/robot-face-bus';
 import { createHandsFreeEngine, type HandsFreeEngine, type HandsFreeState } from "@/lib/handsfree-engine";
 
 const PREFERENCE_KEY = "aerosense.handsfree";
@@ -21,6 +22,8 @@ export function useHandsFreeVoice(options: {
   const { userId, available } = options;
   const [state, setState] = useState<HandsFreeState>(initialState);
   const onQuestion = useRef(options.onQuestion);
+  const faceOwner = useRef(userId);
+  faceOwner.current = userId;
   onQuestion.current = options.onQuestion;
   const engine = useRef<HandsFreeEngine | null>(null);
   const supported = typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia && typeof AudioContext !== "undefined";
@@ -28,6 +31,7 @@ export function useHandsFreeVoice(options: {
   if (!engine.current && typeof window !== "undefined") {
     engine.current = createHandsFreeEngine({
       onState: next => setState(next),
+      onPlayback: (audio, text) => publishRobotFace(faceOwner.current, audio ? { action: 'speak', audio, text } : { action: 'stop' }),
       onQuestion: text => onQuestion.current(text),
       async transcribe(mimeType, base64) {
         const result = await apiRequest<{ text: string }>("/v1/voice/transcribe", {

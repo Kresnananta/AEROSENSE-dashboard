@@ -10,6 +10,7 @@ import { useChatVoice } from "@/hooks/useChatVoice";
 import { useHandsFreeVoice } from "@/hooks/useHandsFreeVoice";
 import type { HandsFreePhase } from "@/lib/handsfree-engine";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { publishRobotFace } from '@/lib/robot-face-bus';
 
 interface Message {
   id: string;
@@ -130,6 +131,7 @@ export function ChatPanel() {
           );
           setPending(null);
           setBusy(false);
+          publishRobotFace(userId, { action: 'expression', text: job.result.text });
           if (spoken) {
             voiceJobs.current.delete(job.id);
             if (spoken === "handsfree") void handsFreeControls.speakAnswer(job.id, job.result!.text!);
@@ -210,6 +212,7 @@ export function ChatPanel() {
       ]);
       setInput("");
       setPending(job.id);
+      publishRobotFace(sender, { action: 'thinking' });
       return job.id;
     } catch (e) {
       if (active.current) {
