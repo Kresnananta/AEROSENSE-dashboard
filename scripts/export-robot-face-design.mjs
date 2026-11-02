@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
-import {mascotSvg,poseFor,parts} from '../public/robot-display/expression.js';
+import {mascotSvg,poseFor,parts} from '../robot-display/screen/expression.js';
 const out=new URL('../artifacts/robot-face/design/',import.meta.url);await fs.mkdir(out,{recursive:true});
-const base='data:image/png;base64,'+(await fs.readFile(new URL('../public/robot-display/assets/mascot-plate-v2.png',import.meta.url))).toString('base64');
+const base='data:image/png;base64,'+(await fs.readFile(new URL('../robot-display/screen/assets/mascot-plate-v2.png',import.meta.url))).toString('base64');
 const states=[['Sleeping','sleeping','neutral',2],['Waking','waking','happy',.6],['Listening','listening','neutral',2],['Thinking','thinking','neutral',2],['Talking','speaking','neutral',2],['Happy','speaking','happy',2],['Concerned','speaking','concerned',2],['Warning','speaking','warning',2],['Danger','speaking','danger',2],['Surprised','speaking','surprised',2]];
 const manifest=[],tiles=[];
 for(const [index,[name,mode,mood,time]]of states.entries()){

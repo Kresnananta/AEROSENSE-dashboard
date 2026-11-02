@@ -40,7 +40,8 @@ try{
  await page.setViewportSize({width:390,height:844});await page.keyboard.press('2');await page.waitForTimeout(700);await page.screenshot({path:new URL('portrait.png',out).pathname.replace(/^\/(\w:)/,'$1')});
  const sizes=await page.evaluate(()=>({svg:document.querySelector('svg').getBoundingClientRect().toJSON(),screen:document.querySelector('#screen').getBoundingClientRect().toJSON(),ratio:document.querySelector('svg').getAttribute('preserveAspectRatio')}));assert.equal(sizes.ratio,'xMidYMid meet');assert.equal(sizes.svg.height,sizes.screen.height);checks.push('portrait preserves the original head proportions');
  await page.keyboard.press('c');assert.equal(await page.locator('svg').getAttribute('preserveAspectRatio'),'xMidYMid slice');checks.push('crop-to-fill preserves aspect ratio');
- await page.goto('http://127.0.0.1:4193/robot-face');await page.frameLocator('iframe').locator('#character svg').waitFor();assert.equal(await page.getByRole('button').count(),0);checks.push('web route shows only the face, no dashboard');
+ assert.equal(await fs.access(new URL('../public/robot-display/',import.meta.url)).then(()=>true).catch(()=>false),false);checks.push('face assets are private to the local application');
  assert.deepEqual(errors,[]);
  await fs.writeFile(new URL('verification.json',out),JSON.stringify({checks,errors,liveDeviceTested:false,geminiTested:false},null,2));console.log(checks.join('\n'));
 }finally{await browser.close();}
+

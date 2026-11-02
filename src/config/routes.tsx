@@ -58,7 +58,6 @@ const AeroBotPage = lazy(() =>
     default: m.AeroBotPage,
   })),
 );
-const RobotFacePage = lazy(() => import('@/pages/aerobot/RobotFacePage').then(m => ({ default: m.RobotFacePage })));
 const NotFoundPage = lazy(() =>
   import("@/pages/not-found/NotFoundPage").then((m) => ({
     default: m.NotFoundPage,
@@ -84,7 +83,6 @@ export function AppRouter() {
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
           <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
           <Route path={ROUTES.HOME} element={<LandingPage />} />
-          <Route path="/robot-face" element={<RobotFacePage />} />
 
           {/* Protected routes — wrapped in dashboard layout */}
           <Route element={<DashboardLayout />}>

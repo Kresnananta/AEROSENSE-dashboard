@@ -61,7 +61,7 @@ function frame(now){
  // Device TTS exposes no PCM. Only its local example uses an estimated rhythm.
  const amplitude=speech&&mode==='speaking'?clamp(.35+.3*Math.sin(now*.019)+.2*Math.sin(now*.032)):volume;
  const target=poseFor(mode,mood,(now-started)/1000,amplitude,reduced.matches),mix=1-Math.exp(-dt/75);
- for(const key of ['open','smile','sparkle','brow','gaze','beak','tilt','lift'])pose[key]+=(target[key]-pose[key])*mix;
+ for(const key of ['open','smile','sparkle','brow','browLift','browAsym','gaze','beak','tilt','lift'])pose[key]+=(target[key]-pose[key])*mix;
  for(const [id,attrs] of Object.entries(parts(pose)))for(const [key,value]of Object.entries(attrs))nodes[id]?.setAttribute(key,value);
  requestAnimationFrame(frame);
 }

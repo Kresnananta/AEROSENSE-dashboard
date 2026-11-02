@@ -4,19 +4,20 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 import readline from 'node:readline';
+import {launchLiveBrowser} from './live-browser.mjs';
+import {expressionFor} from './screen/expression.js';
 const here=path.dirname(fileURLToPath(import.meta.url));
-const bundled=path.join(here,'screen');
-const root=await fs.access(bundled).then(()=>bundled).catch(()=>path.resolve(here,'../public/robot-display'));
+const root=path.join(here,'screen');
 try{process.loadEnvFile(path.join(here,'.env.local'));}catch(error){if(error.code!=='ENOENT')throw error;}
 const port=Number(process.env.AEROBOT_DISPLAY_PORT||4210),host='127.0.0.1',origin=`http://${host}:${port}`,clients=new Set();
 if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid local display port');
 const api=(process.env.AEROSENSE_API_URL||'https://aerosense.me/api').replace(/\/$/,'');
 const device=process.env.AEROBOT_DEVICE_ID,key=process.env.AEROBOT_DEVICE_KEY;
 const headers={'x-device-id':device||'','x-device-key':key||'','Content-Type':'application/json'};
-let state={action:'sleep'},pending=null,pendingAt=0,polling=false,closed=false;
+let state={action:'sleep'},pending=null,pendingAt=0,polling=false,closed=false,browserSession;
 const completed=new Set();
 const queuedAcks=new Map();
-function emit(event){state=event;for(const client of clients)client.write(`data: ${JSON.stringify(event)}\n\n`);console.log(`[face] ${event.action}${event.emotion?' / '+event.emotion:''}`);}
+function emit(event){if(['speak','expression'].includes(event.action))event={...event,emotion:expressionFor(event.text,event.severity,event.emotion)};state=event;for(const client of clients)client.write(`data: ${JSON.stringify(event)}\n\n`);console.log(`[face] ${event.action}${event.emotion?' / '+event.emotion:''}`);}
 async function remote(endpoint,options={}){
  const r=await fetch(api+endpoint,{...options,headers,signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw new Error(`AEROSENSE returned ${r.status}`);return r;
@@ -85,11 +86,14 @@ async function poll(){
 }
 server.listen(port,host,async()=>{
  console.log(`AERO-BOT physical face: ${origin}`);
- console.log(device&&key?'Device adapter enabled. Commands will be claimed only while this screen is connected.':'Local mode. Set device credentials in .env.local to consume real AEROSENSE robot audio.');
+ console.log(device&&key?'Device adapter enabled. Commands will be claimed only while this screen is connected.':process.env.AEROBOT_OPEN_WINDOW==='0'?'Local replay mode.':'Live web mode. Sign in to the AEROSENSE chat window opened by this app.');
  console.log('Commands: wake | sleep | think | neutral | happy | concerned | warning | danger | surprised | say TEXT | play PATH | TEXT');
  if(process.env.AEROBOT_OPEN_WINDOW!=='0'){
   const candidates=process.platform==='win32'?['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe']:process.platform==='darwin'?['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']:['/usr/bin/chromium','/usr/bin/google-chrome','/usr/bin/chromium-browser'];
-  for(const browser of candidates){try{await fs.access(browser);const child=spawn(browser,[`--app=${origin}`,'--autoplay-policy=no-user-gesture-required',`--user-data-dir=${path.join(here,'.chrome-profile')}`],{detached:true,stdio:'ignore',windowsHide:true});child.unref();break;}catch{}}
+  for(const browser of candidates){try{await fs.access(browser);
+   if(!device||!key)browserSession=launchLiveBrowser(browser,path.join(here,'.chrome-profile-studio'),origin,event=>{emit(event);});
+   else{const child=spawn(browser,[`--app=${origin}`,'--autoplay-policy=no-user-gesture-required',`--user-data-dir=${path.join(here,'.chrome-profile')}`],{detached:true,stdio:'ignore',windowsHide:true});child.unref();}
+   break;}catch{}}
  }
 });
 const interval=setInterval(()=>void poll(),1400);
@@ -105,5 +109,5 @@ input.on('line',async line=>{
  }
  if(value)emit({action:'speak',local:true,text:value.replace(/^say /,'')});
 });
-function close(){closed=true;clearInterval(interval);for(const client of clients)client.end();input.close();server.close();}
+function close(){closed=true;browserSession?.close();clearInterval(interval);for(const client of clients)client.end();input.close();server.close();}
 process.on('SIGINT',()=>{close();process.exit(0);});

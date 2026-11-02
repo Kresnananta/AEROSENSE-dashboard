@@ -22,6 +22,10 @@ test('sleep, wake, whole-head color, and beak silence are deterministic',()=>{
  assert.doesNotMatch(mascotSvg(),/base-mask|lower-mask|clip-path/);
 });
 test('reference expressions differ visibly and speaking opens a hinged beak without opening on silence',()=>{
+ assert.equal(expressionFor('Ada laporan bencana banjir di Jawa.',undefined,'happy'),'concerned');
+ assert.equal(expressionFor('Gempa terdeteksi.','danger'),'danger');
+ const brows=['neutral','happy','concerned','warning','danger','surprised'].map(mood=>parts(poseFor('speaking',mood,1,.7))['brow-left'].transform);
+ assert.equal(new Set(brows).size,6);
  const normal=parts(poseFor('listening','neutral',1)),happy=parts(poseFor('listening','happy',1)),star=parts(poseFor('listening','surprised',1));
  assert.notEqual(normal['eye-left'].d,happy['eye-left'].d);
  assert.equal(star['star-left'].opacity,'1');assert.equal(star['eye-left'].opacity,'0');

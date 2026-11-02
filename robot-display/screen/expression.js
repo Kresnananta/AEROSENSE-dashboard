@@ -5,6 +5,7 @@ export function expressionFor(text='', severity, supplied) {
   // Legacy commands contain face:happy for every reply. Danger text must override it.
   if (/\b(bahaya|berbahaya|darurat|evakuasi|danger|dangerous|tidak aman)\b/.test(clean)) return 'danger';
   if (/\b(waspada|meningkat|hati-hati|warning|caution)\b/.test(clean)) return 'warning';
+  if (/\b(bencana|banjir|gempa|longsor|tsunami|korban|kebakaran|karhutla|disaster|flood|earthquake)\b/.test(clean)) return 'concerned';
   if (MOODS.includes(supplied)) return supplied;
   if (/\b(maaf|khawatir|sedih|belum tersedia|belum dapat|sorry)\b/.test(clean)) return 'concerned';
   if (/\b(wah|wow|ternyata)\b/.test(clean)) return 'surprised';
@@ -18,7 +19,10 @@ export function poseFor(mode,mood,t,volume=0,reduced=false){
   if(mode==='sleeping')open=.015;
   if(mode==='waking')open=ease(t/1.1)*(1-.97*Math.exp(-((t-1.35)**2)/.009));
   const worried=mood==='concerned',urgent=mood==='danger',warn=mood==='warning',happy=mood==='happy';
-  return {open:open*(mood==='surprised'?1.12:1),brow:urgent?.75:warn?.45:worried?-.6:happy?-.18:0,
+  const emphasis=mode==='speaking'&&!reduced?Math.sin(t*2.2)*clamp(volume):0;
+  return {open:open*(mood==='surprised'?1.12:worried?.87:1),brow:urgent?1:warn?.65:worried?-1.12:happy?-.3:0,
+    browLift:(mood==='surprised'?-60:worried?-20:happy?-14:urgent?18:0)-emphasis*10,
+    browAsym:mode==='thinking'?18:worried?6:emphasis*7,
     smile:happy?1:worried?-.65:urgent?-.3:0,sparkle:mood==='surprised'?1:0,gaze:mode==='thinking'?22:0,beak:mode==='speaking'?clamp(volume):0,
     tilt:reduced?0:mode==='thinking'?-4:worried?2:happy?Math.sin(t*1.7)*1.4:Math.sin(t*.75)*.5,
     lift:reduced?0:Math.sin(t*(mode==='sleeping'?1.4:1))*3,hue:mood==='danger'?140:mood==='warning'?-165:0};
@@ -29,8 +33,8 @@ export function parts(p){
  return {'head-rig':{transform:`translate(0 ${p.lift}) rotate(${p.tilt} 640 650)`},
  'eye-left':{d:eye(431,759),opacity:String(1-p.sparkle),transform:`translate(${p.gaze} 0) rotate(${p.brow*12} 431 759)`},'eye-right':{d:eye(744,750),opacity:String(1-p.sparkle),transform:`translate(${p.gaze} 0) rotate(${-p.brow*12} 744 750)`},
  'star-left':{opacity:String(clamp(p.sparkle*p.open))},'star-right':{opacity:String(clamp(p.sparkle*p.open))},
- 'brow-left':{d:'M352 620C337 600 338 579 361 565C386 551 421 572 450 593C475 612 500 632 497 644C495 657 458 652 430 649C395 643 366 637 352 620Z',transform:`rotate(${p.brow*22} 425 610)`},
- 'brow-right':{d:'M665 625C650 619 660 597 682 576C707 551 739 533 765 547C791 561 802 596 794 608C788 624 715 629 665 625Z',transform:`rotate(${-p.brow*22} 740 590)`},
+ 'brow-left':{d:'M352 620C337 600 338 579 361 565C386 551 421 572 450 593C475 612 500 632 497 644C495 657 458 652 430 649C395 643 366 637 352 620Z',transform:`translate(0 ${p.browLift+p.browAsym}) rotate(${p.brow*30} 425 610)`},
+ 'brow-right':{d:'M665 625C650 619 660 597 682 576C707 551 739 533 765 547C791 561 802 596 794 608C788 624 715 629 665 625Z',transform:`translate(0 ${p.browLift-p.browAsym}) rotate(${-p.brow*30} 740 590)`},
  'glint-left':{opacity:String(clamp((p.open-.15)*5)*(1-clamp(p.smile))*(1-p.sparkle)),transform:`translate(${p.gaze} 0)`},'glint-right':{opacity:String(clamp((p.open-.15)*5)*(1-clamp(p.smile))*(1-p.sparkle)),transform:`translate(${p.gaze} 0)`},
  'upper-beak':{transform:`rotate(${p.beak*4} 688 918)`},
  'lower-beak':{transform:`rotate(${-p.beak*32} 688 918)`},

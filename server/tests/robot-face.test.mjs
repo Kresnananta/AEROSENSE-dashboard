@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { expressionFor as responseMood, poseFor as facePose, parts as faceParts, mascotSvg as faceSvg } from '../../public/robot-display/expression.js';
+import { expressionFor as responseMood, poseFor as facePose, parts as faceParts, mascotSvg as faceSvg } from '../../robot-display/screen/expression.js';
 
 test('face intent gives explicit danger precedence, handles negation, and never accepts arbitrary expressions', () => {
   assert.equal(responseMood('Terima kasih.', 'danger', 'happy'), 'danger');
