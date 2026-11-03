@@ -23,20 +23,9 @@ import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
 import { dateLabel, type EnvironmentResponse, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
-import {
-  Atmosphere,
-  ConditionScene,
-} from "@/components/environment/ConditionScene";
-import {
-  conditionScene,
-  environmentHighlights,
-} from "@/lib/environment-presentation";
-import {
-  distanceKm,
-  distanceLabel,
-  validPoint,
-  type GeoPoint,
-} from "@/lib/nearby-nodes";
+import { Atmosphere, ConditionScene } from "@/components/environment/ConditionScene";
+import { conditionScene, environmentHighlights } from "@/lib/environment-presentation";
+import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 
 const categories = [
   { id: "weather", label: "Cuaca", icon: CloudSun },
@@ -67,15 +56,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState("");
   const selectedNode = nodes.find((n) => n.id === params.get("node_id")) || nodes[0];
-  const nearest = userPoint && nodes.length
-    ? nodes
-        .filter(validPoint)
-        .map((candidate) => ({
-          node: candidate,
-          distance: distanceKm(userPoint, candidate),
-        }))
-        .sort((a, b) => a.distance - b.distance)[0]
-    : null;
+  const nearest =
+    userPoint && nodes.length
+      ? nodes
+          .filter(validPoint)
+          .map((candidate) => ({
+            node: candidate,
+            distance: distanceKm(userPoint, candidate),
+          }))
+          .sort((a, b) => a.distance - b.distance)[0]
+      : null;
   const node = locationMode === "device" && nearest ? nearest.node : selectedNode;
   const { data, error, loading, refresh } = useLiveData<EnvironmentResponse>(
     node ? `/v1/environment?node_id=${encodeURIComponent(node.id)}` : null,
@@ -88,23 +78,17 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const insights = data?.insights || [];
   const important =
     insights.find(
-      (i) =>
-        i.category === "air_quality" &&
-        ["warning", "danger"].includes(i.tone) &&
-        i.available,
+      (i) => i.category === "air_quality" && ["warning", "danger"].includes(i.tone) && i.available,
     ) ||
     insights.find((i) => i.category === "weather" && i.available) ||
     insights.find((i) => i.available && i.period !== "reference") ||
     insights[0];
-  const selected = compact
-    ? important
-    : insights.find((i) => i.category === category);
+  const selected = compact ? important : insights.find((i) => i.category === category);
   const facts = data?.facts || data?.providers.flatMap((p) => p.facts) || [];
   const selectedFacts = facts.filter(
     (f) =>
       f.category === (selected?.category || category) ||
-      ((selected?.category || category) === "soil" &&
-        f.category === "soil_profile"),
+      ((selected?.category || category) === "soil" && f.category === "soil_profile"),
   );
   const glances = insights
     .filter(
@@ -162,17 +146,23 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     );
   }
   return (
-    <section
-      className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`}
-    >
+    <section className={`environment-hub insights-hub ${compact ? "insights-compact" : ""}`}>
       <header className="insights-heading">
         <div>
           <Heading>
-            {locationMode === "device" && userPoint
-              ? <>Lingkungan <span className="heading-accent">di sekitar Anda</span></>
-              : node
-                ? <>Lingkungan di <span className="heading-accent">{node.name}</span></>
-                : <>Lingkungan <span className="heading-accent">robot</span></>}
+            {locationMode === "device" && userPoint ? (
+              <>
+                Lingkungan <span className="heading-accent">di sekitar Anda</span>
+              </>
+            ) : node ? (
+              <>
+                Lingkungan di <span className="heading-accent">{node.name}</span>
+              </>
+            ) : (
+              <>
+                Lingkungan <span className="heading-accent">robot</span>
+              </>
+            )}
           </Heading>
           <p>
             <MapPin size={15} aria-hidden="true" />
@@ -180,17 +170,28 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               ? `${userPoint.latitude.toFixed(4)}, ${userPoint.longitude.toFixed(4)} · node acuan ${node.name}${nearest ? ` (${distanceLabel(nearest.distance)})` : ""}`
               : node
                 ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)} · mengikuti titik node`
-              : "Pilih titik robot"}
+                : "Pilih titik robot"}
           </p>
-          {locationError && <p className="environment-location-error" role="alert">{locationError}</p>}
+          {locationError && (
+            <p className="environment-location-error" role="alert">
+              {locationError}
+            </p>
+          )}
         </div>
         <div className="live-actions">
           {!compact && (
-            <div className="environment-reference" role="group" aria-label="Acuan lokasi lingkungan">
+            <div
+              className="environment-reference"
+              role="group"
+              aria-label="Acuan lokasi lingkungan"
+            >
               <button
                 type="button"
                 aria-pressed={locationMode === "node"}
-                onClick={() => { setLocationMode("node"); setLocationError(""); }}
+                onClick={() => {
+                  setLocationMode("node");
+                  setLocationError("");
+                }}
               >
                 <MapPin size={15} aria-hidden="true" /> Titik node
               </button>
@@ -209,12 +210,15 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <label className="sensor-select sensor-select--light">
               <MapPin size={15} aria-hidden="true" />
               <span className="sr-only">Pilih titik robot</span>
-              <MonitoringSelect label="Pilih titik robot" value={node?.id || ""}
-                options={nodes.map(n => ({value:n.id,label:n.name}))}
+              <MonitoringSelect
+                label="Pilih titik robot"
+                value={node?.id || ""}
+                options={nodes.map((n) => ({ value: n.id, label: n.name }))}
                 onValueChange={(value) => {
                   setLocationMode("node");
                   updateParams({ node_id: value });
-                }} />
+                }}
+              />
             </label>
           )}
           {compact && (
@@ -233,11 +237,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
         </div>
       </header>
       {!compact && (
-        <div
-          className="insight-topics"
-          role="group"
-          aria-label="Jenis informasi lingkungan"
-        >
+        <div className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
           {categories.map((c) => (
             <button
               key={c.id}
@@ -250,16 +250,36 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
       )}
-      {!compact && data && <p className="environment-sync" role="status">
-        <RefreshCw size={13} aria-hidden="true" /> Diperiksa {dateLabel(data.fetched_at)} · otomatis tiap 60 detik
-      </p>}
+      {!compact && data && (
+        <p className="environment-sync" role="status">
+          <RefreshCw size={13} aria-hidden="true" /> Diperiksa {dateLabel(data.fetched_at)} ·
+          otomatis tiap 60 detik
+        </p>
+      )}
       {pageLoading && !data ? (
         <DataState loading />
       ) : (dashboard.error || error) && !data ? (
-        <DataState error={dashboard.error || error} retry={() => { dashboard.refresh(); refresh(); }} />
+        <DataState
+          error={dashboard.error || error}
+          retry={() => {
+            dashboard.refresh();
+            refresh();
+          }}
+        />
       ) : !nodes.length ? (
-        <div><DataState empty={user ? "Belum ada titik robot yang diberikan kepada akun ini." : "Belum ada titik robot publik yang bisa dipantau."} />
-          {!user && <Link className="insight-text-link" to="/login">Masuk untuk melihat node akun <ArrowUpRight size={16} /></Link>}
+        <div>
+          <DataState
+            empty={
+              user
+                ? "Belum ada titik robot yang diberikan kepada akun ini."
+                : "Belum ada titik robot publik yang bisa dipantau."
+            }
+          />
+          {!user && (
+            <Link className="insight-text-link" to="/login">
+              Masuk untuk melihat node akun <ArrowUpRight size={16} />
+            </Link>
+          )}
         </div>
       ) : !selected ? (
         <DataState empty="Ringkasan belum siap. Coba perbarui beberapa saat lagi." />
@@ -276,13 +296,9 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           >
             <Atmosphere />
             <div className="insight-message">
-              <span
-                className={`insight-status ${selected.available ? "" : "status-pending"}`}
-              >
+              <span className={`insight-status ${selected.available ? "" : "status-pending"}`}>
                 <span />
-                {selected.available
-                  ? periodLabel[selected.period]
-                  : "Menunggu pembaruan"}
+                {selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
               <h2>{selected.title}</h2>
 
@@ -316,9 +332,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 ))}
               </dl>
             )}
-
           </article>
-          {!compact&&node&&["fire","earthquake"].includes(category)&&<Link className="insight-text-link map-event-link" to={`/sensor-map?layer=events&event_type=${category}&node_id=${encodeURIComponent(node.id)}`}><MapPin size={16} />Lihat lokasi di peta <ArrowUpRight size={15} /></Link>}
+          {!compact && node && ["fire", "earthquake"].includes(category) && (
+            <Link
+              className="insight-text-link map-event-link"
+              to={`/sensor-map?layer=events&event_type=${category}&node_id=${encodeURIComponent(node.id)}`}
+            >
+              <MapPin size={16} />
+              Lihat lokasi di peta <ArrowUpRight size={15} />
+            </Link>
+          )}
           {compact && (
             <div className="insight-glances" aria-label="Sekilas lingkungan">
               {glances.map((i) => {
@@ -334,11 +357,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                       <span>{c.label}</span>
                       <ArrowUpRight size={15} />
                     </div>
-                    <ConditionScene
-                      scene={conditionScene(i, facts)}
-                      muted={!i.available}
-                      small
-                    />
+                    <ConditionScene scene={conditionScene(i, facts)} muted={!i.available} small />
                     <h3>{i.title}</h3>
                     {environmentHighlights(i, facts)
                       .slice(0, 1)
@@ -348,11 +367,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                           <span>{h.unit}</span>
                         </div>
                       ))}
-                    <small>
-                      {i.available
-                        ? periodLabel[i.period]
-                        : "Belum ada pembaruan"}
-                    </small>
+                    <small>{i.available ? periodLabel[i.period] : "Belum ada pembaruan"}</small>
                   </Link>
                 );
               })}
@@ -387,9 +402,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 <ChevronDown size={18} />
               </summary>
               <div className="insight-detail-body">
-                <p>
-                  Waktu dan sumber tiap pembacaan.
-                </p>
+                <p>Waktu dan sumber tiap pembacaan.</p>
                 {!selectedFacts.length ? (
                   <p>Belum ada rincian untuk kategori ini.</p>
                 ) : (
@@ -403,11 +416,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                               ? "Data lama"
                               : f.kind === "forecast"
                                 ? "Prakiraan"
-                                : [
-                                      "historical",
-                                      "static_model",
-                                      "event",
-                                    ].includes(f.kind)
+                                : ["historical", "static_model", "event"].includes(f.kind)
                                   ? "Catatan sumber"
                                   : "Estimasi terbaru"}
                           </small>
@@ -423,11 +432,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                           </strong>
                           <span>{dateLabel(f.valid_at)}</span>
                           <a
-                            href={
-                              /^https:\/\//.test(f.source_url)
-                                ? f.source_url
-                                : undefined
-                            }
+                            href={/^https:\/\//.test(f.source_url) ? f.source_url : undefined}
                             target="_blank"
                             rel="noreferrer"
                           >
@@ -451,8 +456,17 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               <ChevronDown size={18} />
             </summary>
             <div className="insight-detail-body">
-              <p>Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat, browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara memakai US AQI, bukan ISPU.</p>
-              <p>Web memeriksa data tiap 60 detik. Pengambilan sumber mengikuti jadwal Hub: cuaca dan titik panas per jam, udara tiap 3 jam, dan debit sungai harian. Waktu data mengikuti penyedia.</p>
+              <p>
+                Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat,
+                browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server
+                atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara
+                memakai US AQI, bukan ISPU.
+              </p>
+              <p>
+                Web memeriksa data tiap 60 detik. Pengambilan sumber mengikuti jadwal Hub: cuaca dan
+                titik panas per jam, udara tiap 3 jam, dan debit sungai harian. Waktu data mengikuti
+                penyedia.
+              </p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
                   const f = p.facts[0];
@@ -460,11 +474,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                     <li key={p.provider}>
                       <div>
                         {f && /^https:\/\//.test(f.source_url) ? (
-                          <a
-                            href={f.source_url}
-                            target="_blank"
-                            rel="noreferrer"
-                          >
+                          <a href={f.source_url} target="_blank" rel="noreferrer">
                             {f.source}
                             <ArrowUpRight size={13} />
                           </a>
@@ -473,11 +483,15 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                         )}
                         <small>
                           {p.last_error ||
-                            (p.facts.length
-                              ? "Terhubung ke sumber"
-                              : "Belum ada data yang sesuai")}
+                            (p.facts.length ? "Terhubung ke sumber" : "Belum ada data yang sesuai")}
                         </small>
-                        <small>{p.facts.some(f => f.stale) ? "Sebagian data melewati masa berlaku" : p.facts.length ? "Data masih dalam masa berlaku sumber" : "Belum ada fakta yang tersedia"}</small>
+                        <small>
+                          {p.facts.some((f) => f.stale)
+                            ? "Sebagian data melewati masa berlaku"
+                            : p.facts.length
+                              ? "Data masih dalam masa berlaku sumber"
+                              : "Belum ada fakta yang tersedia"}
+                        </small>
                       </div>
                       <span>
                         Terakhir dicoba {dateLabel(p.last_attempt_at)}
@@ -488,17 +502,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 })}
               </ul>
               <p>
-                Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir. Cakupan titik panas 50 km dan gempa 300 km dari titik node.
+                Titik panas belum memastikan kebakaran. Debit sungai bukan peringatan banjir.
+                Cakupan titik panas 50 km dan gempa 300 km dari titik node.
               </p>
               <p>
                 Lokasi acuan data: {data?.area.latitude}, {data?.area.longitude}
-                {locationMode === "device" && nearest ? ` · ${nearest.node.name}, ${distanceLabel(nearest.distance)} dari lokasi perangkat` : ""}.
-                Data dan atribusi tersedia pada tautan sumber di atas.{" "}
-                <a
-                  href="https://www.airnow.gov/aqi/aqi-basics/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                {locationMode === "device" && nearest
+                  ? ` · ${nearest.node.name}, ${distanceLabel(nearest.distance)} dari lokasi perangkat`
+                  : ""}
+                . Data dan atribusi tersedia pada tautan sumber di atas.{" "}
+                <a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noreferrer">
                   Tentang kategori US AQI
                 </a>
                 .

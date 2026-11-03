@@ -5,6 +5,9 @@ import { useLiveData } from "@/hooks/useLiveData";
 import { getSupabase } from "@/services/supabase";
 import { API_CONFIG } from "@/lib/constants";
 import { robotFaceDocument } from "@/lib/robot-face-document";
+import { apiRequest } from "@/services/api";
+import { clockOffset } from "../../../robot-display/screen/timeline.js";
+import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 
 interface FaceWindow extends Window {
   aerobotDisplay?: {
@@ -17,11 +20,34 @@ const document = robotFaceDocument();
 export function RobotScreenPage() {
   const { user, isLoading } = useAuth();
   const userId = user?.id;
+  const [robot, setRobot] = useRobotSlot(userId);
   const access = useLiveData<{ can_manage: boolean }>(user ? "/v1/access" : null, 60000);
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState(false);
   const [notice, setNotice] = useState("");
+  useEffect(() => {
+    const settings = (event: MessageEvent) => {
+      if (event.source === frame.current?.contentWindow && event.data?.type === "aerobot-settings")
+        setActive(false);
+    };
+    const fullscreen = () => {
+      if (!window.document.fullscreenElement) setActive(false);
+    };
+    window.addEventListener("message", settings);
+    window.document.addEventListener("fullscreenchange", fullscreen);
+    return () => {
+      window.removeEventListener("message", settings);
+      window.document.removeEventListener("fullscreenchange", fullscreen);
+    };
+  }, []);
+  useEffect(() => {
+    const previous = window.document.title;
+    window.document.title = "AERO-BOT · " + robot.replace("robot-", "Robot ");
+    return () => {
+      window.document.title = previous;
+    };
+  }, [robot]);
 
   useEffect(() => {
     if (!active || !userId || !access.data?.can_manage) return;
@@ -30,12 +56,21 @@ export function RobotScreenPage() {
     let reconnect: ReturnType<typeof setTimeout>;
     async function connect() {
       try {
+        const sent = Date.now();
+        const clock = await apiRequest<{ received_at: number; server_time: number }>(
+          "/v1/robot-face/status?robot_id=" + robot,
+          { signal: controller.signal },
+        );
+        const offset = clockOffset(sent, Date.now(), clock.received_at, clock.server_time);
         const { data, error } = await (await getSupabase()).auth.getSession();
         if (error || !data.session) throw new Error("Masuk kembali untuk menyambungkan layar.");
-        const response = await fetch(`${API_CONFIG.baseUrl}/v1/robot-face/events`, {
-          headers: { Authorization: `Bearer ${data.session.access_token}` },
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `${API_CONFIG.baseUrl}/v1/robot-face/events?robot_id=${robot}`,
+          {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+            signal: controller.signal,
+          },
+        );
         if (!response.ok || !response.body) {
           if ([401, 403].includes(response.status)) {
             setNotice("Akses layar tidak tersedia untuk akun ini.");
@@ -55,7 +90,11 @@ export function RobotScreenPage() {
           while ((end = buffer.indexOf("\n\n")) >= 0) {
             const packet = buffer.slice(0, end);
             buffer = buffer.slice(end + 2);
-            if (packet.startsWith("data: ")) screen()?.receive(JSON.parse(packet.slice(6)));
+            if (packet.startsWith("data: ")) {
+              const event = JSON.parse(packet.slice(6));
+              if (Number.isFinite(event.start_at)) event.localStartAt = event.start_at - offset;
+              screen()?.receive(event);
+            }
           }
           if (buffer.length > 1600000) throw new Error("Paket layar terlalu besar.");
         }
@@ -74,7 +113,27 @@ export function RobotScreenPage() {
       clearTimeout(reconnect);
       screen()?.receive({ action: "stop" });
     };
-  }, [active, userId, access.data?.can_manage]);
+  }, [active, userId, access.data?.can_manage, robot]);
+
+  useEffect(() => {
+    const manifest = window.document.createElement("link");
+    manifest.rel = "manifest";
+    manifest.href = "/robot-screen.webmanifest";
+    window.document.head.appendChild(manifest);
+    const meta = window.document.createElement("meta");
+    meta.name = "apple-mobile-web-app-capable";
+    meta.content = "yes";
+    window.document.head.appendChild(meta);
+    const icon = window.document.createElement("link");
+    icon.rel = "apple-touch-icon";
+    icon.href = "/assets/brand/aerosense-touch-icon.png";
+    window.document.head.appendChild(icon);
+    return () => {
+      manifest.remove();
+      meta.remove();
+      icon.remove();
+    };
+  }, []);
 
   if (isLoading || (user && access.loading)) return <p role="status">Menyiapkan layar…</p>;
   if (!user) return <Navigate to="/login?next=/robot-screen" replace />;
@@ -92,31 +151,54 @@ export function RobotScreenPage() {
         style={{ border: 0, width: "100%", height: "100%" }}
       />
       {!active && (
-        <button
-          disabled={!ready}
-          onClick={() => {
-            const screen = (frame.current?.contentWindow as FaceWindow | null)?.aerobotDisplay;
-            if (!screen) return;
-            void screen
-              .unlockAudio()
-              .then(() => setActive(true))
-              .catch(() => setNotice("Ketuk kembali untuk mengaktifkan wajah."));
-          }}
+        <div
           style={{
             position: "absolute",
             bottom: "8%",
             left: "50%",
             transform: "translateX(-50%)",
-            padding: "14px 24px",
-            border: 0,
-            borderRadius: 24,
-            color: "white",
-            background: "#0758d3",
-            font: "600 16px Inter, sans-serif",
+            display: "grid",
+            gap: 12,
+            justifyItems: "center",
           }}
         >
-          Aktifkan wajah
-        </button>
+          <label style={{ color: "#234763", font: "600 16px Inter,sans-serif" }}>
+            Layar robot{" "}
+            <select
+              value={robot}
+              onChange={(e) => setRobot(e.target.value)}
+              style={{ padding: 8, borderRadius: 12 }}
+            >
+              {ROBOT_SLOTS.map((id, i) => (
+                <option key={id} value={id}>
+                  Robot {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            disabled={!ready}
+            onClick={() => {
+              const screen = (frame.current?.contentWindow as FaceWindow | null)?.aerobotDisplay;
+              if (!screen) return;
+              void window.document.documentElement.requestFullscreen?.().catch(() => {});
+              void screen
+                .unlockAudio()
+                .then(() => setActive(true))
+                .catch(() => setNotice("Ketuk kembali untuk mengaktifkan wajah."));
+            }}
+            style={{
+              padding: "14px 24px",
+              border: 0,
+              borderRadius: 24,
+              color: "white",
+              background: "#0758d3",
+              font: "600 16px Inter, sans-serif",
+            }}
+          >
+            Aktifkan wajah
+          </button>
+        </div>
       )}
       {notice && (
         <p

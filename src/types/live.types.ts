@@ -45,7 +45,11 @@ export interface Reading {
   raw_metrics?: Record<string, number | null>;
   gru: SensorContext["gru"];
   processing?: Record<string, unknown>;
-  quality?: { invalid?: boolean; clock_source?: string; calibration_version?: string | null } | null;
+  quality?: {
+    invalid?: boolean;
+    clock_source?: string;
+    calibration_version?: string | null;
+  } | null;
   raw_sha256?: string | null;
 }
 export interface Alert {
@@ -76,7 +80,16 @@ export interface EnvironmentFact {
 }
 export interface EnvironmentResponse {
   events?: EnvironmentEvent[];
-  event_layers?: {provider:string;category:string;radius_km:number;available:boolean;last_attempt_at:string|null;last_error:string|null;event_count:number;truncated:boolean}[];
+  event_layers?: {
+    provider: string;
+    category: string;
+    radius_km: number;
+    available: boolean;
+    last_attempt_at: string | null;
+    last_error: string | null;
+    event_count: number;
+    truncated: boolean;
+  }[];
   facts: EnvironmentFact[];
   insights: EnvironmentInsight[];
   summary_method: string;
@@ -97,25 +110,25 @@ export interface EnvironmentResponse {
   fetched_at: string;
 }
 export interface EnvironmentEvent {
-  id:string;
-  provider:string;
-  category:"fire"|"earthquake";
-  latitude:number;
-  longitude:number;
-  title:string;
-  observed_at:string;
-  fetched_at:string;
-  fresh_until:string;
-  stale:boolean;
-  distance_km:number;
-  source:string;
-  source_url:string;
-  coordinate_kind:string;
-  confidence?:string|null;
-  magnitude?:number;
-  depth_km?:number|null;
-  felt?:string|null;
-  potential?:string|null;
+  id: string;
+  provider: string;
+  category: "fire" | "earthquake";
+  latitude: number;
+  longitude: number;
+  title: string;
+  observed_at: string;
+  fetched_at: string;
+  fresh_until: string;
+  stale: boolean;
+  distance_km: number;
+  source: string;
+  source_url: string;
+  coordinate_kind: string;
+  confidence?: string | null;
+  magnitude?: number;
+  depth_km?: number | null;
+  felt?: string | null;
+  potential?: string | null;
 }
 export interface EnvironmentInsight {
   category: string;

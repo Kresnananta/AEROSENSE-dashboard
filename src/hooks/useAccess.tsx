@@ -4,9 +4,9 @@ export type AccessRole = "guest" | "viewer" | "operator" | "auditor" | "admin";
 
 export const AccessContext = createContext({
   role: "guest" as AccessRole,
-  canAudit: false,      // ESG report: admin, auditor
-  canViewModel: false,  // raw inputs, GRU details, history export: operator, admin, auditor
-  canManage: false,     // thresholds, alert review, robot settings: operator, admin
+  canAudit: false, // ESG report: admin, auditor
+  canViewModel: false, // raw inputs, GRU details, history export: operator, admin, auditor
+  canManage: false, // thresholds, alert review, robot settings: operator, admin
   loading: true,
   signedIn: false,
   error: "",

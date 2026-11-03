@@ -3,12 +3,10 @@ import { DEMO_MODE } from "@/lib/demo-mode";
 export const authService = {
   async login(email: string, password: string) {
     if (DEMO_MODE) {
-      (await import("@/demo/session")).authenticateDemo(email,password);
+      (await import("@/demo/session")).authenticateDemo(email, password);
       return;
     }
-    const { error } = await (
-      await getSupabase()
-    ).auth.signInWithPassword({ email, password });
+    const { error } = await (await getSupabase()).auth.signInWithPassword({ email, password });
     if (error) throw error;
   },
   async register(name: string, email: string, password: string) {

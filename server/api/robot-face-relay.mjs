@@ -12,11 +12,19 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
   }
   return async (req, res, url) => {
     if (!["/v1/robot-face/events", "/v1/robot-face/status"].includes(url.pathname)) return false;
+    const receivedAt = Date.now();
     const account = await authorize(req);
-    const clients = screens.get(account.id) || new Set();
+    const robot = url.searchParams.get("robot_id") || "robot-1";
+    if (!/^robot-[123]$/.test(robot)) throw fail("Pilih profil robot yang valid.", 400);
+    const scope = account.id + ":" + robot;
+    const clients = screens.get(scope) || new Set();
     rate("face:" + account.id, 180);
     if (req.method === "GET" && url.pathname.endsWith("/status")) {
-      send(res, 200, { connected: clients.size > 0 });
+      send(res, 200, {
+        connected: clients.size > 0,
+        received_at: receivedAt,
+        server_time: Date.now(),
+      });
       return true;
     }
     if (url.pathname.endsWith("/status")) throw fail("Metode tidak didukung.", 405);
@@ -31,6 +39,24 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
       )
         throw fail("Teks wajah tidak valid.", 400);
       const event = { action: body.action, text: body.text || "", monitorOnly: true };
+      if (body.envelope !== undefined) {
+        const e = body.envelope;
+        if (
+          body.action !== "speak" ||
+          !e ||
+          e.frameMs !== 20 ||
+          !Array.isArray(e.values) ||
+          !e.values.length ||
+          e.values.length > 6000 ||
+          !e.values.every((v) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 1) ||
+          !Number.isFinite(e.durationMs) ||
+          e.durationMs <= 0 ||
+          Math.abs(e.values.length * 20 - e.durationMs) > 21
+        )
+          throw fail("Timeline wajah tidak valid.", 400);
+        event.envelope = e;
+        event.start_at = Date.now() + 700;
+      }
       if (
         ["neutral", "happy", "concerned", "warning", "danger", "surprised"].includes(body.emotion)
       )
@@ -54,13 +80,18 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
         if (screen.writableLength > 2000000) screen.end();
         else screen.write(packet);
       }
-      send(res, 202, { screens: clients.size });
+      send(res, 202, {
+        screens: clients.size,
+        start_at: event.start_at,
+        received_at: receivedAt,
+        server_time: Date.now(),
+      });
       return true;
     }
     if (req.method !== "GET") throw fail("Metode tidak didukung.", 405);
     if (clients.size >= 2 || [...screens.values()].reduce((n, group) => n + group.size, 0) >= 16)
       throw fail("Batas layar aktif tercapai.", 429);
-    screens.set(account.id, clients);
+    screens.set(scope, clients);
     clients.add(res);
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -76,7 +107,7 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
       clearInterval(heartbeat);
       clearInterval(permission);
       clients.delete(res);
-      if (!clients.size) screens.delete(account.id);
+      if (!clients.size) screens.delete(scope);
     });
     return true;
   };

@@ -33,14 +33,8 @@ test("highlighted numbers ignore expired readings and future measurements", () =
     valid_at: new Date(now + 86400000).toISOString(),
   });
   const insight = summarizeEnvironment([expired, future, current], now)[0];
-  assert.equal(
-    environmentHighlights(insight, [expired, future, current], now)[0].value,
-    "30",
-  );
-  assert.deepEqual(
-    environmentHighlights({ ...insight, available: false }, [current], now),
-    [],
-  );
+  assert.equal(environmentHighlights(insight, [expired, future, current], now)[0].value, "30");
+  assert.deepEqual(environmentHighlights({ ...insight, available: false }, [current], now), []);
 });
 test("condition illustration follows fresh weather evidence, not temperature alone", () => {
   const current = fact();
@@ -93,33 +87,57 @@ test("sensor summary respects hysteresis, validation and missing readings", () =
   };
   assert.equal(sensorSummary(node, [rule]).tone, "warning");
   assert.equal(sensorSummary(node, [{ ...rule, active: false }]).tone, "calm");
-  assert.doesNotMatch(
-    sensorSummary(node, [{ ...rule, metric: "pm25_ug_m3" }]).title,
-    /ambang/,
-  );
+  assert.doesNotMatch(sensorSummary(node, [{ ...rule, metric: "pm25_ug_m3" }]).title, /ambang/);
   assert.equal(
-    sensorSummary({ ...node, latest: { ...node.latest, stale: true } }, [rule])
-      .tone,
+    sensorSummary({ ...node, latest: { ...node.latest, stale: true } }, [rule]).tone,
     "pending",
   );
   assert.equal(sensorSummary(undefined, [rule]).tone, "pending");
 });
 
-
 test("node bands use sensor evidence and configured thresholds, with no invented danger level", () => {
-  const rule = {metric:"dust_ug_m3",enabled:true,active:false,high:40,danger_high:60,clear_below:35,unit:"µg/m³"};
-  const node = value => ({pm25_validated:false,rules:[rule],latest:{reading_id:"r1",stale:false,metrics:{dust_ug_m3:value}}});
-  assert.equal(sensorSummary(node(22)).label,"Terpantau baik");
-  assert.equal(sensorSummary(node(40)).label,"Waspada");
-  assert.equal(sensorSummary(node(60)).label,"Bahaya");
-  assert.equal(sensorSummary(node(200),[{...rule,danger_high:null}]).label,"Waspada");
-  assert.equal(sensorSummary(node(38),[{...rule,active:true}]).label,"Waspada");
-  assert.equal(sensorSummary(node(35),[{...rule,active:true}]).label,"Terpantau baik");
-  for (const value of [null,NaN,Infinity,-1]) assert.equal(sensorSummary(node(value)).label,"Data belum cukup");
-  assert.equal(sensorSummary({...node(22),latest:{...node(22).latest,stale:true}}).label,"Data belum cukup");
-  assert.equal(sensorSummary({...node(22),latest:{...node(22).latest,quality:{invalid:true}}}).label,"Data belum cukup");
-  assert.equal(sensorSummary(node(22),[]).label,"Data belum cukup");
-  assert.equal(sensorSummary(node(22),[{...rule,metric:"temperature_c"}]).label,"Data belum cukup");
-  assert.equal(sensorSummary(node(22),[rule,{...rule,metric:"tvoc_ppb"}]).label,"Data belum cukup");
-  assert.equal(sensorSummary(node(22),[{...rule,metric:"pm25_ug_m3"}]).label,"Data belum cukup");
+  const rule = {
+    metric: "dust_ug_m3",
+    enabled: true,
+    active: false,
+    high: 40,
+    danger_high: 60,
+    clear_below: 35,
+    unit: "µg/m³",
+  };
+  const node = (value) => ({
+    pm25_validated: false,
+    rules: [rule],
+    latest: { reading_id: "r1", stale: false, metrics: { dust_ug_m3: value } },
+  });
+  assert.equal(sensorSummary(node(22)).label, "Terpantau baik");
+  assert.equal(sensorSummary(node(40)).label, "Waspada");
+  assert.equal(sensorSummary(node(60)).label, "Bahaya");
+  assert.equal(sensorSummary(node(200), [{ ...rule, danger_high: null }]).label, "Waspada");
+  assert.equal(sensorSummary(node(38), [{ ...rule, active: true }]).label, "Waspada");
+  assert.equal(sensorSummary(node(35), [{ ...rule, active: true }]).label, "Terpantau baik");
+  for (const value of [null, NaN, Infinity, -1])
+    assert.equal(sensorSummary(node(value)).label, "Data belum cukup");
+  assert.equal(
+    sensorSummary({ ...node(22), latest: { ...node(22).latest, stale: true } }).label,
+    "Data belum cukup",
+  );
+  assert.equal(
+    sensorSummary({ ...node(22), latest: { ...node(22).latest, quality: { invalid: true } } })
+      .label,
+    "Data belum cukup",
+  );
+  assert.equal(sensorSummary(node(22), []).label, "Data belum cukup");
+  assert.equal(
+    sensorSummary(node(22), [{ ...rule, metric: "temperature_c" }]).label,
+    "Data belum cukup",
+  );
+  assert.equal(
+    sensorSummary(node(22), [rule, { ...rule, metric: "tvoc_ppb" }]).label,
+    "Data belum cukup",
+  );
+  assert.equal(
+    sensorSummary(node(22), [{ ...rule, metric: "pm25_ug_m3" }]).label,
+    "Data belum cukup",
+  );
 });

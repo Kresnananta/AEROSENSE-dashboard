@@ -3,7 +3,12 @@ import { AccessContext, type AccessRole } from "@/hooks/useAccess";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 
-interface AccessResponse { role?: AccessRole | null; can_audit_esg: boolean; can_view_model?: boolean; can_manage?: boolean }
+interface AccessResponse {
+  role?: AccessRole | null;
+  can_audit_esg: boolean;
+  can_view_model?: boolean;
+  can_manage?: boolean;
+}
 
 // The API decides access; this only shapes the menu and pages. Every endpoint checks again.
 export function AccessProvider({ children }: { children: ReactNode }) {

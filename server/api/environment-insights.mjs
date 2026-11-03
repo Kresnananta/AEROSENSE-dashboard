@@ -2,16 +2,12 @@
 export function summarizeEnvironment(facts, now = Date.now()) {
   const time = (f) => Date.parse(f.valid_at || f.fetched_at || "") || 0;
   const day = (t) => new Date(t + 7 * 3600000).toISOString().slice(0, 10);
-  const fresh = facts.filter(
-    (f) => !f.stale && Date.parse(f.fresh_until) > now,
-  );
+  const fresh = facts.filter((f) => !f.stale && Date.parse(f.fresh_until) > now);
   const current = fresh
     .filter(
       (f) =>
         !["forecast", "historical", "event", "static_model"].includes(f.kind) &&
-        (f.valid_at
-          ? time(f) > 0 && time(f) <= now + 1800000
-          : f.kind === "satellite"),
+        (f.valid_at ? time(f) > 0 && time(f) <= now + 1800000 : f.kind === "satellite"),
     )
     .sort((a, b) => time(b) - time(a));
   const match = (list, category, pattern) =>
@@ -23,15 +19,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
         Number.isFinite(f.value),
     );
   const out = [];
-  function add(
-    category,
-    title,
-    body,
-    action,
-    used = [],
-    tone = "neutral",
-    period = "current",
-  ) {
+  function add(category, title, body, action, used = [], tone = "neutral", period = "current") {
     out.push({
       category,
       title,
@@ -54,9 +42,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   const rain = match(current, "weather", /Presipitasi interval/i);
   const weatherCode = match(current, "weather", /Kode kondisi cuaca \(WMO\)/i);
   const today = fresh
-    .filter(
-      (f) => f.kind === "forecast" && f.valid_at && day(time(f)) === day(now),
-    )
+    .filter((f) => f.kind === "forecast" && f.valid_at && day(time(f)) === day(now))
     .sort((a, b) => time(a) - time(b));
   const chance = match(today, "weather", /peluang presipitasi/i);
   if (weatherCode && [95, 96, 99].includes(weatherCode.value))
@@ -71,30 +57,20 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   else if (
     (rain && rain.value > 0) ||
     (weatherCode &&
-      [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(
-        weatherCode.value,
-      ))
+      [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(weatherCode.value))
   )
     add(
       "weather",
       "Hujan di sekitar titik robot",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
-      [
-        ...(rain ? [rain] : []),
-        ...(weatherCode ? [weatherCode] : []),
-        ...(temp ? [temp] : []),
-      ],
+      [...(rain ? [rain] : []), ...(weatherCode ? [weatherCode] : []), ...(temp ? [temp] : [])],
       "notice",
     );
   else if (temp)
     add(
       "weather",
-      temp.value >= 32
-        ? "Terasa panas"
-        : temp.value >= 26
-          ? "Terasa hangat"
-          : "Terasa sejuk",
+      temp.value >= 32 ? "Terasa panas" : temp.value >= 26 ? "Terasa hangat" : "Terasa sejuk",
       chance && chance.value >= 60
         ? "Prakiraan hari ini juga menunjukkan peluang hujan."
         : `Suhu wilayah diperkirakan sekitar ${Math.round(temp.value)}°C. Kondisi di tiap lokasi bisa berbeda.`,
@@ -171,9 +147,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
         "danger",
       ],
     ];
-    const [, title, body, action, tone] = bands.find(
-      ([max]) => aqi.value <= max,
-    );
+    const [, title, body, action, tone] = bands.find(([max]) => aqi.value <= max);
     add("air_quality", title, body, action, [aqi], tone);
   } else
     add(
@@ -214,9 +188,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   if (fire)
     add(
       "fire",
-      fire.value > 0
-        ? "Titik panas terdeteksi"
-        : "Tidak ada deteksi titik panas",
+      fire.value > 0 ? "Titik panas terdeteksi" : "Tidak ada deteksi titik panas",
       "Cakupan pantauan adalah feed 24 jam pada radius yang ditetapkan.",
       fire.value > 0
         ? "Cek lokasi dan informasi resmi. Titik panas belum tentu kebakaran."
@@ -234,12 +206,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
     );
   const river = match(
     fresh
-      .filter(
-        (f) =>
-          f.kind === "forecast" &&
-          time(f) >= now &&
-          time(f) <= now + 48 * 3600000,
-      )
+      .filter((f) => f.kind === "forecast" && time(f) >= now && time(f) <= now + 48 * 3600000)
       .sort((a, b) => time(a) - time(b)),
     "flood",
     /debit sungai/i,
@@ -292,8 +259,6 @@ export function orderEnvironmentFacts(facts, now = Date.now()) {
           ? 2
           : 0;
   return [...facts].sort(
-    (a, b) =>
-      rank(a) - rank(b) ||
-      (Date.parse(b.valid_at) || 0) - (Date.parse(a.valid_at) || 0),
+    (a, b) => rank(a) - rank(b) || (Date.parse(b.valid_at) || 0) - (Date.parse(a.valid_at) || 0),
   );
 }

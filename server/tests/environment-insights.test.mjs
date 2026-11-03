@@ -1,10 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import {
-  summarizeEnvironment,
-  orderEnvironmentFacts,
-} from "../api/environment-insights.mjs";
+import { summarizeEnvironment, orderEnvironmentFacts } from "../api/environment-insights.mjs";
 const now = Date.parse("2026-10-17T05:00:00Z");
 const fact = (changes = {}) => ({
   id: "current",
@@ -57,8 +54,7 @@ test("AQI classification uses provider US AQI, never converts instantaneous PM2.
       now,
     ).find((x) => x.category === "air_quality");
   assert.equal(
-    summarizeEnvironment([pm], now).find((x) => x.category === "air_quality")
-      .available,
+    summarizeEnvironment([pm], now).find((x) => x.category === "air_quality").available,
     false,
   );
   assert.match(pick(50).title, /baik/);
@@ -87,7 +83,11 @@ test("forecasts and reference records retain their own time and meaning", () => 
   assert.deepEqual(summary.fact_ids, ["today"]);
   const current = summarizeEnvironment([chance, fact()], now)[0];
   assert.equal(current.valid_at, fact().valid_at);
-  assert(!summarizeEnvironment([fact({category:"biodiversity"})], now).some(x => x.category === "biodiversity"));
+  assert(
+    !summarizeEnvironment([fact({ category: "biodiversity" })], now).some(
+      (x) => x.category === "biodiversity",
+    ),
+  );
   const fire = fact({
     kind: "satellite",
     category: "fire",
@@ -150,15 +150,11 @@ test("the actual n8n Code node preserves filters and stores only supported summa
       },
     },
   };
-  const result = run(response, () => ({ item: { json: request } })).json
-    .entries[0];
+  const result = run(response, () => ({ item: { json: request } })).json.entries[0];
   assert.equal(result.ok, true);
   assert.equal(result.payload.summary_method, "rules-v1");
   assert(result.payload.insights.every((i) => i.available));
-  assert.match(
-    result.payload.insights.find((i) => i.category === "weather").title,
-    /panas/,
-  );
+  assert.match(result.payload.insights.find((i) => i.category === "weather").title, /panas/);
   assert(result.payload.facts.every((f) => f.area_id === "surabaya"));
   const rejected = run(
     { ...response, body: { ...response.body, latitude: 0, longitude: 0 } },

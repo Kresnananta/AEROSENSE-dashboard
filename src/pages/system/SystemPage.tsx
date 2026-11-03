@@ -16,9 +16,7 @@ export function SystemPage() {
         </div>
       </header>
       {!auth.user ? (
-        <DataState
-          error={auth.error || "Masuk untuk mengatur akun dan perangkat."}
-        />
+        <DataState error={auth.error || "Masuk untuk mengatur akun dan perangkat."} />
       ) : (
         <>
           <section className="live-panel">
@@ -40,8 +38,12 @@ export function SystemPage() {
           </section>
           <section className="live-panel">
             <h2>Ambang kawasan</h2>
-            <p>Kelola batas waspada, bahaya, dan notifikasi pada perangkat di lokasi yang ditugaskan.</p>
-            <Link className="live-button secondary" to="/management">Buka pengelolaan kawasan</Link>
+            <p>
+              Kelola batas waspada, bahaya, dan notifikasi pada perangkat di lokasi yang ditugaskan.
+            </p>
+            <Link className="live-button secondary" to="/management">
+              Buka pengelolaan kawasan
+            </Link>
           </section>
           <WhatsAppSettings />
         </>

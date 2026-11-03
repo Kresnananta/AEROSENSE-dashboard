@@ -11,9 +11,7 @@ export const chatService = {
       method: "POST",
       headers: { "Idempotency-Key": key },
       body: JSON.stringify(
-        robotId
-          ? { text, robot_id: robotId }
-          : { text, node_id: nodeId || undefined },
+        robotId ? { text, robot_id: robotId } : { text, node_id: nodeId || undefined },
       ),
     });
   },

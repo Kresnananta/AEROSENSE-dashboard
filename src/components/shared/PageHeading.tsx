@@ -1,12 +1,12 @@
-import React from 'react'
+import React from "react";
 
 interface PageHeadingProps {
-  eyebrow?: string
-  title: string
-  titleAccent?: string
-  description?: string
-  badge?: React.ReactNode
-  actions?: React.ReactNode
+  eyebrow?: string;
+  title: string;
+  titleAccent?: string;
+  description?: string;
+  badge?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
 export function PageHeading({
@@ -28,9 +28,7 @@ export function PageHeading({
         <h1 className="text-2xl sm:text-[28px] font-semibold tracking-[-0.6px] leading-[1.18] text-[#11223D]">
           {title} {titleAccent && <span className="text-[#086CFB]">{titleAccent}</span>}
         </h1>
-        {description && (
-          <p className="text-xs text-[#7A8CA4] mt-2 font-medium">{description}</p>
-        )}
+        {description && <p className="text-xs text-[#7A8CA4] mt-2 font-medium">{description}</p>}
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
@@ -38,5 +36,5 @@ export function PageHeading({
         {actions}
       </div>
     </div>
-  )
+  );
 }

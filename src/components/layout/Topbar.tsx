@@ -12,8 +12,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Find active nav item or fallback label
   const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
   const currentLabel = currentItem
     ? currentItem.label
@@ -25,7 +23,6 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
   return (
     <header className="app-topbar h-[72px] bg-white/90 border-b border-[#e9f0f8] flex items-center justify-between px-6 sm:px-9 sticky top-0 z-20 backdrop-blur-md">
-      {/* Left: Mobile hamburger & Breadcrumb */}
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
@@ -46,10 +43,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </nav>
       </div>
 
-      {/* Right: Actions & Badges */}
       <div className="flex items-center gap-3 sm:gap-4">
-
-        {/* Quick alerts button with notification indicator */}
         <button
           type="button"
           onClick={() => navigate(ROUTES.ALERTS)}
@@ -60,7 +54,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         </button>
 
         <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>
-          {user ? "Akun saya" : "Masuk"}<ChevronRight size={15} />
+          {user ? "Akun saya" : "Masuk"}
+          <ChevronRight size={15} />
         </Link>
       </div>
     </header>

@@ -16,9 +16,7 @@ import {
   type Alert,
   type EnvironmentResponse,
 } from "@/types/live.types";
-const LiveMap = lazy(() =>
-  import("./LiveMap").then((m) => ({ default: m.LiveMap })),
-);
+const LiveMap = lazy(() => import("./LiveMap").then((m) => ({ default: m.LiveMap })));
 const ReadingChart = lazy(() => import("./ReadingChart"));
 import { api } from "@/services/api";
 import { MonitoringScope } from "./MonitoringScope";
@@ -28,22 +26,27 @@ import { downloadCsv, readingsCsv } from "@/lib/csv-export";
 export function SensorWorkspace({
   mode = "overview",
 }: {
-  mode?:
-    | "overview"
-    | "map"
-    | "nodes"
-    | "detail"
-    | "analytics"
-    | "alerts"
-    | "report";
+  mode?: "overview" | "map" | "nodes" | "detail" | "analytics" | "alerts" | "report";
 }) {
   const { user, isLoading } = useAuth();
   const { id } = useParams();
-  const [mapParams,setMapParams]=useSearchParams();
-  const mapLayer=["mixed","events"].includes(mapParams.get("layer")||"")?mapParams.get("layer")!:"sensors";
-  const eventType=["fire","earthquake"].includes(mapParams.get("event_type")||"")?mapParams.get("event_type")!:"all";
-  const dashboard = useLiveData<{ nodes: LiveNode[]; refreshed_at: string; report_scope?: Record<string, unknown> }>(
-    mode === "report" ? (user ? "/v1/esg/report" : null) : `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
+  const [mapParams, setMapParams] = useSearchParams();
+  const mapLayer = ["mixed", "events"].includes(mapParams.get("layer") || "")
+    ? mapParams.get("layer")!
+    : "sensors";
+  const eventType = ["fire", "earthquake"].includes(mapParams.get("event_type") || "")
+    ? mapParams.get("event_type")!
+    : "all";
+  const dashboard = useLiveData<{
+    nodes: LiveNode[];
+    refreshed_at: string;
+    report_scope?: Record<string, unknown>;
+  }>(
+    mode === "report"
+      ? user
+        ? "/v1/esg/report"
+        : null
+      : `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
   const [selected, setSelected] = useState("");
   const [previewNode, setPreviewNode] = useState<string | null>(null);
@@ -55,12 +58,16 @@ export function SensorWorkspace({
   }, [id]);
   const nodes = dashboard.data?.nodes || [];
   const node =
-    nodes.find((n) => n.id === (id || selected || (mode==="map"?mapParams.get("node_id"):null))) ||
-    (!id ? nodes[0] : undefined);
+    nodes.find(
+      (n) => n.id === (id || selected || (mode === "map" ? mapParams.get("node_id") : null)),
+    ) || (!id ? nodes[0] : undefined);
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
   const history = useLiveData<{ readings: Reading[]; detail?: "simple" | "model" }>(
     node && ["analytics", "detail", "report"].includes(mode)
-      ? (mode === "report" ? "/v1/esg/report" : "/v1/history") + nodeQuery + "&account=" + encodeURIComponent(user?.id || "guest")
+      ? (mode === "report" ? "/v1/esg/report" : "/v1/history") +
+          nodeQuery +
+          "&account=" +
+          encodeURIComponent(user?.id || "guest")
       : null,
     60000,
   );
@@ -72,17 +79,26 @@ export function SensorWorkspace({
   const readings = history.data?.readings || [];
   // The API decides: "model" for operators, admins and auditors; "simple" for guests and warga.
   const modelView = history.data?.detail === "model";
-  const environment = useLiveData<EnvironmentResponse>(node && mode==="map" ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id||"guest")}` : null,60000);
-  const events=(environment.data?.events||[]).filter(e=>eventType==="all"||e.category===eventType);
+  const environment = useLiveData<EnvironmentResponse>(
+    node && mode === "map"
+      ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id || "guest")}`
+      : null,
+    60000,
+  );
+  const events = (environment.data?.events || []).filter(
+    (e) => eventType === "all" || e.category === eventType,
+  );
   function changeMapParam(key: string, value: string) {
     const next = new URLSearchParams(mapParams);
     next.set(key, value);
     setMapParams(next);
   }
-  const eventWarning = environment.error || (!environment.loading && !environment.data?.event_layers?.length)
-    ? "Lokasi kejadian dari sumber publik belum tersedia."
-    : environment.data?.event_layers?.some(l => l.last_error || !l.available)
-      ? "Sebagian sumber belum berhasil diperbarui." : "";
+  const eventWarning =
+    environment.error || (!environment.loading && !environment.data?.event_layers?.length)
+      ? "Lokasi kejadian dari sumber publik belum tersedia."
+      : environment.data?.event_layers?.some((l) => l.last_error || !l.available)
+        ? "Sebagian sumber belum berhasil diperbarui."
+        : "";
   const title = {
     overview: "Kondisi sensor",
     map: "Peta sensor",
@@ -96,10 +112,7 @@ export function SensorWorkspace({
     time: dateLabel(r.observed_at),
     reading: r.metrics[metric] ?? null,
     raw: r.raw_metrics?.[metric] ?? null,
-    gru:
-      r.gru?.target === metric && r.gru.horizon_seconds === 0
-        ? r.gru.value
-        : null,
+    gru: r.gru?.target === metric && r.gru.horizon_seconds === 0 ? r.gru.value : null,
   }));
   function exportReadings() {
     const blob = new Blob(
@@ -162,16 +175,11 @@ export function SensorWorkspace({
                   <div className="sensor-summary-row" key={n.id}>
                     <MapPin size={20} />
                     <div>
-                      <strong>{n.name}</strong><NodeStatus node={n} />
-                      <p>
-                        Pembacaan terbaru tersedia ·{" "}
-                        {dateLabel(n.latest?.observed_at)}
-                      </p>
+                      <strong>{n.name}</strong>
+                      <NodeStatus node={n} />
+                      <p>Pembacaan terbaru tersedia · {dateLabel(n.latest?.observed_at)}</p>
                     </div>
-                    <Link
-                      to={`/nodes/${encodeURIComponent(n.id)}`}
-                      className="insight-text-link"
-                    >
+                    <Link to={`/nodes/${encodeURIComponent(n.id)}`} className="insight-text-link">
                       Detail <ArrowUpRight size={15} />
                     </Link>
                   </div>
@@ -191,17 +199,15 @@ export function SensorWorkspace({
                     <div className="sensor-summary-row" key={n.id}>
                       <MapPin size={18} />
                       <div>
-                        <strong>{n.name}</strong><NodeStatus node={n} />
+                        <strong>{n.name}</strong>
+                        <NodeStatus node={n} />
                         <p>
                           {n.latest?.reading_id
                             ? `Pembacaan terakhir ${dateLabel(n.latest.observed_at)}. Data ini sudah lama.`
                             : "Belum ada pembacaan dari perangkat."}
                         </p>
                       </div>
-                      <Link
-                        to={`/nodes/${encodeURIComponent(n.id)}`}
-                        className="insight-text-link"
-                      >
+                      <Link to={`/nodes/${encodeURIComponent(n.id)}`} className="insight-text-link">
                         Detail <ArrowUpRight size={15} />
                       </Link>
                     </div>
@@ -219,17 +225,21 @@ export function SensorWorkspace({
       <header className="live-heading">
         <div>
           <h1>{title}</h1>
-          {mode !== "map" && <p>
-            {{
-              report: "Ringkasan dan ekspor untuk pemeriksaan ESG.",
-              nodes: "Status setiap perangkat yang dapat Anda akses.",
-              analytics: "Perubahan kualitas udara 24 jam terakhir di satu titik.",
-              alerts: "Peringatan yang tercatat di satu titik.",
-              detail: "Kondisi terkini, riwayat, dan peringatan titik ini.",
-              overview: "Pembacaan node dan hasil model, terpisah dari informasi wilayah.",
-              map: "",
-            }[mode]}
-          </p>}
+          {mode !== "map" && (
+            <p>
+              {
+                {
+                  report: "Ringkasan dan ekspor untuk pemeriksaan ESG.",
+                  nodes: "Status setiap perangkat yang dapat Anda akses.",
+                  analytics: "Perubahan kualitas udara 24 jam terakhir di satu titik.",
+                  alerts: "Peringatan yang tercatat di satu titik.",
+                  detail: "Kondisi terkini, riwayat, dan peringatan titik ini.",
+                  overview: "Pembacaan node dan hasil model, terpisah dari informasi wilayah.",
+                  map: "",
+                }[mode]
+              }
+            </p>
+          )}
         </div>
         <button
           aria-label="Perbarui data sensor"
@@ -255,98 +265,162 @@ export function SensorWorkspace({
         <DataState empty="Belum ada node yang tersedia." />
       ) : (
         <>
-          {!["map", "nodes"].includes(mode) && <div className="sensor-toolbar">
-            <label>
-              Node
-              <MonitoringSelect label="Pilih node" value={node?.id || ""} disabled={!!id}
-                onValueChange={setSelected} options={nodes.map(n => ({value:n.id,label:n.name}))} />
-            </label>
-            <span>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</span>
-          </div>}
+          {!["map", "nodes"].includes(mode) && (
+            <div className="sensor-toolbar">
+              <label>
+                Node
+                <MonitoringSelect
+                  label="Pilih node"
+                  value={node?.id || ""}
+                  disabled={!!id}
+                  onValueChange={setSelected}
+                  options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+                />
+              </label>
+              <span>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</span>
+            </div>
+          )}
           {node ? (
             <>
-              {!["map", "nodes"].includes(mode) && <div className="sensor-location">
-                <MapPin size={16} />
-                <span>
-                  {node.name} · {node.latitude}, {node.longitude}
-                </span>
-                <NodeStatus node={node} />
-              </div>}
+              {!["map", "nodes"].includes(mode) && (
+                <div className="sensor-location">
+                  <MapPin size={16} />
+                  <span>
+                    {node.name} · {node.latitude}, {node.longitude}
+                  </span>
+                  <NodeStatus node={node} />
+                </div>
+              )}
               {mode === "map" && (
                 <>
-                {mode === "map" && <div className="map-controls" data-public={mapLayer !== "sensors"}>
-                  <div className="map-controls-main">
-                    <div className="map-node-picker">
-                      <MapPin size={17} aria-hidden="true" />
-                      <MonitoringSelect label="Titik acuan" value={node.id} onValueChange={setSelected} onPreviewChange={setPreviewNode}
-                        options={nodes.map(n => ({value:n.id,label:n.name}))} />
-                    </div>
-                    <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
-                      {[
-                        {id:"sensors",label:"Sensor",name:"Sensor saja"},
-                        {id:"mixed",label:"Gabungan",name:"Sensor & kejadian"},
-                        {id:"events",label:"Kejadian",name:"Kejadian publik"},
-                      ].map(layer => <button key={layer.id} aria-label={layer.name} aria-pressed={mapLayer === layer.id}
-                        onClick={() => changeMapParam("layer",layer.id)}>{layer.label}</button>)}
-                    </div>
-                    {mapLayer !== "sensors" && <div className="map-kind-picker">
-                      <MonitoringSelect label="Jenis kejadian" value={eventType}
-                        onValueChange={value => changeMapParam("event_type",value)}
-                        options={[{value:"all",label:"Semua kejadian"},{value:"fire",label:"Titik panas"},{value:"earthquake",label:"Gempa"}]} />
-                    </div>}
-                  </div>
-                  <div className="map-controls-meta">
-                    <span role="status">{mapLayer !== "events" ? nodes.length + " node" : ""}
-                      {mapLayer === "mixed" ? " · " : ""}
-                      {mapLayer !== "sensors" ? environment.loading && !environment.data ? "Memuat kejadian…" : events.length + " kejadian" : ""}
-                    </span>
-                    <details className="map-info">
-                      <summary>Legenda & cakupan <ChevronDown size={14} aria-hidden="true" /></summary>
-                      <div className="map-info-content">
-                        <div className="map-event-legend">
-                          <span className="legend-sensor"><MapSymbol kind="sensor" />Node AEROSENSE</span>
-                          <span className="legend-fire"><MapSymbol kind="fire" />Titik panas satelit</span>
-                          <span className="legend-earthquake"><MapSymbol kind="earthquake" />Episenter gempa BMKG</span>
+                  {mode === "map" && (
+                    <div className="map-controls" data-public={mapLayer !== "sensors"}>
+                      <div className="map-controls-main">
+                        <div className="map-node-picker">
+                          <MapPin size={17} aria-hidden="true" />
+                          <MonitoringSelect
+                            label="Titik acuan"
+                            value={node.id}
+                            onValueChange={setSelected}
+                            onPreviewChange={setPreviewNode}
+                            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+                          />
                         </div>
-                        <p>Titik acuan: <strong>{node.name}</strong><br />{node.latitude}, {node.longitude}</p>
-                        <p>Titik panas: feed 24 jam, radius 50 km. Deteksi satelit belum mengonfirmasi kebakaran.</p>
-                        <p>Gempa: daftar M5+ dalam 7 hari, radius 300 km. Tidak mencakup seluruh gempa atau menunjukkan radius dampak.</p>
-                        <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
-                        <p>Titik biru menunjukkan lokasi perangkat setelah Anda mengizinkan akses lokasi. Koordinat tetap di peramban dan tidak dikirim ke server AEROSENSE.</p>
+                        <div className="map-layer-picker" role="group" aria-label="Lapisan peta">
+                          {[
+                            { id: "sensors", label: "Sensor", name: "Sensor saja" },
+                            { id: "mixed", label: "Gabungan", name: "Sensor & kejadian" },
+                            { id: "events", label: "Kejadian", name: "Kejadian publik" },
+                          ].map((layer) => (
+                            <button
+                              key={layer.id}
+                              aria-label={layer.name}
+                              aria-pressed={mapLayer === layer.id}
+                              onClick={() => changeMapParam("layer", layer.id)}
+                            >
+                              {layer.label}
+                            </button>
+                          ))}
+                        </div>
+                        {mapLayer !== "sensors" && (
+                          <div className="map-kind-picker">
+                            <MonitoringSelect
+                              label="Jenis kejadian"
+                              value={eventType}
+                              onValueChange={(value) => changeMapParam("event_type", value)}
+                              options={[
+                                { value: "all", label: "Semua kejadian" },
+                                { value: "fire", label: "Titik panas" },
+                                { value: "earthquake", label: "Gempa" },
+                              ]}
+                            />
+                          </div>
+                        )}
                       </div>
-                    </details>
-                  </div>
-                  {mapLayer !== "sensors" && eventWarning && <p className="map-event-notice" role="status">{eventWarning}</p>}
-                </div>}
-                <Suspense fallback={<DataState loading />}>
-                  <LiveMap
-                    nodes={nodes}
-                    selected={node.id}
-                    previewed={previewNode}
-                    locateUser={mode === "map"}
-                    onSelect={setSelected}
-                    showNodes={mode!=="map"||mapLayer!=="events"}
-                    events={mode==="map"&&mapLayer!=="sensors"?events:[]}
-                  />
-                </Suspense>
+                      <div className="map-controls-meta">
+                        <span role="status">
+                          {mapLayer !== "events" ? nodes.length + " node" : ""}
+                          {mapLayer === "mixed" ? " · " : ""}
+                          {mapLayer !== "sensors"
+                            ? environment.loading && !environment.data
+                              ? "Memuat kejadian…"
+                              : events.length + " kejadian"
+                            : ""}
+                        </span>
+                        <details className="map-info">
+                          <summary>
+                            Legenda & cakupan <ChevronDown size={14} aria-hidden="true" />
+                          </summary>
+                          <div className="map-info-content">
+                            <div className="map-event-legend">
+                              <span className="legend-sensor">
+                                <MapSymbol kind="sensor" />
+                                Node AEROSENSE
+                              </span>
+                              <span className="legend-fire">
+                                <MapSymbol kind="fire" />
+                                Titik panas satelit
+                              </span>
+                              <span className="legend-earthquake">
+                                <MapSymbol kind="earthquake" />
+                                Episenter gempa BMKG
+                              </span>
+                            </div>
+                            <p>
+                              Titik acuan: <strong>{node.name}</strong>
+                              <br />
+                              {node.latitude}, {node.longitude}
+                            </p>
+                            <p>
+                              Titik panas: feed 24 jam, radius 50 km. Deteksi satelit belum
+                              mengonfirmasi kebakaran.
+                            </p>
+                            <p>
+                              Gempa: daftar M5+ dalam 7 hari, radius 300 km. Tidak mencakup seluruh
+                              gempa atau menunjukkan radius dampak.
+                            </p>
+                            <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
+                            <p>
+                              Titik biru menunjukkan lokasi perangkat setelah Anda mengizinkan akses
+                              lokasi. Koordinat tetap di peramban dan tidak dikirim ke server
+                              AEROSENSE.
+                            </p>
+                          </div>
+                        </details>
+                      </div>
+                      {mapLayer !== "sensors" && eventWarning && (
+                        <p className="map-event-notice" role="status">
+                          {eventWarning}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <Suspense fallback={<DataState loading />}>
+                    <LiveMap
+                      nodes={nodes}
+                      selected={node.id}
+                      previewed={previewNode}
+                      locateUser={mode === "map"}
+                      onSelect={setSelected}
+                      showNodes={mode !== "map" || mapLayer !== "events"}
+                      events={mode === "map" && mapLayer !== "sensors" ? events : []}
+                    />
+                  </Suspense>
                 </>
               )}
               {mode === "detail" && (
                 <>
                   <div className="sensor-values">
                     {Object.entries(metricLabels)
-                      .filter(
-                        ([k]) => k !== "pm25_ug_m3" || node.pm25_validated,
-                      )
+                      .filter(([k]) => k !== "pm25_ug_m3" || node.pm25_validated)
                       .map(([key, [label, unit]]) => (
                         <article key={key}>
                           <h2>{label}</h2>
                           <p>
                             {typeof node.latest?.metrics[key] === "number"
-                              ? node.latest.metrics[key]!.toLocaleString(
-                                  "id-ID",
-                                  { maximumFractionDigits: 2 },
-                                )
+                              ? node.latest.metrics[key]!.toLocaleString("id-ID", {
+                                  maximumFractionDigits: 2,
+                                })
                               : "—"}{" "}
                             <small>{unit}</small>
                           </p>
@@ -354,9 +428,8 @@ export function SensorWorkspace({
                       ))}
                   </div>
                   <p className="hub-footnote">
-                    Pembacaan: {dateLabel(node.latest?.observed_at)}. eCO₂
-                    merupakan estimasi setara CO₂ dari sensor gas. Debu optik
-                    tidak otomatis menjadi PM2.5 tervalidasi.
+                    Pembacaan: {dateLabel(node.latest?.observed_at)}. eCO₂ merupakan estimasi setara
+                    CO₂ dari sensor gas. Debu optik tidak otomatis menjadi PM2.5 tervalidasi.
                   </p>
                 </>
               )}
@@ -376,7 +449,8 @@ export function SensorWorkspace({
                       {nodes.map((n) => (
                         <tr key={n.id}>
                           <td>
-                            <strong>{n.name}</strong><NodeStatus node={n} />
+                            <strong>{n.name}</strong>
+                            <NodeStatus node={n} />
                             <small>{n.id}</small>
                           </td>
                           <td>
@@ -398,30 +472,53 @@ export function SensorWorkspace({
                 </div>
               )}
               {mode === "report" && (
-                <EsgReportPanel node={node} readings={readings} alerts={alerts.data?.alerts || []}
-                  scope={dashboard.data?.report_scope} userEmail={user?.email}
-                  loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)} />
+                <EsgReportPanel
+                  node={node}
+                  readings={readings}
+                  alerts={alerts.data?.alerts || []}
+                  scope={dashboard.data?.report_scope}
+                  userEmail={user?.email}
+                  loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)}
+                />
               )}
               {["detail", "analytics"].includes(mode) && (
                 <section className="live-panel">
                   <div className="live-heading">
                     <div>
                       <h2>{modelView ? "Historis pembacaan & model" : "Riwayat 24 jam"}</h2>
-                      <p>{modelView ? "Nilai terkoreksi, input mentah, dan estimasi GRU." : "Nilai sudah dikoreksi otomatis untuk pengaruh suhu dan kelembapan."}</p>
+                      <p>
+                        {modelView
+                          ? "Nilai terkoreksi, input mentah, dan estimasi GRU."
+                          : "Nilai sudah dikoreksi otomatis untuk pengaruh suhu dan kelembapan."}
+                      </p>
                     </div>
-                    {modelView && <div className="flex flex-wrap gap-2"><button
-                      className="live-button secondary"
-                      onClick={() => node && downloadCsv(readingsCsv(node, readings, true), `aerosense-pembacaan-${node.id}.csv`)}
-                      disabled={!user || !readings.length || history.loading || !!history.error}
-                    ><Download size={15} />Unduh CSV</button><button
-                      className="live-button secondary"
-                      onClick={exportReadings}
-                      disabled={!user || !readings.length || history.loading || !!history.error}
-                      title={!user ? "Masuk untuk mengekspor data" : undefined}
-                    >
-                      <Download size={15} />
-                      Ekspor JSON
-                    </button></div>}
+                    {modelView && (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          className="live-button secondary"
+                          onClick={() =>
+                            node &&
+                            downloadCsv(
+                              readingsCsv(node, readings, true),
+                              `aerosense-pembacaan-${node.id}.csv`,
+                            )
+                          }
+                          disabled={!user || !readings.length || history.loading || !!history.error}
+                        >
+                          <Download size={15} />
+                          Unduh CSV
+                        </button>
+                        <button
+                          className="live-button secondary"
+                          onClick={exportReadings}
+                          disabled={!user || !readings.length || history.loading || !!history.error}
+                          title={!user ? "Masuk untuk mengekspor data" : undefined}
+                        >
+                          <Download size={15} />
+                          Ekspor JSON
+                        </button>
+                      </div>
+                    )}
                   </div>
                   {history.error ? (
                     <DataState error={history.error} retry={history.refresh} />
@@ -433,9 +530,14 @@ export function SensorWorkspace({
                     <>
                       <label className="metric-picker">
                         Parameter
-                        <MonitoringSelect label="Pilih parameter" value={metric} onValueChange={setMetric}
-                          options={Object.entries(metricLabels).filter(([k]) => k !== "pm25_ug_m3" || node.pm25_validated)
-                            .map(([value,[label]]) => ({value,label}))} />
+                        <MonitoringSelect
+                          label="Pilih parameter"
+                          value={metric}
+                          onValueChange={setMetric}
+                          options={Object.entries(metricLabels)
+                            .filter(([k]) => k !== "pm25_ug_m3" || node.pm25_validated)
+                            .map(([value, [label]]) => ({ value, label }))}
+                        />
                       </label>
                       {!modelView && <HistorySummary readings={readings} metric={metric} />}
                       <Suspense fallback={<DataState loading />}>
@@ -457,15 +559,13 @@ export function SensorWorkspace({
                       <div>
                         <dt>Target</dt>
                         <dd>
-                          {metricLabels[node.latest.gru.target]?.[0] ||
-                            node.latest.gru.target}
+                          {metricLabels[node.latest.gru.target]?.[0] || node.latest.gru.target}
                         </dd>
                       </div>
                       <div>
                         <dt>Estimasi</dt>
                         <dd>
-                          {node.latest.gru.value}{" "}
-                          {metricLabels[node.latest.gru.target]?.[1]}
+                          {node.latest.gru.value} {metricLabels[node.latest.gru.target]?.[1]}
                         </dd>
                       </div>
                       <div>
@@ -474,9 +574,7 @@ export function SensorWorkspace({
                       </div>
                     </dl>
                   ) : (
-                    <p className="live-notice">
-                      Belum ada hasil GRU untuk pembacaan terbaru.
-                    </p>
+                    <p className="live-notice">Belum ada hasil GRU untuk pembacaan terbaru.</p>
                   )}
                 </section>
               )}
@@ -495,12 +593,10 @@ export function SensorWorkspace({
                         <li key={a.id}>
                           <div>
                             <strong>
-                              {metricLabels[a.metric]?.[0] || a.metric}:{" "}
-                              {a.value} {a.unit}
+                              {metricLabels[a.metric]?.[0] || a.metric}: {a.value} {a.unit}
                             </strong>
                             <p>
-                              Ambang {a.threshold} {a.unit} ·{" "}
-                              {dateLabel(a.created_at)}
+                              Ambang {a.threshold} {a.unit} · {dateLabel(a.created_at)}
                             </p>
                           </div>
                           {a.acknowledged_at ? (
@@ -518,11 +614,7 @@ export function SensorWorkspace({
                                     });
                                     alerts.refresh();
                                   } catch (e) {
-                                    setNotice(
-                                      e instanceof Error
-                                        ? e.message
-                                        : "Gagal menyimpan.",
-                                    );
+                                    setNotice(e instanceof Error ? e.message : "Gagal menyimpan.");
                                   } finally {
                                     setAckBusy(false);
                                   }
@@ -541,9 +633,8 @@ export function SensorWorkspace({
               )}
               {mode === "report" && (
                 <p className="live-notice">
-                  Ekspor menyertakan cakupan waktu dan batas penggunaan data.
-                  Penilaian ESG memerlukan bukti lain serta pemeriksaan sesuai
-                  metodologi yang digunakan.
+                  Ekspor menyertakan cakupan waktu dan batas penggunaan data. Penilaian ESG
+                  memerlukan bukti lain serta pemeriksaan sesuai metodologi yang digunakan.
                 </p>
               )}
             </>
@@ -569,9 +660,30 @@ function HistorySummary({ readings, metric }: { readings: Reading[]; metric: str
   const fmt = (v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 1 });
   return (
     <dl className="history-summary">
-      <div><dt>Rata-rata {label.toLowerCase()}</dt><dd>{fmt(avg)} <small>{unit}</small></dd></div>
-      <div><dt>Tertinggi</dt><dd>{fmt(high.value)} <small>{unit} · {dateLabel(high.at)}</small></dd></div>
-      <div><dt>Terendah</dt><dd>{fmt(low.value)} <small>{unit} · {dateLabel(low.at)}</small></dd></div>
+      <div>
+        <dt>Rata-rata {label.toLowerCase()}</dt>
+        <dd>
+          {fmt(avg)} <small>{unit}</small>
+        </dd>
+      </div>
+      <div>
+        <dt>Tertinggi</dt>
+        <dd>
+          {fmt(high.value)}{" "}
+          <small>
+            {unit} · {dateLabel(high.at)}
+          </small>
+        </dd>
+      </div>
+      <div>
+        <dt>Terendah</dt>
+        <dd>
+          {fmt(low.value)}{" "}
+          <small>
+            {unit} · {dateLabel(low.at)}
+          </small>
+        </dd>
+      </div>
     </dl>
   );
 }

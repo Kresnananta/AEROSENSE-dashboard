@@ -57,8 +57,7 @@ export function Atmosphere() {
     let visible = false;
     const sync = () => {
       if (!motion.matches && !paused && visible && !document.hidden) {
-        if (!element.getAttribute("src"))
-          element.src = "/assets/environment/atmosphere.mp4";
+        if (!element.getAttribute("src")) element.src = "/assets/environment/atmosphere.mp4";
         void element.play().catch(() => {});
       } else element.pause();
     };

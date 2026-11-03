@@ -10,22 +10,23 @@ export async function apiRequest<T>(
 ): Promise<T> {
   if (DEMO_MODE) {
     const { demoRequest } = await import("@/demo/api");
-    return await demoRequest(endpoint, options) as T;
+    return (await demoRequest(endpoint, options)) as T;
   }
   const headers = new Headers(options.headers);
-  const publicRead = (!options.method || options.method === "GET") &&
+  const publicRead =
+    (!options.method || options.method === "GET") &&
     /^\/v1\/(dashboard|nodes|history|rules|alerts|environment)(\?|$)/.test(endpoint);
   if (options.body) headers.set("Content-Type", "application/json");
   if (authenticated) {
-    const session = await getSupabase().then(client => client.auth.getSession()).catch(() => null);
+    const session = await getSupabase()
+      .then((client) => client.auth.getSession())
+      .catch(() => null);
     if (session?.data.session && !session.error) {
       headers.set("Authorization", `Bearer ${session.data.session.access_token}`);
     } else if (publicRead) {
       endpoint = endpoint.replace("/v1/", "/v1/public/");
     } else {
-      throw new Error(
-        "Masuk terlebih dahulu untuk menggunakan fitur ini.",
-      );
+      throw new Error("Masuk terlebih dahulu untuk menggunakan fitur ini.");
     }
   }
   const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
@@ -36,12 +37,10 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(
-      body?.error ||
-        body?.message ||
-        `Layanan belum dapat diakses (${response.status}).`,
+      body?.error || body?.message || `Layanan belum dapat diakses (${response.status}).`,
     );
   }
-  if (responseType === "blob") return await response.blob() as T;
+  if (responseType === "blob") return (await response.blob()) as T;
   const body = await response.json().catch(() => null);
   if (body === null) throw new Error("API belum mengembalikan data JSON. Periksa koneksi backend.");
   return body as T;

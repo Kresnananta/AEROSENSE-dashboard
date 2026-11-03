@@ -24,8 +24,8 @@ export function RobotControls() {
     <section className="live-panel">
       <h2>Layar robot</h2>
       <p>
-        Pilih robot untuk membuka percakapan pada layar dada. Perintah suara
-        dijalankan oleh perangkat robot.
+        Pilih robot untuk membuka percakapan pada layar dada. Perintah suara dijalankan oleh
+        perangkat robot.
       </p>
       <div className="live-actions">
         {robots.data.robots.map((r) => (
@@ -48,9 +48,7 @@ export function RobotControls() {
               setBusy(true);
               try {
                 await api.post("/v1/robot/listen", { robot_id: robot.id });
-                setNotice(
-                  "Perintah mendengarkan dikirim. Tunggu indikator mikrofon pada robot.",
-                );
+                setNotice("Perintah mendengarkan dikirim. Tunggu indikator mikrofon pada robot.");
               } catch (e) {
                 setNotice(e instanceof Error ? e.message : "Perintah gagal.");
               } finally {

@@ -55,11 +55,6 @@ const ESGReportsPage = lazy(() =>
 const SystemPage = lazy(() =>
   import("@/pages/system/SystemPage").then((m) => ({ default: m.SystemPage })),
 );
-const AeroBotPage = lazy(() =>
-  import("@/pages/aerobot/AeroBotPage").then((m) => ({
-    default: m.AeroBotPage,
-  })),
-);
 const NotFoundPage = lazy(() =>
   import("@/pages/not-found/NotFoundPage").then((m) => ({
     default: m.NotFoundPage,
@@ -93,7 +88,7 @@ export function AppRouter() {
             <Route path={ROUTES.NODE_DETAIL} element={<NodeDetailPage />} />
             <Route path={ROUTES.ALERTS} element={<AlertsPage />} />
             <Route path={ROUTES.ESG_REPORTS} element={<ESGReportsPage />} />
-            <Route path={ROUTES.AEROBOT} element={<AeroBotPage />} />
+            <Route path={ROUTES.AEROBOT} element={null} />
             <Route path={ROUTES.SYSTEM} element={<SystemPage />} />
             <Route path={ROUTES.MANAGEMENT} element={<ManagementPage />} />
           </Route>

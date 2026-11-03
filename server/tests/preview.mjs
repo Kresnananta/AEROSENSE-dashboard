@@ -11,9 +11,7 @@ const user = {
   user_metadata: { name: "Preview" },
 };
 const token =
-  Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString(
-    "base64url",
-  ) +
+  Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" })).toString("base64url") +
   "." +
   Buffer.from(
     JSON.stringify({
@@ -70,9 +68,7 @@ const facts = [
   unit,
   reference: { latitude: area.latitude, longitude: area.longitude },
   valid_at:
-    category === "flood"
-      ? new Date(Date.now() + 3600000).toISOString()
-      : new Date().toISOString(),
+    category === "flood" ? new Date(Date.now() + 3600000).toISOString() : new Date().toISOString(),
   fresh_until: new Date(Date.now() + 3600000).toISOString(),
   kind:
     {
@@ -82,8 +78,7 @@ const facts = [
     }[category] || "model",
   source: "Open-Meteo / data pengujian lokal",
   source_url: "https://open-meteo.com/",
-  spatial_context:
-    "Nilai sintetis untuk memeriksa tampilan, bukan kondisi lapangan.",
+  spatial_context: "Nilai sintetis untuk memeriksa tampilan, bukan kondisi lapangan.",
 }));
 facts.unshift({
   ...facts[0],
@@ -97,10 +92,15 @@ let publicNewsRows = null;
 if (process.env.PREVIEW_LIVE_NEWS === "true") {
   publicNewsRows = [];
   const { disasterNews } = await import("../api/disaster-news.mjs");
-  const news = disasterNews({db:async (_table,_query,method,body) => {
-    if (method === "POST") {publicNewsRows=publicNewsRows.filter(r=>r.provider!==body.provider).concat(body);return null;}
-    return publicNewsRows;
-  }});
+  const news = disasterNews({
+    db: async (_table, _query, method, body) => {
+      if (method === "POST") {
+        publicNewsRows = publicNewsRows.filter((r) => r.provider !== body.provider).concat(body);
+        return null;
+      }
+      return publicNewsRows;
+    },
+  });
   await news.refresh();
 }
 const mock = http.createServer(async (req, res) => {
@@ -120,18 +120,45 @@ const mock = http.createServer(async (req, res) => {
     return;
   }
   let output = [];
-  if (url.pathname === "/rest/v1/ae_disaster_news_cache") output = publicNewsRows || [{
-    provider: "gdacs", last_success_at: newsTime, refresh_after: new Date(Date.now()+3600000).toISOString(), last_error:null,
-    items: [
-      {id:"example-fire", title:"Contoh pantauan karhutla", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Karhutla",location:"Indonesia",country_code:"IDN",metrics:[{value:1200,unit:"ha",label:"Estimasi area GDACS"}]},
-      {id:"example-flood", title:"Contoh pantauan banjir", original_title:"Data sintetis untuk pratinjau, bukan kejadian nyata", url:"https://www.gdacs.org/report.aspx?eventtype=FL", source:"GDACS · contoh tampilan", published_at:newsTime, kind:"monitoring",type:"Banjir",location:"Indonesia",country_code:"IDN",metrics:[]}
-    ]
-  }];
+  if (url.pathname === "/rest/v1/ae_disaster_news_cache")
+    output = publicNewsRows || [
+      {
+        provider: "gdacs",
+        last_success_at: newsTime,
+        refresh_after: new Date(Date.now() + 3600000).toISOString(),
+        last_error: null,
+        items: [
+          {
+            id: "example-fire",
+            title: "Contoh pantauan karhutla",
+            original_title: "Data sintetis untuk pratinjau, bukan kejadian nyata",
+            url: "https://www.gdacs.org/",
+            source: "GDACS · contoh tampilan",
+            published_at: newsTime,
+            kind: "monitoring",
+            type: "Karhutla",
+            location: "Indonesia",
+            country_code: "IDN",
+            metrics: [{ value: 1200, unit: "ha", label: "Estimasi area GDACS" }],
+          },
+          {
+            id: "example-flood",
+            title: "Contoh pantauan banjir",
+            original_title: "Data sintetis untuk pratinjau, bukan kejadian nyata",
+            url: "https://www.gdacs.org/report.aspx?eventtype=FL",
+            source: "GDACS · contoh tampilan",
+            published_at: newsTime,
+            kind: "monitoring",
+            type: "Banjir",
+            location: "Indonesia",
+            country_code: "IDN",
+            metrics: [],
+          },
+        ],
+      },
+    ];
   if (url.pathname === "/auth/v1/token") {
-    if (
-      p?.password !== "fixture-password" &&
-      p?.grant_type !== "refresh_token"
-    ) {
+    if (p?.password !== "fixture-password" && p?.grant_type !== "refresh_token") {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(
         JSON.stringify({
@@ -141,20 +168,14 @@ const mock = http.createServer(async (req, res) => {
       );
       return;
     }
-    const isViewer =
-      p?.email === "viewer@example.test" ||
-      p?.refresh_token === "fixture-viewer";
+    const isViewer = p?.email === "viewer@example.test" || p?.refresh_token === "fixture-viewer";
     output = {
-      access_token: isViewer
-        ? token.replace(/fixture$/, "fixture-viewer")
-        : token,
+      access_token: isViewer ? token.replace(/fixture$/, "fixture-viewer") : token,
       refresh_token: "fixture-refresh",
       token_type: "bearer",
       expires_in: 3600,
       expires_at: Math.floor(Date.now() / 1000) + 3600,
-      user: isViewer
-        ? { ...user, id: viewerId, email: "viewer@example.test" }
-        : user,
+      user: isViewer ? { ...user, id: viewerId, email: "viewer@example.test" } : user,
     };
   }
   if (url.pathname === "/auth/v1/user")
@@ -169,15 +190,9 @@ const mock = http.createServer(async (req, res) => {
   if (url.pathname === "/rest/v1/ae_members")
     output = [
       {
-        user_id:
-          url.searchParams.get("user_id") === "eq." + viewerId
-            ? viewerId
-            : userId,
+        user_id: url.searchParams.get("user_id") === "eq." + viewerId ? viewerId : userId,
         location_id: node.location_id,
-        role:
-          url.searchParams.get("user_id") === "eq." + viewerId
-            ? "viewer"
-            : "admin",
+        role: url.searchParams.get("user_id") === "eq." + viewerId ? "viewer" : "admin",
       },
     ];
   if (url.pathname === "/rest/v1/ae_nodes") output = [node];
@@ -229,8 +244,7 @@ const mock = http.createServer(async (req, res) => {
     } else {
       output = jobs.filter(
         (j) =>
-          (!url.searchParams.get("id") ||
-            url.searchParams.get("id") === "eq." + j.id) &&
+          (!url.searchParams.get("id") || url.searchParams.get("id") === "eq." + j.id) &&
           (!url.searchParams.get("dedupe_key") ||
             url.searchParams.get("dedupe_key") === "eq." + j.dedupe_key),
       );

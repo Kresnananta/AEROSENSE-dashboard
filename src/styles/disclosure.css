@@ -47,5 +47,7 @@
 }
 
 @media (max-width: 600px) {
-  .insight-disclosure summary { font-size: 12px; }
+  .insight-disclosure summary {
+    font-size: 12px;
+  }
 }

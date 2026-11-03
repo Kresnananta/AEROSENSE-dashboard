@@ -1,9 +1,3 @@
-/**
- * ============================================
- * AEROSENSE Dashboard — Application Constants
- * ============================================
- */
-
 /** Application metadata */
 export const APP_CONFIG = {
   name: "AEROSENSE",

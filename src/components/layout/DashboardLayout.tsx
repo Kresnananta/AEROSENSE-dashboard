@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { AccessProvider } from "./AccessProvider";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { DemoBanner } from "@/components/shared/DemoBanner";
+const AeroBotPage = lazy(() =>
+  import("@/pages/aerobot/AeroBotPage").then((m) => ({ default: m.AeroBotPage })),
+);
 
 export function DashboardLayout() {
   return (
@@ -16,14 +19,15 @@ export function DashboardLayout() {
 function DashboardShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-
-  // Scroll to top and close mobile menu on route change
+  const onChat = location.pathname === "/aerobot";
+  const [chatVisited, setChatVisited] = useState(onChat);
+  useEffect(() => {
+    if (onChat) setChatVisited(true);
+  }, [onChat]);
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
     setMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // Close mobile drawer on Escape key press
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -35,14 +39,15 @@ function DashboardShell() {
   }, []);
 
   return (
-    <div className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}>
+    <div
+      className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}
+    >
       {DEMO_MODE && <DemoBanner />}
-      {/* Desktop Sidebar */}
+
       <div className="hidden md:block">
         <Sidebar />
       </div>
 
-      {/* Mobile Drawer Backdrop & Sidebar */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 md:hidden flex">
           <div
@@ -56,11 +61,17 @@ function DashboardShell() {
         </div>
       )}
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onMenuClick={() => setMobileMenuOpen((prev) => !prev)} />
         <main className="flex-1 p-5 sm:p-8 max-w-[1760px] w-full mx-auto animate-[appear_0.32s_ease_both]">
-          <Outlet />
+          {chatVisited && (
+            <div hidden={!onChat}>
+              <Suspense fallback={null}>
+                <AeroBotPage />
+              </Suspense>
+            </div>
+          )}
+          {!onChat && <Outlet />}
         </main>
       </div>
     </div>

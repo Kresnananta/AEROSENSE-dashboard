@@ -1,6 +1,7 @@
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { ArrowUp, Ear, Loader2, RefreshCw, Mic, MicOff, Square, Volume2 } from "lucide-react";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +13,8 @@ import type { HandsFreePhase } from "@/lib/handsfree-engine";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { configureRobotFace, publishRobotFace } from "@/lib/robot-face-bus";
 import { useAccess } from "@/hooks/useAccess";
+import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
+import { detectWakePhrase } from "@/lib/handsfree";
 
 interface Message {
   id: string;
@@ -39,13 +42,18 @@ const suggestions = [
 export function ChatPanel() {
   const { user, error: authError } = useAuth();
   const userId = user?.id;
+  const [slot, setSlot] = useRobotSlot(userId);
+  const onChat = useLocation().pathname === "/aerobot";
   const { canManage } = useAccess();
   useEffect(() => {
-    configureRobotFace(userId, canManage);
+    configureRobotFace(userId, canManage, slot);
     return () => configureRobotFace(undefined, false);
-  }, [userId, canManage]);
+  }, [userId, canManage, slot]);
   const [params] = useSearchParams();
-  const robotId = params.get("robot_id") || undefined;
+  const [robotId, setRobotId] = useState<string | undefined>(params.get("robot_id") || undefined);
+  useEffect(() => {
+    if (onChat) setRobotId(params.get("robot_id") || undefined);
+  }, [onChat, params]);
   const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
   const [nodeId, setNodeId] = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -56,12 +64,20 @@ export function ChatPanel() {
     },
   ]);
   const [input, setInput] = useState(params.get("question") || "");
+  useEffect(() => {
+    if (onChat && params.get("question")) setInput(params.get("question")!);
+  }, [onChat, params]);
   const voiceJobs = useRef(new Map<string, "manual" | "handsfree">());
   const sendRef = useRef<(text: string, fromVoice?: boolean) => Promise<string | null>>(
     async () => null,
   );
   const voice = useChatVoice(userId, (text) => {
-    void sendRef.current(text, true).then((id) => {
+    const wake = detectWakePhrase(text, true);
+    if (!wake.matched || !wake.remainder.trim()) {
+      setError("Awali pertanyaan suara dengan Halo AERO-BOT.");
+      return;
+    }
+    void sendRef.current(wake.remainder, true).then((id) => {
       if (id) voiceJobs.current.set(id, "manual");
       else setInput(text);
     });
@@ -113,8 +129,8 @@ export function ChatPanel() {
     }
   }, [user?.id]);
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [messages, busy]);
+    if (onChat) end.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [messages, busy, onChat]);
   useEffect(() => {
     if (!pending || !userId) return;
     const controller = new AbortController();
@@ -229,260 +245,298 @@ export function ChatPanel() {
   sendRef.current = send;
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
-    <section className="live-chat" aria-label="Percakapan AERO-BOT">
-      <header>
-        <img
-          src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"}
-          alt=""
-        />
-        <div>
-          <strong>AERO-BOT</strong>
-          <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
-        </div>
-        {user ? (
-          <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
-        ) : (
-          <Link className="live-tag" to="/login">
-            Masuk untuk bertanya
-          </Link>
+    <>
+      <section className="live-chat" aria-label="Percakapan AERO-BOT">
+        <header>
+          <img
+            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"}
+            alt=""
+          />
+          <div>
+            <strong>AERO-BOT</strong>
+            <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
+          </div>
+          {user ? (
+            <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
+          ) : (
+            <Link className="live-tag" to="/login">
+              Masuk untuk bertanya
+            </Link>
+          )}
+        </header>
+        {canManage && (
+          <label className="chat-scope">
+            Layar robot
+            <select
+              value={slot}
+              onChange={(e) => setSlot(e.target.value)}
+              disabled={busy || !!pending || !!voice.speaking || handsFree.phase === "speaking"}
+            >
+              {ROBOT_SLOTS.map((id, i) => (
+                <option key={id} value={id}>
+                  Robot {i + 1}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
-      </header>
-      <label className="chat-scope">
-        Sensor
-        <MonitoringSelect
-          label="Sumber sensor percakapan"
-          value={nodeId || "__no_sensor__"}
-          onValueChange={(value) => setNodeId(value === "__no_sensor__" ? "" : value)}
-          disabled={!!robotId || busy || !!pending}
-          options={[
-            { value: "__no_sensor__", label: "Tanpa sensor" },
-            ...(nodes.data?.nodes || []).map((n) => ({ value: n.id, label: n.name })),
-          ]}
-        />
-      </label>
-      {nodes.error && <p className="live-notice">{nodes.error}</p>}
-      <div className="live-messages" role="log" aria-live="polite">
-        {messages.map((m) => (
-          <div className={"live-message " + m.sender} key={m.id}>
-            <div className="chat-message-content">
-              {(m.sender === "bot" ? m.text.trim().split(/\n\s*\n/) : [m.text]).map(
-                (paragraph, index) => (
-                  <p
-                    key={index}
-                    className={paragraph.startsWith("Sumber:") ? "chat-message-sources" : undefined}
-                  >
-                    {paragraph}
-                  </p>
-                ),
+        <label className="chat-scope">
+          Sensor
+          <MonitoringSelect
+            label="Sumber sensor percakapan"
+            value={nodeId || "__no_sensor__"}
+            onValueChange={(value) => setNodeId(value === "__no_sensor__" ? "" : value)}
+            disabled={!!robotId || busy || !!pending}
+            options={[
+              { value: "__no_sensor__", label: "Tanpa sensor" },
+              ...(nodes.data?.nodes || []).map((n) => ({ value: n.id, label: n.name })),
+            ]}
+          />
+        </label>
+        {nodes.error && <p className="live-notice">{nodes.error}</p>}
+        <div className="live-messages" role="log" aria-live="polite">
+          {messages.map((m) => (
+            <div className={"live-message " + m.sender} key={m.id}>
+              <div className="chat-message-content">
+                {(m.sender === "bot" ? m.text.trim().split(/\n\s*\n/) : [m.text]).map(
+                  (paragraph, index) => (
+                    <p
+                      key={index}
+                      className={
+                        paragraph.startsWith("Sumber:") ? "chat-message-sources" : undefined
+                      }
+                    >
+                      {paragraph}
+                    </p>
+                  ),
+                )}
+              </div>
+              {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
+                <button
+                  className="chat-listen"
+                  type="button"
+                  onClick={() => void voice.speak(m.id, m.text)}
+                  disabled={voice.recording || voice.transcribing}
+                >
+                  {voice.speaking === m.id && voice.preparingSpeech ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : voice.speaking === m.id ? (
+                    <Square size={14} />
+                  ) : (
+                    <Volume2 size={15} />
+                  )}
+                  {voice.speaking === m.id
+                    ? voice.preparingSpeech
+                      ? "Menyiapkan suara…"
+                      : "Hentikan suara"
+                    : "Dengarkan"}
+                </button>
               )}
             </div>
-            {m.sender === "bot" && m.id !== "welcome" && voice.configured && (
-              <button
-                className="chat-listen"
-                type="button"
-                onClick={() => void voice.speak(m.id, m.text)}
-                disabled={voice.recording || voice.transcribing}
-              >
-                {voice.speaking === m.id && voice.preparingSpeech ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : voice.speaking === m.id ? (
-                  <Square size={14} />
-                ) : (
-                  <Volume2 size={15} />
-                )}
-                {voice.speaking === m.id
-                  ? voice.preparingSpeech
-                    ? "Menyiapkan suara…"
-                    : "Hentikan suara"
-                  : "Dengarkan"}
+          ))}
+          {busy && (
+            <p className="chat-progress">
+              <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang menyiapkan jawaban…
+            </p>
+          )}
+          <div ref={end} />
+        </div>
+        {!user && authError && (
+          <p className="live-notice" role="alert">
+            {authError}
+          </p>
+        )}
+        {error && (
+          <div className="live-notice" role="alert">
+            {error}
+            {pending && (
+              <button className="live-button secondary" onClick={() => setPollRun((n) => n + 1)}>
+                <RefreshCw size={14} />
+                Cek jawaban
               </button>
             )}
           </div>
-        ))}
-        {busy && (
-          <p className="chat-progress">
-            <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang menyiapkan jawaban…
-          </p>
         )}
-        <div ref={end} />
-      </div>
-      {!user && authError && (
-        <p className="live-notice" role="alert">
-          {authError}
-        </p>
-      )}
-      {error && (
-        <div className="live-notice" role="alert">
-          {error}
-          {pending && (
-            <button className="live-button secondary" onClick={() => setPollRun((n) => n + 1)}>
-              <RefreshCw size={14} />
-              Cek jawaban
+        <div className="chat-suggestions">
+          {suggestions.map((s) => (
+            <button
+              key={s}
+              onClick={() => {
+                setInput(s);
+                composer.current?.focus();
+              }}
+            >
+              {s}
             </button>
-          )}
+          ))}
         </div>
-      )}
-      <div className="chat-suggestions">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            onClick={() => {
-              setInput(s);
-              composer.current?.focus();
-            }}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send();
-        }}
-      >
-        <label className="sr-only" htmlFor="chatInput">
-          Pertanyaan lingkungan
-        </label>
-        <input
-          id="chatInput"
-          ref={composer}
-          aria-describedby={
-            voice.recording || voice.transcribing ? "chat-recording-status" : undefined
-          }
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          maxLength={2000}
-          disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
-          placeholder="Tanyakan tentang lingkungan…"
-          autoComplete="off"
-        />
-        <button
-          className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`}
-          type="button"
-          onClick={() => void voice.toggleRecording()}
-          disabled={
-            !user ||
-            !voice.configured ||
-            !voice.supported ||
-            voice.transcribing ||
-            busy ||
-            !!pending ||
-            handsFree.active
-          }
-          aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
-          title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
-          aria-pressed={voice.recording}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void send();
+          }}
         >
-          {voice.recording ? (
-            <Square size={18} />
-          ) : voice.transcribing ? (
-            <Loader2 size={18} className="animate-spin" />
-          ) : (
-            <Mic size={18} />
-          )}
-        </button>
-        <button
-          aria-label="Kirim pesan"
-          title="Kirim pesan"
-          disabled={
-            !user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing
-          }
-        >
-          <ArrowUp size={18} />
-        </button>
-      </form>
-      {(voice.recording || voice.transcribing) && (
-        <p id="chat-recording-status" className="chat-note" role="status">
-          {voice.recording
-            ? "Merekam… Tekan tombol berhenti untuk mengirim."
-            : "AERO-BOT sedang memahami rekaman…"}
-        </p>
-      )}
-      {user && voice.configured && handsFree.supported && (
-        <div className={`handsfree-card is-${handsFree.phase}`}>
+          <label className="sr-only" htmlFor="chatInput">
+            Pertanyaan lingkungan
+          </label>
+          <input
+            id="chatInput"
+            ref={composer}
+            aria-describedby={
+              voice.recording || voice.transcribing ? "chat-recording-status" : undefined
+            }
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            maxLength={2000}
+            disabled={!user || busy || !!pending || voice.recording || voice.transcribing}
+            placeholder="Tanyakan tentang lingkungan…"
+            autoComplete="off"
+          />
           <button
-            className="handsfree-toggle"
+            className={`chat-composer-mic ${voice.recording ? "is-recording" : ""}`}
             type="button"
-            aria-pressed={handsFree.active}
-            onClick={() =>
-              handsFree.active ? handsFreeControls.disable() : handsFreeControls.enable()
+            onClick={() => void voice.toggleRecording()}
+            disabled={
+              !user ||
+              !voice.configured ||
+              !voice.supported ||
+              voice.transcribing ||
+              busy ||
+              !!pending ||
+              handsFree.active
+            }
+            aria-label={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+            title={voice.recording ? "Selesai rekam dan kirim" : "Rekam pertanyaan"}
+            aria-pressed={voice.recording}
+          >
+            {voice.recording ? (
+              <Square size={18} />
+            ) : voice.transcribing ? (
+              <Loader2 size={18} className="animate-spin" />
+            ) : (
+              <Mic size={18} />
+            )}
+          </button>
+          <button
+            aria-label="Kirim pesan"
+            title="Kirim pesan"
+            disabled={
+              !user || !input.trim() || busy || !!pending || voice.recording || voice.transcribing
             }
           >
-            {handsFree.active ? <MicOff size={20} /> : <Ear size={20} />}
-            {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara"}
+            <ArrowUp size={18} />
           </button>
-          {handsFree.active && (
-            <div className="handsfree-status" role="status" aria-live="polite">
-              <span
-                className="handsfree-meter"
-                aria-hidden="true"
-                style={{ "--level": handsFree.level } as CSSProperties}
+        </form>
+        {(voice.recording || voice.transcribing) && (
+          <p id="chat-recording-status" className="chat-note" role="status">
+            {voice.recording
+              ? "Merekam… Tekan tombol berhenti untuk mengirim."
+              : "AERO-BOT sedang memahami rekaman…"}
+          </p>
+        )}
+        {user && voice.configured && handsFree.supported && (
+          <div className={`handsfree-card is-${handsFree.phase}`}>
+            <button
+              className="handsfree-toggle"
+              type="button"
+              aria-pressed={handsFree.active}
+              onClick={() =>
+                handsFree.active ? handsFreeControls.disable() : handsFreeControls.enable()
+              }
+            >
+              {handsFree.active ? <MicOff size={20} /> : <Ear size={20} />}
+              {handsFree.active ? "Matikan mode suara" : "Aktifkan mode suara"}
+            </button>
+            {handsFree.active && (
+              <div className="handsfree-status" role="status" aria-live="polite">
+                <span
+                  className="handsfree-meter"
+                  aria-hidden="true"
+                  style={{ "--level": handsFree.level } as CSSProperties}
+                >
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span>
+                  <strong>{handsFreeTitle}</strong>
+                  <small>{handsFree.notice || handsFreeHint}</small>
+                </span>
+              </div>
+            )}
+            {handsFree.heard && handsFree.active && (
+              <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>
+            )}
+            {handsFree.phase === "speaking" && (
+              <button
+                className="chat-voice-button"
+                type="button"
+                onClick={() => handsFreeControls.stopSpeaking()}
               >
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-              </span>
-              <span>
-                <strong>{handsFreeTitle}</strong>
-                <small>{handsFree.notice || handsFreeHint}</small>
-              </span>
-            </div>
-          )}
-          {handsFree.heard && handsFree.active && (
-            <p className="handsfree-heard">Terdengar: “{handsFree.heard}”</p>
-          )}
-          {handsFree.phase === "speaking" && (
-            <button
-              className="chat-voice-button"
-              type="button"
-              onClick={() => handsFreeControls.stopSpeaking()}
-            >
-              <Square size={16} />
-              Hentikan suara
-            </button>
-          )}
-          {handsFree.phase === "blocked" && (
-            <button
-              className="chat-voice-button"
-              type="button"
-              onClick={() => handsFreeControls.resume()}
-            >
-              <Volume2 size={16} />
-              Nyalakan suara
-            </button>
-          )}
-          {handsFree.error && (
-            <p className="live-notice" role="alert">
-              {handsFree.error}
-            </p>
-          )}
-          {handsFree.active && (
-            <details className="chat-voice-privacy">
-              <summary>Privasi mikrofon</summary>
-              <p>
-                Mikrofon aktif selama mode suara menyala.{" "}
-                {handsFree.engine === "browser"
-                  ? "Rekaman pertanyaan dikirim untuk diproses AERO-BOT."
-                  : "Ucapan dikirim untuk mengenali panggilan dan pertanyaan."}{" "}
-                Rekaman tidak disimpan AEROSENSE.
+                <Square size={16} />
+                Hentikan suara
+              </button>
+            )}
+            {handsFree.phase === "blocked" && (
+              <button
+                className="chat-voice-button"
+                type="button"
+                onClick={() => handsFreeControls.resume()}
+              >
+                <Volume2 size={16} />
+                Nyalakan suara
+              </button>
+            )}
+            {handsFree.error && (
+              <p className="live-notice" role="alert">
+                {handsFree.error}
               </p>
-            </details>
-          )}
-        </div>
-      )}
-      {voice.error && (
-        <p className="live-notice" role="alert">
-          {voice.error}
-        </p>
-      )}
-      {voice.configured && !voice.supported && (
-        <p className="chat-note">
-          Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.
-        </p>
-      )}
-    </section>
+            )}
+            {handsFree.active && (
+              <details className="chat-voice-privacy">
+                <summary>Privasi mikrofon</summary>
+                <p>
+                  Mikrofon aktif selama mode suara menyala.{" "}
+                  {handsFree.engine === "browser"
+                    ? "Rekaman pertanyaan dikirim untuk diproses AERO-BOT."
+                    : "Ucapan dikirim untuk mengenali panggilan dan pertanyaan."}{" "}
+                  Rekaman tidak disimpan AEROSENSE.
+                </p>
+              </details>
+            )}
+          </div>
+        )}
+        {voice.error && (
+          <p className="live-notice" role="alert">
+            {voice.error}
+          </p>
+        )}
+        {voice.configured && !voice.supported && (
+          <p className="chat-note">
+            Untuk merekam, buka situs HTTPS ini di Chrome atau Edge dan izinkan mikrofon.
+          </p>
+        )}
+      </section>
+      {!onChat &&
+        (handsFree.active || voice.speaking) &&
+        createPortal(
+          <div className="robot-voice-session" role="status">
+            <Link to="/aerobot">
+              {slot.replace("robot-", "Robot ")} · {handsFreeTitle}
+            </Link>
+            <button
+              onClick={() => {
+                handsFreeControls.disable();
+                voice.stopSpeaker();
+              }}
+            >
+              Matikan suara
+            </button>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

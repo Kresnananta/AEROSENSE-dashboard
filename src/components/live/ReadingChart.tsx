@@ -38,22 +38,26 @@ export default function ReadingChart({
             connectNulls={false}
             isAnimationActive={false}
           />
-          {!simple && <Line
-            name="Input mentah"
-            dataKey="raw"
-            stroke="#537496"
-            dot={false}
-            connectNulls={false}
-            isAnimationActive={false}
-          />}
-          {!simple && <Line
-            name="GRU (horizon 0)"
-            dataKey="gru"
-            stroke="#168466"
-            dot={false}
-            connectNulls={false}
-            isAnimationActive={false}
-          />}
+          {!simple && (
+            <Line
+              name="Input mentah"
+              dataKey="raw"
+              stroke="#537496"
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          )}
+          {!simple && (
+            <Line
+              name="GRU (horizon 0)"
+              dataKey="gru"
+              stroke="#168466"
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

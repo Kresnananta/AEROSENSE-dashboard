@@ -51,7 +51,13 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
     const reader = stream.body.getReader();
     const first = new TextDecoder().decode((await reader.read()).value);
     assert.equal(first, ": connected\n\n");
-    assert.deepEqual(await (await request("/status", "other")).json(), { connected: false });
+    const other = await (await request("/status", "other")).json();
+    assert.equal(other.connected, false);
+    assert.ok(other.server_time >= other.received_at);
+    assert.equal(
+      (await (await request("/status?robot_id=robot-2", "owner")).json()).connected,
+      false,
+    );
     assert.equal(
       (await request("/events", "other", { owner_id: "owner", action: "speak" })).status,
       403,
@@ -86,6 +92,29 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
     assert.equal(received.monitorOnly, true);
     assert.equal(received.audioBase64, audio.toString("base64"));
     assert.equal(received.commandId, undefined);
+    const before = Date.now();
+    const scheduled = await request("/events", "owner", {
+      owner_id: "owner",
+      action: "speak",
+      text: "Halo.",
+      envelope: { values: [0, 0.5, 1, 0], frameMs: 20, durationMs: 80 },
+    });
+    const timing = await scheduled.json();
+    assert.ok(timing.start_at >= before + 650 && timing.start_at <= Date.now() + 750);
+    const timeline = JSON.parse(new TextDecoder().decode((await reader.read()).value).slice(6));
+    assert.deepEqual(timeline.envelope.values, [0, 0.5, 1, 0]);
+    assert.equal(timeline.start_at, timing.start_at);
+    assert.equal(timeline.audioBase64, undefined);
+    assert.equal(
+      (
+        await request("/events", "owner", {
+          owner_id: "owner",
+          action: "speak",
+          envelope: { values: [Infinity], frameMs: 20, durationMs: 20 },
+        })
+      ).status,
+      400,
+    );
     abort.abort();
   } finally {
     abort.abort();

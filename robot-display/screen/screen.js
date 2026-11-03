@@ -1,4 +1,5 @@
 import { MOODS, clamp, expressionFor, poseFor, parts } from "./expression.js";
+import { envelopeAt } from "./timeline.js";
 const character = document.querySelector("#character"),
   notice = document.querySelector("#notice"),
   caption = document.querySelector("#caption");
@@ -18,6 +19,7 @@ let mode = "sleeping",
   previous = started,
   pose = poseFor(mode, mood, 0),
   volume = 0;
+let timeline = null;
 let audio = null,
   context = null,
   disconnect = () => {},
@@ -66,6 +68,7 @@ function stop() {
   window.speechSynthesis?.cancel();
   speech = null;
   volume = 0;
+  timeline = null;
   notice.textContent = "";
 }
 function sleeping() {
@@ -195,6 +198,13 @@ async function speak(event) {
 function receive(event) {
   if (!event || typeof event !== "object") return;
   if (event.action === "speak") {
+    if (event.envelope) {
+      stop();
+      setMood(expressionFor(event.text, event.severity, event.emotion));
+      timeline = { ...event.envelope, startAt: event.localStartAt || Date.now() };
+      setMode("thinking");
+      return;
+    }
     void speak(event);
     return;
   }
@@ -231,6 +241,16 @@ function receive(event) {
 function frame(now) {
   const dt = Math.min(60, now - previous);
   previous = now;
+  if (timeline) {
+    const elapsed = Date.now() - timeline.startAt;
+    volume = envelopeAt(timeline.values, timeline.frameMs, elapsed);
+    if (elapsed >= 0 && mode !== "speaking") setMode("speaking");
+    if (elapsed > timeline.durationMs) {
+      timeline = null;
+      volume = 0;
+      setMode("listening");
+    }
+  }
   const amplitude =
     speech && mode === "speaking"
       ? clamp(0.35 + 0.3 * Math.sin(now * 0.019) + 0.2 * Math.sin(now * 0.032))
@@ -250,7 +270,12 @@ function frame(now) {
     "lift",
   ])
     pose[key] +=
-      (target[key] - pose[key]) * (key.startsWith("brow") ? 1 - Math.exp(-dt / 210) : mix);
+      (target[key] - pose[key]) *
+      (key.startsWith("brow")
+        ? 1 - Math.exp(-dt / 210)
+        : key === "beak"
+          ? 1 - Math.exp(-dt / 35)
+          : mix);
   for (const [id, attrs] of Object.entries(parts(pose)))
     for (const [key, value] of Object.entries(attrs)) nodes[id]?.setAttribute(key, value);
   requestAnimationFrame(frame);

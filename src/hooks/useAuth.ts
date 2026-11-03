@@ -10,7 +10,10 @@ export function useAuth() {
   const [error, setError] = useState("");
   useEffect(() => {
     if (DEMO_MODE) {
-      const sync = () => { setUser(getDemoUser()); setLoading(false); };
+      const sync = () => {
+        setUser(getDemoUser());
+        setLoading(false);
+      };
       sync();
       window.addEventListener(DEMO_AUTH_EVENT, sync);
       return () => window.removeEventListener(DEMO_AUTH_EVENT, sync);
