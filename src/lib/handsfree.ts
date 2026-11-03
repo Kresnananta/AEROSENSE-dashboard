@@ -102,43 +102,6 @@ export function detectWakePhrase(text: string, requireGreeting = false): WakeMat
   return { matched: false, remainder: text.trim() };
 }
 
-export function createWakeMatcher() {
-  let prefix = "",
-    expires = 0;
-  return {
-    reset() {
-      prefix = "";
-      expires = 0;
-    },
-    push(text: string, final: boolean, now: number): WakeMatch {
-      const direct = detectWakePhrase(text, true);
-      if (direct.matched) {
-        prefix = "";
-        return direct;
-      }
-      const joined = prefix && now < expires ? prefix + " " + text : text;
-      const match = detectWakePhrase(joined, true);
-      if (match.matched) {
-        prefix = "";
-        return match;
-      }
-      if (final) {
-        const words = tokens(joined);
-        const partial = words
-          .slice(1)
-          .map((word) => word.norm)
-          .join("");
-        const valid =
-          WAKE_GREETINGS.has(words[0]?.norm) &&
-          [WAKE_TARGET, ...ALIASES].some((name) => name.startsWith(partial));
-        prefix = valid && words.length <= 3 ? joined : "";
-        expires = now + 2500;
-      }
-      return { matched: false, remainder: text.trim() };
-    },
-  };
-}
-
 export function hasQuestion(text: string): boolean {
   return tokens(text).some(
     (token) => !FILLERS.has(token.norm) && !GREETINGS.has(token.norm) && token.norm.length > 1,

@@ -1,9 +1,8 @@
-// A fresh wake phrase authorizes one question; ambient audio is never sent for transcription.
+// Gemini transcribes speech while voice mode is active; only a fresh wake phrase authorizes a chat question.
 import {
   answerChunks,
   concatFrames,
   createVad,
-  createWakeMatcher,
   detectWakePhrase,
   downsample,
   encodeWav,
@@ -21,12 +20,11 @@ export type HandsFreePhase =
   | "transcribing"
   | "thinking"
   | "speaking";
-export type WakeEngine = "browser" | "gemini";
 
 export interface HandsFreeState {
   phase: HandsFreePhase;
   level: number;
-  engine: WakeEngine;
+  engine: "gemini";
   heard: string;
   notice: string;
   error: string;
@@ -34,7 +32,7 @@ export interface HandsFreeState {
 }
 
 export interface HandsFreeCallbacks {
-  transcribe(mimeType: string, base64: string): Promise<string>;
+  transcribe(mimeType: string, base64: string, signal: AbortSignal): Promise<string>;
   fetchSpeech(jobId: string, part: number, signal: AbortSignal): Promise<Blob>;
   onQuestion(text: string): Promise<boolean>;
   onState(state: HandsFreeState): void;
@@ -53,40 +51,11 @@ export interface HandsFreeEngine {
   readonly state: HandsFreeState;
 }
 
-interface RecognitionAlternative {
-  transcript: string;
-}
-interface RecognitionResult {
-  readonly isFinal: boolean;
-  readonly length: number;
-  [index: number]: RecognitionAlternative;
-}
-interface RecognitionEvent {
-  readonly resultIndex: number;
-  readonly results: { readonly length: number; [index: number]: RecognitionResult };
-}
-interface Recognition {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onresult: ((event: RecognitionEvent) => void) | null;
-  onerror: ((event: { error: string }) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  abort(): void;
-}
-type RecognitionConstructor = new () => Recognition;
-
 const TARGET_RATE = 16000;
 const PRE_ROLL_MS = 450;
 const LISTEN_TIMEOUT_MS = 9000;
-const WAKE_GRACE_MS = 1600;
 const MAX_QUESTION_MS = 20000;
 const END_SILENCE_MS = 1100;
-// Speech shorter than this after the wake word means only "Halo AERO-BOT" was said.
-const WAKE_ONLY_MS = 1700;
-
 const workletSource = `
 class AerosenseMicTap extends AudioWorkletProcessor {
   constructor() { super(); this.buffer = new Float32Array(Math.round(sampleRate * 0.02)); this.size = 0; }
@@ -102,15 +71,6 @@ class AerosenseMicTap extends AudioWorkletProcessor {
 registerProcessor("aerosense-mic-tap", AerosenseMicTap);
 `;
 
-export function recognitionConstructor(): RecognitionConstructor | null {
-  if (typeof window === "undefined") return null;
-  const scope = window as unknown as {
-    SpeechRecognition?: RecognitionConstructor;
-    webkitSpeechRecognition?: RecognitionConstructor;
-  };
-  return scope.SpeechRecognition || scope.webkitSpeechRecognition || null;
-}
-
 export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeEngine {
   let state: HandsFreeState = {
     phase: "off",
@@ -125,27 +85,14 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   let stream: MediaStream | null = null;
   let context: AudioContext | null = null;
   let nodes: AudioNode[] = [];
-  let recognition: Recognition | null = null;
-  let recognitionWanted = false;
-  let recognitionFailures = 0;
+  let transcription: AbortController | null = null;
+  let lastWakeAttempt = -Infinity;
   const vad = createVad({ maxSpeechMs: MAX_QUESTION_MS, endSilenceMs: END_SILENCE_MS });
-  const wakeMatcher = createWakeMatcher();
   let preRoll: Float32Array[] = [];
   let preRollMs = 0;
   let segment: Float32Array[] | null = null;
   let segmentStartedAt = 0;
-  let segmentWake = false;
-  let pendingSegment: {
-    frames: Float32Array[];
-    rate: number;
-    duration: number;
-    startedAt: number;
-  } | null = null;
-  let pendingTimer: ReturnType<typeof setTimeout> | undefined;
-  let wakeLatched = false;
   let wakeAuthorized = false;
-  let browserRemainder = "";
-  let browserFinals: { at: number; text: string }[] = [];
   let ignoreUntil = 0;
   let listenTimer: ReturnType<typeof setTimeout> | undefined;
   let frameCount = 0;
@@ -163,9 +110,6 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
 
   function clearSegment() {
     segment = null;
-    segmentWake = false;
-    pendingSegment = null;
-    clearTimeout(pendingTimer);
     preRoll = [];
     preRollMs = 0;
     vad.reset();
@@ -175,10 +119,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearTimeout(listenTimer);
     clearInterval(thinkingTimer);
     clearSegment();
-    wakeLatched = false;
     wakeAuthorized = false;
-    wakeMatcher.reset();
-    browserRemainder = "";
     ignoreUntil = now() + 300;
     set({ phase: "waiting", notice, followUp: false });
   }
@@ -233,7 +174,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     const frameMs = (frame.length / context.sampleRate) * 1000;
     if (++frameCount % 5 === 0) set({ level: Math.min(1, level * 14) });
     if (state.phase !== "waiting" && state.phase !== "listening") return;
-    if (now() < ignoreUntil) return;
+    if (now() < ignoreUntil || transcription) return;
     if (segment) segment.push(frame);
     else pushPreRoll(frame, frameMs);
     const event = vad.push(level, frameMs);
@@ -242,59 +183,59 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       preRoll = [];
       preRollMs = 0;
       segmentStartedAt = now() - PRE_ROLL_MS;
-      segmentWake = wakeLatched;
       clearTimeout(listenTimer);
     } else if (event === "end" && segment) {
       const frames = segment;
       const duration = Math.max(0, now() - segmentStartedAt - PRE_ROLL_MS - END_SILENCE_MS);
-      const startedAt = segmentStartedAt;
-      const woke = segmentWake;
       segment = null;
-      segmentWake = false;
-      void handleSegment(frames, context.sampleRate, duration, startedAt, woke);
+      void handleSegment(frames, context.sampleRate, duration);
     }
   }
 
-  async function transcribeFrames(
-    frames: Float32Array[],
-    rate: number,
-    startedAt: number,
-  ): Promise<string> {
+  async function transcribeFrames(frames: Float32Array[], rate: number): Promise<string> {
     const wav = encodeWav(downsample(concatFrames(frames), rate, TARGET_RATE), TARGET_RATE);
+    const controller = new AbortController();
+    transcription = controller;
     try {
-      return (await callbacks.transcribe("audio/wav", toBase64(wav))).trim();
-    } catch (error) {
-      // Gemini busy or unreachable: use what the browser recognizer heard for the same moment.
-      const fallback = browserFinals
-        .filter((item) => item.at >= startedAt - 300)
-        .map((item) => item.text)
-        .join(" ")
-        .trim();
-      if (fallback) return fallback;
-      throw error;
+      return (await callbacks.transcribe("audio/wav", toBase64(wav), controller.signal)).trim();
+    } finally {
+      if (transcription === controller) transcription = null;
     }
   }
 
-  async function handleSegment(
-    frames: Float32Array[],
-    rate: number,
-    duration: number,
-    startedAt: number,
-    woke: boolean,
-  ) {
+  async function handleSegment(frames: Float32Array[], rate: number, duration: number) {
     if (duration < 200) return; // clicks and short noises
     const token = run;
-    if (woke && wakeAuthorized) return processWakeSegment(frames, rate, duration, startedAt);
     if (state.phase === "waiting") {
-      if (state.engine === "browser") {
-        if (woke) return processWakeSegment(frames, rate, duration, startedAt);
-        // Browser results can arrive slightly after silence. Keep the segment briefly.
-        pendingSegment = { frames, rate, duration, startedAt };
-        clearTimeout(pendingTimer);
-        pendingTimer = setTimeout(() => {
-          pendingSegment = null;
-        }, WAKE_GRACE_MS);
-        return;
+      if (transcription || now() - lastWakeAttempt < 2500) return;
+      lastWakeAttempt = now();
+      set({ notice: "Memeriksa panggilan…", error: "" });
+      try {
+        const text = await transcribeFrames(frames, rate);
+        if (token !== run || state.phase !== "waiting") return;
+        const wake = detectWakePhrase(text, true);
+        if (!wake.matched) {
+          set({ notice: "Awali dengan Halo AERO-BOT, lalu sampaikan pertanyaan." });
+          return;
+        }
+        wakeAuthorized = true;
+        set({ heard: text, error: "" });
+        if (hasQuestion(wake.remainder)) return ask(wake.remainder);
+        earcon("wake");
+        enterListening(
+          LISTEN_TIMEOUT_MS,
+          false,
+          "Panggilan dikenali. Silakan sampaikan pertanyaan.",
+        );
+      } catch (error) {
+        if (token === run)
+          set({
+            notice: "",
+            error:
+              error instanceof Error
+                ? error.message
+                : "Panggilan belum dapat dikenali. Silakan ulangi.",
+          });
       }
       return;
     }
@@ -302,7 +243,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       set({ phase: "transcribing", notice: "" });
       let text = "";
       try {
-        text = await transcribeFrames(frames, rate, startedAt);
+        text = await transcribeFrames(frames, rate);
       } catch (error) {
         if (token !== run) return;
         const message = error instanceof Error ? error.message : "Suara belum terbaca.";
@@ -330,38 +271,6 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       }
       return ask(question);
     }
-  }
-
-  async function processWakeSegment(
-    frames: Float32Array[],
-    rate: number,
-    duration: number,
-    startedAt: number,
-  ) {
-    const token = run;
-    // Only "Halo AERO-BOT" was said: skip a transcription call and listen for the question.
-    if (!hasQuestion(browserRemainder) && duration < WAKE_ONLY_MS) {
-      earcon("wake");
-      enterListening(LISTEN_TIMEOUT_MS, false);
-      return;
-    }
-    set({ phase: "transcribing", notice: "" });
-    let text = "";
-    try {
-      text = await transcribeFrames(frames, rate, startedAt);
-    } catch {
-      text = "";
-    }
-    if (token !== run) return;
-    const wake = detectWakePhrase(text, true);
-    const question = wake.matched
-      ? wake.remainder
-      : hasQuestion(browserRemainder)
-        ? browserRemainder
-        : text;
-    if (hasQuestion(question)) return ask(question);
-    earcon("wake");
-    enterListening(LISTEN_TIMEOUT_MS, false);
   }
 
   async function ask(question: string) {
@@ -393,121 +302,6 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     if (!sent) {
       await say("Pertanyaan belum terkirim. Silakan coba lagi.");
       if (token === run) enterWaiting();
-    }
-  }
-
-  function onBrowserWake(remainder: string) {
-    wakeAuthorized = true;
-    browserRemainder = remainder;
-    if (wakeLatched) return;
-    wakeLatched = true;
-    set({ heard: "Halo AERO-BOT", notice: "Panggilan dikenali. Silakan sampaikan pertanyaan." });
-    if (segment) {
-      segmentWake = true;
-      set({ phase: "listening" });
-      return;
-    }
-    if (pendingSegment) {
-      const pending = pendingSegment;
-      pendingSegment = null;
-      clearTimeout(pendingTimer);
-      void processWakeSegment(pending.frames, pending.rate, pending.duration, pending.startedAt);
-      return;
-    }
-    earcon("wake");
-    enterListening(LISTEN_TIMEOUT_MS, false);
-  }
-
-  function startRecognition() {
-    const Constructor = recognitionConstructor();
-    if (!Constructor) {
-      throw new Error("Gunakan Chrome atau Edge untuk mengenali panggilan Halo AERO-BOT.");
-    }
-    const token = run;
-    const instance = new Constructor();
-    instance.lang = "id-ID";
-    instance.continuous = true;
-    instance.interimResults = true;
-    instance.maxAlternatives = 3;
-    instance.onresult = (event) => {
-      if (token !== run) return;
-      recognitionFailures = 0;
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal && result[0]?.transcript) {
-          browserFinals.push({ at: now(), text: result[0].transcript });
-          browserFinals = browserFinals.filter((item) => now() - item.at < 30000);
-        }
-        if (state.phase !== "waiting" && !(wakeLatched && state.phase === "listening")) continue;
-        for (let alt = 0; alt < result.length; alt++) {
-          const wake = wakeMatcher.push(result[alt].transcript, false, now());
-          if (wake.matched) {
-            if (result.isFinal && hasQuestion(wake.remainder)) {
-              wakeAuthorized = true;
-              clearSegment();
-              void ask(wake.remainder);
-            } else onBrowserWake(wake.remainder);
-            break;
-          }
-          if (
-            alt === 0 &&
-            result.isFinal &&
-            state.phase === "listening" &&
-            wakeAuthorized &&
-            hasQuestion(result[0].transcript)
-          ) {
-            clearSegment();
-            void ask(result[0].transcript);
-            break;
-          }
-        }
-        if (result.isFinal && state.phase === "waiting")
-          wakeMatcher.push(result[0].transcript, true, now());
-      }
-    };
-    instance.onerror = (event) => {
-      if (token !== run) return;
-      if (["not-allowed", "service-not-allowed", "language-not-supported"].includes(event.error))
-        recognitionFailures = 99;
-      else if (event.error === "network" || event.error === "audio-capture") {
-        recognitionFailures++;
-        set({
-          notice:
-            event.error === "network"
-              ? "Pengenal panggilan belum tersambung. Periksa koneksi atau coba Chrome/Edge."
-              : "Pengenal panggilan belum menerima mikrofon. Periksa perangkat input.",
-        });
-      }
-      if (recognitionFailures >= 3) {
-        stop();
-        set({
-          error:
-            "Pengenal panggilan terputus. Aktifkan kembali mode suara; percakapan tanpa panggilan tidak dikirim.",
-        });
-      }
-    };
-    instance.onend = () => {
-      if (token !== run || !recognitionWanted) return;
-      setTimeout(
-        () => {
-          if (token !== run || !recognitionWanted) return;
-          try {
-            instance.start();
-          } catch {
-            /* already started */
-          }
-        },
-        recognitionFailures ? 1200 * recognitionFailures : 250,
-      );
-    };
-    recognition = instance;
-    recognitionWanted = true;
-    set({ engine: "browser" });
-    try {
-      instance.start();
-    } catch {
-      stop();
-      set({ error: "Pengenal panggilan belum dapat dimulai. Gunakan Chrome atau Edge." });
     }
   }
 
@@ -550,6 +344,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   async function start() {
     if (state.phase !== "off") return;
     const token = ++run;
+    lastWakeAttempt = -Infinity;
     set({ phase: "starting", error: "", notice: "", heard: "" });
     try {
       const media = await navigator.mediaDevices.getUserMedia({
@@ -597,8 +392,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   }
 
   function goLive() {
-    if (!recognition) startRecognition();
-    if (state.phase !== "off") enterWaiting();
+    set({ engine: "gemini" });
+    enterWaiting();
   }
 
   async function resume() {
@@ -716,14 +511,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   function stop() {
     ++run;
     clearInterval(thinkingTimer);
-    recognitionWanted = false;
-    try {
-      recognition?.abort();
-    } catch {
-      /* ignore */
-    }
-    recognition = null;
-    recognitionFailures = 0;
+    transcription?.abort();
+    transcription = null;
     clearTimeout(listenTimer);
     clearSegment();
     releaseSpeech();
@@ -739,7 +528,6 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     stream = null;
     void context?.close().catch(() => undefined);
     context = null;
-    browserFinals = [];
     set({ phase: "off", level: 0, notice: "", followUp: false });
   }
 

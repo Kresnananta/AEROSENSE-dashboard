@@ -8,10 +8,14 @@ import {
 } from "@/lib/handsfree-engine";
 
 const PREFERENCE_KEY = "aerosense.handsfree";
+const PROVIDER_KEY = "aerosense.handsfree.provider";
 
 function readPreference() {
   try {
-    return localStorage.getItem(PREFERENCE_KEY) === "on";
+    return (
+      localStorage.getItem(PREFERENCE_KEY) === "on" &&
+      localStorage.getItem(PROVIDER_KEY) === "gemini"
+    );
   } catch {
     return false;
   }
@@ -19,6 +23,7 @@ function readPreference() {
 function writePreference(on: boolean) {
   try {
     localStorage.setItem(PREFERENCE_KEY, on ? "on" : "off");
+    if (on) localStorage.setItem(PROVIDER_KEY, "gemini");
   } catch {
     /* private mode */
   }
@@ -74,11 +79,11 @@ export function useHandsFreeVoice(options: {
           "blob",
         ),
       onQuestion: (text) => onQuestion.current(text),
-      async transcribe(mimeType, base64) {
+      async transcribe(mimeType, base64, signal) {
         const result = await apiRequest<{ text: string }>("/v1/voice/transcribe", {
           method: "POST",
           body: JSON.stringify({ mime_type: mimeType, audio_base64: base64 }),
-          signal: AbortSignal.timeout(60000),
+          signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
         });
         return result.text;
       },

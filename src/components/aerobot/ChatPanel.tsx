@@ -23,7 +23,7 @@ interface Message {
 }
 const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   off: ["Mode suara mati", "Aktifkan untuk bertanya tanpa menekan tombol."],
-  starting: ["Menyiapkan mikrofon…", "Izinkan mikrofon jika browser meminta."],
+  starting: ["Menyiapkan mode suara…", "Izinkan mikrofon jika browser meminta."],
   blocked: [
     "Ketuk layar atau tekan tombol apa saja",
     "Browser perlu satu sentuhan untuk menyalakan suara.",
@@ -436,6 +436,12 @@ export function ChatPanel() {
         )}
         {user && voice.configured && handsFree.supported && (
           <div className={`handsfree-card is-${handsFree.phase}`}>
+            {!handsFree.active && (
+              <p className="chat-note">
+                Mode suara mengirim potongan ucapan ke Gemini untuk mengenali “Halo AERO-BOT”. Hanya
+                pertanyaan setelah panggilan yang diproses sebagai chat.
+              </p>
+            )}
             <button
               className="handsfree-toggle"
               type="button"
@@ -498,9 +504,9 @@ export function ChatPanel() {
               <details className="chat-voice-privacy">
                 <summary>Privasi mikrofon</summary>
                 <p>
-                  Mikrofon aktif selama mode suara menyala. Panggilan dikenali oleh layanan suara
-                  browser. Pertanyaan diproses setelah “Halo AERO-BOT”; rekaman tidak disimpan
-                  AEROSENSE.
+                  Mikrofon aktif selama mode suara menyala. Potongan ucapan, termasuk sebelum
+                  panggilan, dikirim ke Gemini untuk transkripsi. Chat hanya memproses pertanyaan
+                  setelah “Halo AERO-BOT”. Rekaman tidak disimpan AEROSENSE.
                 </p>
               </details>
             )}
