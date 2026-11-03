@@ -2,6 +2,7 @@
 // logic can be unit tested with Node.
 
 const WAKE_TARGET = "aerobot";
+const WAKE_GREETINGS = new Set(["halo", "hallo", "helo", "hello"]);
 const GREETINGS = new Set([
   "halo",
   "hallo",
@@ -76,9 +77,10 @@ export interface WakeMatch {
 // "halo robot". Without a greeting the name must be closer (distance <= 1) to avoid false wakes.
 export function detectWakePhrase(text: string, requireGreeting = false): WakeMatch {
   const list = tokens(text);
+  let nameStart = 1;
+  while (nameStart < list.length && WAKE_GREETINGS.has(list[nameStart].norm)) nameStart++;
   for (let i = 0; i < list.length; i++) {
-    if (requireGreeting && (i !== 1 || !["halo", "hallo", "helo", "hello"].includes(list[0].norm)))
-      continue;
+    if (requireGreeting && (i !== nameStart || !WAKE_GREETINGS.has(list[0].norm))) continue;
     const greeted = i > 0 && GREETINGS.has(list[i - 1].norm);
     let joined = "";
     for (let span = 0; span < 3 && i + span < list.length; span++) {
@@ -98,6 +100,43 @@ export function detectWakePhrase(text: string, requireGreeting = false): WakeMat
     }
   }
   return { matched: false, remainder: text.trim() };
+}
+
+export function createWakeMatcher() {
+  let prefix = "",
+    expires = 0;
+  return {
+    reset() {
+      prefix = "";
+      expires = 0;
+    },
+    push(text: string, final: boolean, now: number): WakeMatch {
+      const direct = detectWakePhrase(text, true);
+      if (direct.matched) {
+        prefix = "";
+        return direct;
+      }
+      const joined = prefix && now < expires ? prefix + " " + text : text;
+      const match = detectWakePhrase(joined, true);
+      if (match.matched) {
+        prefix = "";
+        return match;
+      }
+      if (final) {
+        const words = tokens(joined);
+        const partial = words
+          .slice(1)
+          .map((word) => word.norm)
+          .join("");
+        const valid =
+          WAKE_GREETINGS.has(words[0]?.norm) &&
+          [WAKE_TARGET, ...ALIASES].some((name) => name.startsWith(partial));
+        prefix = valid && words.length <= 3 ? joined : "";
+        expires = now + 2500;
+      }
+      return { matched: false, remainder: text.trim() };
+    },
+  };
 }
 
 export function hasQuestion(text: string): boolean {

@@ -498,11 +498,9 @@ export function ChatPanel() {
               <details className="chat-voice-privacy">
                 <summary>Privasi mikrofon</summary>
                 <p>
-                  Mikrofon aktif selama mode suara menyala.{" "}
-                  {handsFree.engine === "browser"
-                    ? "Rekaman pertanyaan dikirim untuk diproses AERO-BOT."
-                    : "Ucapan dikirim untuk mengenali panggilan dan pertanyaan."}{" "}
-                  Rekaman tidak disimpan AEROSENSE.
+                  Mikrofon aktif selama mode suara menyala. Panggilan dikenali oleh layanan suara
+                  browser. Pertanyaan diproses setelah “Halo AERO-BOT”; rekaman tidak disimpan
+                  AEROSENSE.
                 </p>
               </details>
             )}

@@ -3,6 +3,7 @@ import {
   answerChunks,
   concatFrames,
   createVad,
+  createWakeMatcher,
   detectWakePhrase,
   downsample,
   encodeWav,
@@ -128,6 +129,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   let recognitionWanted = false;
   let recognitionFailures = 0;
   const vad = createVad({ maxSpeechMs: MAX_QUESTION_MS, endSilenceMs: END_SILENCE_MS });
+  const wakeMatcher = createWakeMatcher();
   let preRoll: Float32Array[] = [];
   let preRollMs = 0;
   let segment: Float32Array[] | null = null;
@@ -175,6 +177,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearSegment();
     wakeLatched = false;
     wakeAuthorized = false;
+    wakeMatcher.reset();
     browserRemainder = "";
     ignoreUntil = now() + 300;
     set({ phase: "waiting", notice, followUp: false });
@@ -281,6 +284,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   ) {
     if (duration < 200) return; // clicks and short noises
     const token = run;
+    if (woke && wakeAuthorized) return processWakeSegment(frames, rate, duration, startedAt);
     if (state.phase === "waiting") {
       if (state.engine === "browser") {
         if (woke) return processWakeSegment(frames, rate, duration, startedAt);
@@ -397,8 +401,10 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     browserRemainder = remainder;
     if (wakeLatched) return;
     wakeLatched = true;
+    set({ heard: "Halo AERO-BOT", notice: "Panggilan dikenali. Silakan sampaikan pertanyaan." });
     if (segment) {
       segmentWake = true;
+      set({ phase: "listening" });
       return;
     }
     if (pendingSegment) {
@@ -434,19 +440,44 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
         }
         if (state.phase !== "waiting" && !(wakeLatched && state.phase === "listening")) continue;
         for (let alt = 0; alt < result.length; alt++) {
-          const wake = detectWakePhrase(result[alt].transcript, true);
+          const wake = wakeMatcher.push(result[alt].transcript, false, now());
           if (wake.matched) {
-            onBrowserWake(wake.remainder);
+            if (result.isFinal && hasQuestion(wake.remainder)) {
+              wakeAuthorized = true;
+              clearSegment();
+              void ask(wake.remainder);
+            } else onBrowserWake(wake.remainder);
+            break;
+          }
+          if (
+            alt === 0 &&
+            result.isFinal &&
+            state.phase === "listening" &&
+            wakeAuthorized &&
+            hasQuestion(result[0].transcript)
+          ) {
+            clearSegment();
+            void ask(result[0].transcript);
             break;
           }
         }
+        if (result.isFinal && state.phase === "waiting")
+          wakeMatcher.push(result[0].transcript, true, now());
       }
     };
     instance.onerror = (event) => {
       if (token !== run) return;
       if (["not-allowed", "service-not-allowed", "language-not-supported"].includes(event.error))
         recognitionFailures = 99;
-      else if (event.error === "network" || event.error === "audio-capture") recognitionFailures++;
+      else if (event.error === "network" || event.error === "audio-capture") {
+        recognitionFailures++;
+        set({
+          notice:
+            event.error === "network"
+              ? "Pengenal panggilan belum tersambung. Periksa koneksi atau coba Chrome/Edge."
+              : "Pengenal panggilan belum menerima mikrofon. Periksa perangkat input.",
+        });
+      }
       if (recognitionFailures >= 3) {
         stop();
         set({

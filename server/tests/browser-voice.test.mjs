@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { browserVoiceRoutes } from "../api/browser-voice.mjs";
-import { detectWakePhrase } from "../../src/lib/handsfree.ts";
+import { createWakeMatcher, detectWakePhrase } from "../../src/lib/handsfree.ts";
 
 test("strict wake requires Halo AERO-BOT at the start of every voice question", () => {
   for (const text of [
@@ -16,6 +16,27 @@ test("strict wake requires Halo AERO-BOT at the start of every voice question", 
     remainder: "bagaimana udara?",
   });
   assert.equal(detectWakePhrase("halo aero bot bagaimana udara?", true).matched, true);
+  assert.equal(detectWakePhrase("Halo, halo AERO-BOT bagaimana udara?", true).matched, true);
+});
+
+test("wake matcher joins short speech-recognition fragments and expires without uploading ambient speech", () => {
+  const matcher = createWakeMatcher();
+  assert.equal(matcher.push("halo", true, 0).matched, false);
+  assert.deepEqual(matcher.push("aero bot bagaimana udara?", true, 500), {
+    matched: true,
+    remainder: "bagaimana udara?",
+  });
+  matcher.reset();
+  matcher.push("halo", true, 0);
+  matcher.push("aero", true, 500);
+  assert.equal(matcher.push("bot", true, 900).matched, true);
+  matcher.reset();
+  matcher.push("halo", true, 0);
+  assert.equal(matcher.push("aerobot", true, 3000).matched, false);
+  matcher.reset();
+  matcher.push("percakapan biasa", true, 0);
+  assert.equal(matcher.push("aerobot bagaimana udara?", true, 500).matched, false);
+  assert.equal(matcher.push("halo robot", true, 700).matched, false);
 });
 
 test("browser voice requires auth and owned replies, validates recordings, and never stores audio", async () => {
