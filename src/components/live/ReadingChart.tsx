@@ -31,7 +31,7 @@ export default function ReadingChart({
           <Tooltip />
           {!simple && <Legend />}
           <Line
-            name={simple ? "Nilai terkoreksi" : "Pembacaan"}
+            name="Pembacaan sensor"
             dataKey="reading"
             stroke="#086cfb"
             dot={false}
@@ -50,7 +50,7 @@ export default function ReadingChart({
           )}
           {!simple && (
             <Line
-              name="GRU (horizon 0)"
+              name="Estimasi GRU (waktu pembacaan)"
               dataKey="gru"
               stroke="#168466"
               dot={false}

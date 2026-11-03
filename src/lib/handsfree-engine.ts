@@ -87,6 +87,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   let nodes: AudioNode[] = [];
   let transcription: AbortController | null = null;
   let lastWakeAttempt = -Infinity;
+  let queuedSpeech: { frames: Float32Array[]; rate: number; duration: number } | null = null;
+  let queuedTimer: ReturnType<typeof setTimeout> | undefined;
   const vad = createVad({ maxSpeechMs: MAX_QUESTION_MS, endSilenceMs: END_SILENCE_MS });
   let preRoll: Float32Array[] = [];
   let preRollMs = 0;
@@ -119,6 +121,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearTimeout(listenTimer);
     clearInterval(thinkingTimer);
     clearSegment();
+    queuedSpeech = null;
+    clearTimeout(queuedTimer);
     wakeAuthorized = false;
     ignoreUntil = now() + 300;
     set({ phase: "waiting", notice, followUp: false });
@@ -174,7 +178,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     const frameMs = (frame.length / context.sampleRate) * 1000;
     if (++frameCount % 5 === 0) set({ level: Math.min(1, level * 14) });
     if (state.phase !== "waiting" && state.phase !== "listening") return;
-    if (now() < ignoreUntil || transcription) return;
+    if (now() < ignoreUntil) return;
     if (segment) segment.push(frame);
     else pushPreRoll(frame, frameMs);
     const event = vad.push(level, frameMs);
@@ -206,8 +210,12 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   async function handleSegment(frames: Float32Array[], rate: number, duration: number) {
     if (duration < 200) return; // clicks and short noises
     const token = run;
+    if (transcription || (state.phase === "waiting" && now() - lastWakeAttempt < 2500)) {
+      queuedSpeech = { frames, rate, duration };
+      drainSpeech();
+      return;
+    }
     if (state.phase === "waiting") {
-      if (transcription || now() - lastWakeAttempt < 2500) return;
       lastWakeAttempt = now();
       set({ notice: "Memeriksa panggilan…", error: "" });
       try {
@@ -236,6 +244,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
                 ? error.message
                 : "Panggilan belum dapat dikenali. Silakan ulangi.",
           });
+      } finally {
+        if (token === run) drainSpeech();
       }
       return;
     }
@@ -273,12 +283,32 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     }
   }
 
+  function drainSpeech() {
+    clearTimeout(queuedTimer);
+    if (!queuedSpeech || transcription) return;
+    if (state.phase !== "waiting" && state.phase !== "listening") {
+      queuedSpeech = null;
+      return;
+    }
+    const delay = state.phase === "waiting" ? Math.max(0, 2500 - (now() - lastWakeAttempt)) : 0;
+    if (delay > 0) {
+      queuedTimer = setTimeout(drainSpeech, delay);
+      return;
+    }
+    const speech = queuedSpeech;
+    queuedSpeech = null;
+    void handleSegment(speech.frames, speech.rate, speech.duration);
+  }
+
   async function ask(question: string) {
     if (!wakeAuthorized) {
       enterWaiting();
       return;
     }
     wakeAuthorized = false;
+    queuedSpeech = null;
+    clearTimeout(queuedTimer);
+    clearSegment();
     const token = run;
     clearTimeout(listenTimer);
     set({ phase: "thinking", heard: question, error: "", notice: "" });
@@ -513,6 +543,8 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearInterval(thinkingTimer);
     transcription?.abort();
     transcription = null;
+    queuedSpeech = null;
+    clearTimeout(queuedTimer);
     clearTimeout(listenTimer);
     clearSegment();
     releaseSpeech();

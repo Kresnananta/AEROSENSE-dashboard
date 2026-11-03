@@ -1,4 +1,5 @@
 import { dateLabel, metricLabels, type LiveNode, type Reading } from "../types/live.types.ts";
+import { gruEstimates } from "./gru.ts";
 
 type Cell = string | number | boolean | null | undefined;
 
@@ -35,6 +36,12 @@ export function readingsCsv(node: LiveNode, readings: Reading[], includeModel = 
       "Horizon model (detik)",
       "Versi model",
       "Hash data mentah",
+      "Tugas model",
+      "Mode model",
+      ...keys.map((k) => "Estimasi GRU — " + metricLabels[k].join(" (") + ")"),
+      ...keys.map((k) => "Skor gangguan — " + metricLabels[k][0]),
+      ...keys.map((k) => "Ambang skor gangguan — " + metricLabels[k][0]),
+      "Parameter perlu diperiksa",
     );
   return csvDocument([
     headers,
@@ -61,6 +68,14 @@ export function readingsCsv(node: LiveNode, readings: Reading[], includeModel = 
           r.gru?.horizon_seconds,
           r.gru?.model_version,
           r.raw_sha256,
+          r.gru?.task,
+          r.gru?.mode,
+          ...keys.map((k) =>
+            k === "pm25_ug_m3" && !node.pm25_validated ? null : gruEstimates(r.gru)[k],
+          ),
+          ...keys.map((k) => r.gru?.fault_scores?.[k]),
+          ...keys.map((k) => r.gru?.thresholds?.[k]),
+          r.gru?.suspect?.map((k) => metricLabels[k]?.[0] || k).join("; "),
         );
       return row;
     }),

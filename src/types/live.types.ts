@@ -1,3 +1,17 @@
+export interface GruResult {
+  model_version: string;
+  horizon_seconds: number;
+  target?: string;
+  value?: number;
+  task?: string;
+  mode?: string;
+  estimates?: Record<string, number>;
+  fault_scores?: Record<string, number>;
+  thresholds?: Record<string, number>;
+  suspect?: string[];
+  processed_at?: string;
+}
+
 export interface SensorContext {
   node_id: string;
   name: string;
@@ -5,12 +19,7 @@ export interface SensorContext {
   observed_at: string | null;
   received_at: string | null;
   metrics: Record<string, number | null>;
-  gru: {
-    target: string;
-    value: number;
-    model_version: string;
-    horizon_seconds: number;
-  } | null;
+  gru: GruResult | null;
   quality: Record<string, unknown>;
   stale: boolean;
   pm25_validated: boolean;

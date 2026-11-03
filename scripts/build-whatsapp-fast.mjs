@@ -15,6 +15,18 @@ model.parameters.modelId = {
 };
 model.retryOnFail = false;
 model.parameters.options = { ...model.parameters.options, maxOutputTokens: 512 };
+model.parameters.options.systemMessage = fs.readFileSync(
+  new URL("../n8n/chat-system-prompt.txt", import.meta.url),
+  "utf8",
+);
+model.parameters.messages.values[0].content =
+  "=" + fs.readFileSync(new URL("../n8n/chat-model-input.txt", import.meta.url), "utf8").trim();
+const validator = workflow.nodes.find((n) => n.name === "Validasi jawaban WhatsApp");
+if (!validator) throw new Error("WhatsApp answer validator missing");
+validator.parameters.jsCode = fs
+  .readFileSync(new URL("../n8n/chat-answer-validation.js", import.meta.url), "utf8")
+  .replaceAll("konteks hub Web", "konteks hub WhatsApp")
+  .replaceAll("Periksa input Web", "Periksa input WhatsApp");
 scope.parameters.query = fs.readFileSync(
   new URL("../n8n/whatsapp-conversation.sql", import.meta.url),
   "utf8",

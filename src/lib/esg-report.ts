@@ -1,3 +1,6 @@
+import type { GruResult } from "../types/live.types.ts";
+import { gruEstimates } from "./gru.ts";
+
 // Structured ambient-monitoring report used by both the JSON and the PDF export,
 // so an auditor can match the two files line by line. Pure functions: no DOM.
 
@@ -23,7 +26,7 @@ export interface ReportReading {
   id: string;
   observed_at: string;
   metrics: Record<string, number | null>;
-  gru: { target: string; value: number; model_version: string; horizon_seconds: number } | null;
+  gru: GruResult | null;
   quality?: {
     invalid?: boolean;
     clock_source?: string;
@@ -248,7 +251,7 @@ export function buildReport(input: {
     },
     model: {
       version: gru?.model_version || null,
-      target: gru?.target || null,
+      target: Object.keys(gruEstimates(gru)).join(", ") || null,
       estimates: readings.filter((r) => r.gru).length,
     },
     scope: input.scope,

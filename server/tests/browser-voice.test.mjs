@@ -143,19 +143,46 @@ test("transcription retries Gemini high-demand errors and falls back to the next
   };
   const result = await transcribeWithFallback(gemini, env, "audio/wav", "AAAA", { delays: [1, 1] });
   assert.equal(result.steps[0].content[0].text, "Halo");
-  assert.deepEqual(calls, [
-    "busy-model",
-    "busy-model",
-    "busy-model",
-    "missing-model",
-    "spare-model",
-  ]);
+  assert.deepEqual(calls, ["busy-model", "missing-model", "spare-model"]);
   const denied = async () => {
     throw Object.assign(Error("Upstream HTTP 403"), { status: 403 });
   };
   await assert.rejects(transcribeWithFallback(denied, env, "audio/wav", "AAAA", { delays: [1] }), {
     status: 403,
   });
+});
+
+test("transcription aborts a hanging model before using its fallback", async () => {
+  const { transcribeWithFallback } = await import("../api/browser-voice.mjs");
+  const models = [],
+    signals = [];
+  const gemini = async (_prompt, _audio, options) => {
+    models.push(options.model);
+    signals.push(options.signal);
+    if (options.model === "spare") return { steps: [] };
+    return new Promise((_resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("Upstream did not abort")), 1000);
+      options.signal.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          reject(options.signal.reason);
+        },
+        { once: true },
+      );
+    });
+  };
+  const began = Date.now();
+  await transcribeWithFallback(
+    gemini,
+    { GEMINI_TRANSCRIBE_MODEL: "slow", GEMINI_TRANSCRIBE_FALLBACK_MODELS: "spare" },
+    "audio/wav",
+    "AAAA",
+    { attemptMs: 10, deadlineMs: 100 },
+  );
+  assert.deepEqual(models, ["slow", "spare"]);
+  assert.equal(signals[0].aborted, true);
+  assert.ok(Date.now() - began < 500);
 });
 
 test("hands-free wake phrase, voice activity and WAV helpers", async (t) => {

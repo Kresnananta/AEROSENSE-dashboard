@@ -87,9 +87,9 @@ function microphone() {
     silence() {
       feed(0, 200);
     },
-    async utterance() {
+    async utterance(level = 0.12) {
       time += 3000;
-      feed(0.12, 60);
+      feed(level, 60);
       feed(0, 65);
       await new Promise(setImmediate);
     },
@@ -161,6 +161,50 @@ test("Gemini wake accepts audio, ignores silence, and requires a fresh call for 
   } finally {
     engine.stop();
     assert.equal(mic.stopped, 1);
+    mic.restore();
+  }
+});
+
+test("the latest utterance is kept while a previous wake transcription is pending", async () => {
+  const mic = microphone(),
+    questions = [];
+  let calls = 0,
+    finishFirst,
+    queuedPeak;
+  const engine = createHandsFreeEngine({
+    async transcribe(_type, base64) {
+      if (++calls === 1)
+        return new Promise((resolve) => {
+          finishFirst = resolve;
+        });
+      const wav = Buffer.from(base64, "base64");
+      queuedPeak = 0;
+      for (let i = 44; i < wav.length; i += 2)
+        queuedPeak = Math.max(queuedPeak, Math.abs(wav.readInt16LE(i)) / 32767);
+      return "Halo AERO-BOT bagaimana udara?";
+    },
+    async fetchSpeech() {
+      throw new Error("Unexpected TTS call");
+    },
+    async onQuestion(text) {
+      questions.push(text);
+      return true;
+    },
+    onState() {},
+  });
+  try {
+    await engine.start();
+    await mic.utterance();
+    await mic.utterance(0.2);
+    await mic.utterance(0.3);
+    assert.equal(calls, 1);
+    finishFirst("Percakapan sekitar.");
+    await new Promise(setImmediate);
+    assert.equal(calls, 2);
+    assert.ok(Math.abs(queuedPeak - 0.3) < 0.001);
+    assert.deepEqual(questions, ["bagaimana udara?"]);
+  } finally {
+    engine.stop();
     mic.restore();
   }
 });

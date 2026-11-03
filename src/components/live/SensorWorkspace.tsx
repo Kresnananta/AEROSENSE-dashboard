@@ -22,6 +22,7 @@ import { api } from "@/services/api";
 import { MonitoringScope } from "./MonitoringScope";
 import { EsgReportPanel } from "./EsgReportPanel";
 import { downloadCsv, readingsCsv } from "@/lib/csv-export";
+import { gruChartValue, gruEstimates } from "@/lib/gru";
 
 export function SensorWorkspace({
   mode = "overview",
@@ -61,6 +62,12 @@ export function SensorWorkspace({
     nodes.find(
       (n) => n.id === (id || selected || (mode === "map" ? mapParams.get("node_id") : null)),
     ) || (!id ? nodes[0] : undefined);
+  useEffect(() => {
+    const available = Object.keys(metricLabels).find(
+      (key) => typeof node?.latest?.metrics[key] === "number",
+    );
+    setMetric(available || "dust_ug_m3");
+  }, [node?.id, !!node?.latest?.reading_id]);
   const nodeQuery = node ? "?node_id=" + encodeURIComponent(node.id) : "";
   const history = useLiveData<{ readings: Reading[]; detail?: "simple" | "model" }>(
     node && ["analytics", "detail", "report"].includes(mode)
@@ -112,7 +119,7 @@ export function SensorWorkspace({
     time: dateLabel(r.observed_at),
     reading: r.metrics[metric] ?? null,
     raw: r.raw_metrics?.[metric] ?? null,
-    gru: r.gru?.target === metric && r.gru.horizon_seconds === 0 ? r.gru.value : null,
+    gru: gruChartValue(r.gru, metric),
   }));
   function exportReadings() {
     const blob = new Blob(
@@ -488,8 +495,8 @@ export function SensorWorkspace({
                       <h2>{modelView ? "Historis pembacaan & model" : "Riwayat 24 jam"}</h2>
                       <p>
                         {modelView
-                          ? "Nilai terkoreksi, input mentah, dan estimasi GRU."
-                          : "Nilai sudah dikoreksi otomatis untuk pengaruh suhu dan kelembapan."}
+                          ? "Pembacaan sensor, input mentah, dan estimasi GRU ditampilkan terpisah."
+                          : "Riwayat pembacaan sensor pada lokasi terpilih."}
                       </p>
                     </div>
                     {modelView && (
@@ -551,28 +558,83 @@ export function SensorWorkspace({
                     </>
                   )}
                   {!modelView ? null : node.latest?.gru ? (
-                    <dl className="model-details">
-                      <div>
-                        <dt>Model</dt>
-                        <dd>{node.latest.gru.model_version}</dd>
+                    <>
+                      <dl className="model-details">
+                        <div>
+                          <dt>Model</dt>
+                          <dd>{node.latest.gru.model_version}</dd>
+                        </div>
+                        <div>
+                          <dt>Tugas</dt>
+                          <dd>
+                            {node.latest.gru.task === "fault_detection"
+                              ? "Pemeriksaan gangguan sensor"
+                              : "Estimasi parameter"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Mode</dt>
+                          <dd>
+                            {node.latest.gru.mode === "shadow"
+                              ? "Pembanding · tidak mengganti pembacaan"
+                              : node.latest.gru.mode || "Estimasi terpisah"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Horizon</dt>
+                          <dd>{node.latest.gru.horizon_seconds} detik</dd>
+                        </div>
+                      </dl>
+                      <div className="live-table-wrap">
+                        <table className="live-table">
+                          <thead>
+                            <tr>
+                              <th>Parameter</th>
+                              <th>Pembacaan sensor</th>
+                              <th>Estimasi GRU</th>
+                              <th>Skor gangguan</th>
+                              <th>Ambang skor</th>
+                              <th>Pemeriksaan</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(gruEstimates(node.latest.gru))
+                              .filter(([key]) => key !== "pm25_ug_m3" || node.pm25_validated)
+                              .map(([key, value]) => {
+                                const g = node.latest!.gru!;
+                                const fmt = (v: number | null | undefined) =>
+                                  typeof v === "number" && Number.isFinite(v)
+                                    ? v.toLocaleString("id-ID", { maximumFractionDigits: 3 })
+                                    : "—";
+                                return (
+                                  <tr key={key}>
+                                    <td>{metricLabels[key]?.[0] || key}</td>
+                                    <td>
+                                      {fmt(node.latest!.metrics[key])} {metricLabels[key]?.[1]}
+                                    </td>
+                                    <td>
+                                      {fmt(value)} {metricLabels[key]?.[1]}
+                                    </td>
+                                    <td>{fmt(g.fault_scores?.[key])}</td>
+                                    <td>{fmt(g.thresholds?.[key])}</td>
+                                    <td>
+                                      {g.task === "fault_detection"
+                                        ? g.suspect?.includes(key)
+                                          ? "Perlu diperiksa"
+                                          : "Tidak ditandai"
+                                        : "—"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
                       </div>
-                      <div>
-                        <dt>Target</dt>
-                        <dd>
-                          {metricLabels[node.latest.gru.target]?.[0] || node.latest.gru.target}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Estimasi</dt>
-                        <dd>
-                          {node.latest.gru.value} {metricLabels[node.latest.gru.target]?.[1]}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>Horizon</dt>
-                        <dd>{node.latest.gru.horizon_seconds} detik</dd>
-                      </div>
-                    </dl>
+                      <p className="hub-footnote">
+                        Estimasi dan skor gangguan model bukan ambang kualitas udara.{" "}
+                        {dateLabel(node.latest.gru.processed_at)}
+                      </p>
+                    </>
                   ) : (
                     <p className="live-notice">Belum ada hasil GRU untuk pembacaan terbaru.</p>
                   )}

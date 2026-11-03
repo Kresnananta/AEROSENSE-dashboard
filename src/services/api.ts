@@ -29,11 +29,18 @@ export async function apiRequest<T>(
       throw new Error("Masuk terlebih dahulu untuk menggunakan fitur ini.");
     }
   }
-  const response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
-    ...options,
-    headers,
-    signal: options.signal ?? AbortSignal.timeout(20000),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_CONFIG.baseUrl}${endpoint}`, {
+      ...options,
+      headers,
+      signal: options.signal ?? AbortSignal.timeout(20000),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError")
+      throw new Error("Layanan belum merespons tepat waktu. Silakan coba lagi.");
+    throw error;
+  }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(

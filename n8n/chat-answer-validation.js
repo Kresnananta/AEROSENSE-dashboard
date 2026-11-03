@@ -11,6 +11,8 @@ const allowed = {
   temperature_c: ["Suhu", "°C"],
   humidity_pct: ["Kelembapan", "%"],
 };
+const modelValue = (g, metric) =>
+  g?.task === "fault_detection" ? g.estimates?.[metric] : g?.target === metric ? g.value : null;
 const clean = (s) =>
   String(s || "")
     .replace(/[\r\n<>]/g, " ")
@@ -44,6 +46,7 @@ try {
       if (
         p.readings.length < 8 &&
         g &&
+        g.task !== "fault_detection" &&
         Object.hasOwn(allowed, g.target) &&
         Number.isFinite(g.value) &&
         s.quality?.invalid !== true &&
@@ -154,12 +157,7 @@ try {
       const key = ref.node_id + ":" + ref.metric + ":" + ref.source;
       if (seen.has(key)) continue;
       seen.add(key);
-      const value =
-        ref.source === "gru"
-          ? s.gru?.target === ref.metric
-            ? s.gru.value
-            : null
-          : s.metrics?.[ref.metric];
+      const value = ref.source === "gru" ? modelValue(s.gru, ref.metric) : s.metrics?.[ref.metric];
       if (!Number.isFinite(value)) throw new Error("Nilai sensor tidak tersedia");
       addSource("Sensor AEROSENSE " + (s.name || s.node_id), s.observed_at, s.stale);
     }

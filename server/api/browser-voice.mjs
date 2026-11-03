@@ -54,20 +54,23 @@ export function transcriptionModels(env) {
   return [...new Set([primary, ...fallback])];
 }
 
-// Gemini sometimes answers 503 "high demand". Retry briefly, then move to the next model,
-// so a hands-free user is not asked to repeat the question for a temporary provider spike.
+// Try the alternate model before repeating a busy one; bound each upstream request.
 export async function transcribeWithFallback(
   gemini,
   env,
   mime,
   data,
-  { delays = [700, 1800], deadlineMs = 40000 } = {},
+  { delays = [], deadlineMs = 18000, attemptMs = 8000 } = {},
 ) {
   const started = Date.now();
+  const unavailable = new Set();
   let last;
-  for (const model of transcriptionModels(env)) {
-    for (let attempt = 0; attempt <= delays.length; attempt++) {
-      if (Date.now() - started > deadlineMs) throw last || fail("Waktu transkripsi habis.", 503);
+  for (let round = 0; round <= delays.length; round++) {
+    for (const model of transcriptionModels(env)) {
+      if (unavailable.has(model)) continue;
+      const remaining = deadlineMs - (Date.now() - started);
+      if (remaining <= 0)
+        throw last || new DOMException("Waktu transkripsi habis.", "TimeoutError");
       try {
         return await gemini(
           transcribePrompt,
@@ -75,15 +78,23 @@ export async function transcribeWithFallback(
             { type: "text", text: "Transkripsikan pertanyaan ini." },
             { type: "audio", mime_type: mime, data },
           ],
-          { model },
+          { model, signal: AbortSignal.timeout(Math.max(1, Math.min(attemptMs, remaining))) },
         );
       } catch (error) {
         last = error;
-        if ([400, 404].includes(error?.status)) break; // model unavailable for this key: try the next one
-        if (!transientStatus.has(error?.status) && error?.name !== "TimeoutError") throw error;
-        if (attempt < delays.length) await wait(delays[attempt]);
+        if ([400, 404].includes(error?.status)) {
+          unavailable.add(model);
+          continue;
+        }
+        if (
+          !transientStatus.has(error?.status) &&
+          !["TimeoutError", "TypeError"].includes(error?.name)
+        )
+          throw error;
       }
     }
+    const remaining = deadlineMs - (Date.now() - started);
+    if (round < delays.length && remaining > 0) await wait(Math.min(delays[round], remaining));
   }
   throw last;
 }
@@ -140,6 +151,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
               : bytes.toString("ascii", 0, 4) === "RIFF" &&
                 bytes.toString("ascii", 8, 12) === "WAVE";
       if (!headerValid) throw fail("Rekaman tidak valid. Coba rekam ulang.");
+      const started = Date.now();
       try {
         const response = await transcribeWithFallback(gemini, env, mime, input.audio_base64);
         const text = modelText(response).trim();
@@ -153,13 +165,21 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
             time: new Date().toISOString(),
             path: "/v1/voice/transcribe",
             upstream_status: error?.status || null,
+            error_type: ["TimeoutError", "AbortError", "TypeError"].includes(error?.name)
+              ? error.name
+              : "Error",
+            duration_ms: Date.now() - started,
             error: "transcription_failed",
           }),
         );
         throw fail(
-          error?.status === 429 || error?.status === 503
-            ? "AERO-BOT sedang sibuk. Coba ucapkan lagi sebentar lagi."
-            : "AERO-BOT belum dapat menyalin suara. Coba lagi atau ketik pertanyaan.",
+          error?.name === "TimeoutError"
+            ? "Pengenal suara melewati batas waktu. Silakan ulangi pertanyaan."
+            : error?.status === 429
+              ? "Batas pemakaian pengenal suara tercapai. Tunggu sebentar lalu coba lagi."
+              : error?.status === 503
+                ? "AERO-BOT sedang sibuk. Coba ucapkan lagi sebentar lagi."
+                : "AERO-BOT belum dapat menyalin suara. Coba lagi atau ketik pertanyaan.",
           503,
         );
       }

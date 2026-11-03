@@ -90,7 +90,7 @@ function background(mode, mood) {
 }
 
 function screen(inner, color, name) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" fill="none"><title>${name}</title><rect id="face-background" width="1280" height="800" fill="${color}"/><g id="face-artwork" transform="translate(240 0) scale(1.2307692308) translate(-280 -450)">${inner}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1200" viewBox="0 0 2000 1200" fill="none"><title>${name}</title><rect id="face-background" width="2000" height="1200" fill="${color}"/><g id="face-artwork" transform="translate(400 0) scale(1.8461538461538463) translate(-280 -450)">${inner}</g></svg>`;
 }
 
 const tiles = [];

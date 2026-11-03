@@ -52,7 +52,9 @@ const dbBase = e.SUPABASE_URL.replace(/\/$/, "") + "/rest/v1/";
 async function request(url, options = {}) {
   const r = await fetch(url, {
     ...options,
-    signal: AbortSignal.timeout(options.timeout || 60000),
+    signal: options.signal
+      ? AbortSignal.any([options.signal, AbortSignal.timeout(options.timeout || 60000)])
+      : AbortSignal.timeout(options.timeout || 60000),
   });
   if (!r.ok) {
     const err = new Error("Upstream HTTP " + r.status);
@@ -118,8 +120,11 @@ async function leased(p) {
 }
 async function gemini(system, input, extra = {}) {
   if (!e.GEMINI_API_KEY) throw new Error("Gemini not configured");
+  const { signal, timeout, ...generation } = extra;
   return request("https://generativelanguage.googleapis.com/v1beta/interactions", {
     method: "POST",
+    signal,
+    timeout,
     headers: {
       "Content-Type": "application/json",
       "x-goog-api-key": e.GEMINI_API_KEY,
@@ -130,7 +135,7 @@ async function gemini(system, input, extra = {}) {
       input,
       store: false,
       generation_config: { max_output_tokens: 800, temperature: 0.2 },
-      ...extra,
+      ...generation,
     }),
   });
 }

@@ -8,12 +8,12 @@ if [[ ! -f "$backend/.env" || ! -f "$backend/api/server.mjs" ]]; then
   exit 1
 fi
 backup="$backend/face-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
-files=(api/server.mjs api/browser-voice.mjs)
+files=(api/server.mjs api/browser-voice.mjs api/core.mjs)
 for file in api/robot-face-relay.mjs api/voice-templates.mjs api/deployment-revision.json; do
   if [[ -f "$backend/$file" ]]; then files+=("$file"); fi
 done
 tar -czf "$backup" -C "$backend" "${files[@]}"
-cp "$web/server/api/server.mjs" "$web/server/api/robot-face-relay.mjs" "$web/server/api/browser-voice.mjs" "$web/server/api/voice-templates.mjs" "$backend/api/"
+cp "$web/server/api/server.mjs" "$web/server/api/core.mjs" "$web/server/api/robot-face-relay.mjs" "$web/server/api/browser-voice.mjs" "$web/server/api/voice-templates.mjs" "$backend/api/"
 printf '{"commit":"%s"}\n' "$(git -C "$web" rev-parse HEAD)" > "$backend/api/deployment-revision.json"
 cd "$backend"
 if ! docker compose up -d --build aerosense-api || ! bash "$web/server/scripts/wait-api.sh"; then

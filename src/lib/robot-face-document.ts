@@ -19,7 +19,7 @@ export function robotFaceDocument() {
     .join("\n")
     .replace(/<\/script/gi, "<\\/script");
   return document
-    .replace('<link rel="stylesheet" href="./screen.css">', `<style>${styles}</style>`)
+    .replace(/<link rel="stylesheet" href="\.\/screen\.css"\s*\/?>/, `<style>${styles}</style>`)
     .replace(
       '<script type="module" src="./screen.js"></script>',
       `<script type="module">${script}</script>`,

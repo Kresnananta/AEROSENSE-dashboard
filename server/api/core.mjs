@@ -104,19 +104,49 @@ export function validateTelemetry(p, node, now = Date.now()) {
         ))
     )
       throw new Error("Invalid model reading references");
+    const validEstimate = (key, value) =>
+      Object.hasOwn(LIMITS, key) &&
+      Number.isFinite(value) &&
+      value >= LIMITS[key][0] &&
+      value <= LIMITS[key][1] &&
+      (key !== "pm25_ug_m3" || node.pm25_validated === true);
+    if (p.gru.task === "fault_detection") {
+      const estimates = p.gru.estimates;
+      if (
+        !estimates ||
+        Array.isArray(estimates) ||
+        !Object.keys(estimates).length ||
+        !Object.entries(estimates).every(([key, value]) => validEstimate(key, value)) ||
+        p.gru.mode !== "shadow" ||
+        !Array.isArray(p.gru.suspect) ||
+        p.gru.suspect.some((key) => !Object.hasOwn(estimates, key))
+      )
+        throw new Error("Hasil pemeriksaan GRU tidak valid");
+      for (const field of ["fault_scores", "thresholds"]) {
+        const scores = p.gru[field];
+        if (
+          !scores ||
+          Array.isArray(scores) ||
+          Object.keys(scores).length !== Object.keys(estimates).length ||
+          !Object.entries(scores).every(
+            ([key, value]) =>
+              Object.hasOwn(estimates, key) && Number.isFinite(value) && value >= 0 && value <= 1,
+          )
+        )
+          throw new Error("Skor pemeriksaan GRU tidak valid");
+      }
+    } else if (!validEstimate(p.gru.target, p.gru.value)) {
+      throw new Error("Hasil GRU tidak valid");
+    }
     if (
       !p.gru.model_version ||
-      !LIMITS[p.gru.target] ||
-      !Number.isFinite(p.gru.value) ||
-      p.gru.value < 0 ||
-      p.gru.value > LIMITS[p.gru.target][1] ||
       !Number.isInteger(p.gru.horizon_seconds) ||
       p.gru.horizon_seconds < 0 ||
       p.gru.horizon_seconds > 86400
     )
       throw new Error("Hasil GRU tidak valid");
   }
-  for (const key of ["raw_metrics", "raw_payload", "processing"])
+  for (const key of ["raw_metrics", "raw_payload", "processing", "quality"])
     if (
       p[key] != null &&
       (typeof p[key] !== "object" || Array.isArray(p[key]) || JSON.stringify(p[key]).length > 12000)
@@ -137,6 +167,7 @@ export function validateTelemetry(p, node, now = Date.now()) {
     raw_sha256: p.raw_sha256 ?? null,
     processing: p.processing ?? {},
     quality: {
+      ...p.quality,
       clock_source: p.quality?.clock_source === "sensor" ? "sensor" : "gateway",
       invalid: p.quality?.invalid === true,
       calibration_version: node.calibration_version,
