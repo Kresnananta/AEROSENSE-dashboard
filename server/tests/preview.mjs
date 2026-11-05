@@ -42,6 +42,7 @@ const node = {
   pm25_validated: false,
 };
 const jobs = [];
+const registeredNodes = [node];
 const newsTime = new Date().toISOString();
 const facts = [
   ["weather", "Suhu udara", 30, "°C"],
@@ -195,7 +196,10 @@ const mock = http.createServer(async (req, res) => {
         role: url.searchParams.get("user_id") === "eq." + viewerId ? "viewer" : "admin",
       },
     ];
-  if (url.pathname === "/rest/v1/ae_nodes") output = [node];
+  if (url.pathname === "/rest/v1/ae_nodes") {
+    if (req.method === "POST") registeredNodes.push(p);
+    output = req.method === "POST" ? [p] : registeredNodes;
+  }
   if (url.pathname === "/rest/v1/ae_sensor_context")
     output = [
       {
@@ -268,7 +272,9 @@ Object.assign(process.env, {
   SUPABASE_ANON_KEY: "fixture-public",
   SUPABASE_SERVICE_ROLE_KEY: "fixture-private",
   INTERNAL_API_KEY: "fixture-internal",
-  DEVICE_KEYS_JSON: "{}",
+  DEVICE_KEYS_JSON: JSON.stringify({
+    "gateway-preview": { type: "gateway", key: "fixture-gateway" },
+  }),
   WEB_ORIGINS: "http://127.0.0.1:4173",
   DISASTER_NEWS_ENABLED: "false",
 });

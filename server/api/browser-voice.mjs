@@ -5,7 +5,7 @@ const testText =
   "Halo halo! Aku AERO-BOT, robot penjaga udaramu. Suaraku sudah terdengar jelas, kan?";
 // Cheerful robot character, still slow and clear enough for listeners with disabilities.
 // Override with GEMINI_TTS_STYLE in the backend .env.
-const defaultStyle =
+export const defaultStyle =
   "A cheerful, playful little robot friend speaking Indonesian. Bright, upbeat and smiling, with lively friendly intonation, like a kind children's science show host. Keep every word clear and the pace calm, never rushed.";
 const fail = (message, status = 400) =>
   Object.assign(new Error(message), { status, publicMessage: message });
@@ -104,7 +104,62 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
   // Per-process, short-lived audio reuse; authorization is checked before every cache lookup.
   const audioCache = new Map();
   const pendingAudio = new Map();
-  return async (req, res, url) => {
+  async function audioFor(ownerId, text) {
+    const key = sha(
+      JSON.stringify([
+        ownerId,
+        text,
+        env.GEMINI_TTS_MODEL,
+        env.GEMINI_TTS_VOICE,
+        env.GEMINI_TTS_STYLE,
+      ]),
+    );
+    for (const [id, cached] of audioCache) if (cached.expires < Date.now()) audioCache.delete(id);
+    let audio = audioCache.get(key)?.audio;
+    if (!audio) {
+      let task = pendingAudio.get(key);
+      if (!task) {
+        task = (async () => {
+          const response = await gemini(
+            "",
+            [
+              {
+                type: "user_input",
+                content: [
+                  {
+                    type: "text",
+                    text,
+                    annotations: [
+                      { type: "speech_metadata", style: env.GEMINI_TTS_STYLE || defaultStyle },
+                    ],
+                  },
+                ],
+              },
+            ],
+            {
+              model: env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
+              signal: AbortSignal.timeout(22000),
+              response_format: { type: "audio" },
+              generation_config: { speech_config: [{ voice: env.GEMINI_TTS_VOICE || "Puck" }] },
+            },
+          );
+          return wavAudio(response);
+        })();
+        pendingAudio.set(key, task);
+      }
+      try {
+        audio = await task;
+        if (audio.length <= 1000000) {
+          audioCache.set(key, { audio, expires: Date.now() + 300000 });
+          while (audioCache.size > 16) audioCache.delete(audioCache.keys().next().value);
+        }
+      } finally {
+        pendingAudio.delete(key);
+      }
+    }
+    return audio;
+  }
+  const route = async (req, res, url) => {
     if (!url.pathname.startsWith("/v1/voice/")) return false;
     const account = await user(req);
     const configured = !!env.GEMINI_API_KEY;
@@ -213,57 +268,7 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
       } else text = speechText(text).slice(0, 2000);
     }
     try {
-      const key = sha(
-        JSON.stringify([
-          account.id,
-          text,
-          env.GEMINI_TTS_MODEL,
-          env.GEMINI_TTS_VOICE,
-          env.GEMINI_TTS_STYLE,
-        ]),
-      );
-      for (const [id, cached] of audioCache) if (cached.expires < Date.now()) audioCache.delete(id);
-      let audio = audioCache.get(key)?.audio;
-      if (!audio) {
-        let task = pendingAudio.get(key);
-        if (!task) {
-          task = (async () => {
-            const response = await gemini(
-              "",
-              [
-                {
-                  type: "user_input",
-                  content: [
-                    {
-                      type: "text",
-                      text,
-                      annotations: [
-                        { type: "speech_metadata", style: env.GEMINI_TTS_STYLE || defaultStyle },
-                      ],
-                    },
-                  ],
-                },
-              ],
-              {
-                model: env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
-                response_format: { type: "audio" },
-                generation_config: { speech_config: [{ voice: env.GEMINI_TTS_VOICE || "Puck" }] },
-              },
-            );
-            return wavAudio(response);
-          })();
-          pendingAudio.set(key, task);
-        }
-        try {
-          audio = await task;
-          if (audio.length <= 1000000) {
-            audioCache.set(key, { audio, expires: Date.now() + 300000 });
-            while (audioCache.size > 16) audioCache.delete(audioCache.keys().next().value);
-          }
-        } finally {
-          pendingAudio.delete(key);
-        }
-      }
+      const audio = await audioFor(account.id, text);
       res.writeHead(200, {
         "Content-Type": "audio/wav",
         "Content-Length": audio.length,
@@ -290,4 +295,10 @@ export function browserVoiceRoutes({ env, user, one, member, rate, rawBody, send
     }
     return true;
   };
+  route.prefetch = (ownerId, text) => {
+    if (!env.GEMINI_API_KEY) return;
+    const first = answerChunks(text)[0];
+    if (first) void audioFor(ownerId, first).catch(() => {});
+  };
+  return route;
 }

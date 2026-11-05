@@ -88,6 +88,7 @@ export async function prepareRobotFaceSpeech(
   blob: Blob,
   text: string,
   signal: AbortSignal,
+  emotion?: string,
 ) {
   if (!userId || cloudOwner !== userId) return;
   const robot = cloudRobot;
@@ -101,15 +102,23 @@ export async function prepareRobotFaceSpeech(
   clearTimeout(timer!);
   if (!ready) return;
   if (signal.aborted || cloudOwner !== userId || robot !== cloudRobot) return;
-  const status = await apiRequest<{ connected: boolean }>(
-    "/v1/robot-face/status?robot_id=" + robot,
-    { signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]) },
-  ).catch(() => null);
-  if (!status?.connected) return;
+  const statusRequest =
+    Date.now() - checkedAt < 5000
+      ? Promise.resolve({ connected: cloudConnected })
+      : apiRequest<{ connected: boolean }>("/v1/robot-face/status?robot_id=" + robot, {
+          signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]),
+        }).catch(() => null);
   let buffer: AudioBuffer;
   try {
     const context = new OfflineAudioContext(1, 1, 24000);
-    buffer = await context.decodeAudioData(await blob.arrayBuffer());
+    const [status, decoded] = await Promise.all([
+      statusRequest,
+      blob.arrayBuffer().then((data) => context.decodeAudioData(data)),
+    ]);
+    if (!status?.connected || cloudOwner !== userId || robot !== cloudRobot) return;
+    cloudConnected = status.connected;
+    checkedAt = Date.now();
+    buffer = decoded;
   } catch {
     return;
   }
@@ -123,7 +132,7 @@ export async function prepareRobotFaceSpeech(
     server_time: number;
   }>("/v1/robot-face/events?robot_id=" + robot, {
     method: "POST",
-    body: JSON.stringify({ owner_id: userId, action: "speak", text, envelope }),
+    body: JSON.stringify({ owner_id: userId, action: "speak", text, envelope, emotion }),
     signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]),
   }).catch(() => null);
   const received = Date.now();

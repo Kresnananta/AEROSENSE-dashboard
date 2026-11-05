@@ -1,5 +1,6 @@
 const hub = $("Siapkan konteks hub Web").first().json;
 const context = hub.context || [];
+const moods = ["neutral", "happy", "concerned", "warning", "danger", "surprised"];
 const direct = $("Periksa input Web").first().json.direct_route === true;
 const refusal =
   "Maaf, AERO-BOT hanya membantu pertanyaan tentang udara dan lingkungan. Silakan gunakan bahasa yang sopan.";
@@ -17,7 +18,7 @@ const clean = (s) =>
   String(s || "")
     .replace(/[\r\n<>]/g, " ")
     .slice(0, 100);
-let result = { answer: refusal, decision: "deny", provider_error: false };
+let result = { answer: refusal, decision: "deny", emotion: "concerned", provider_error: false };
 try {
   let p;
   if (direct) {
@@ -122,6 +123,8 @@ try {
     p.environment_refs.length > 4
   )
     throw new Error("Format jawaban tidak valid");
+  if (p.emotion !== undefined && !moods.includes(p.emotion))
+    throw new Error("Ekspresi jawaban tidak valid");
   if (p.decision === "allow") {
     if (!p.answer.trim() || p.answer.length > 1000 || /https?:|www\./i.test(p.answer))
       throw new Error("Isi jawaban tidak valid");
@@ -208,7 +211,7 @@ try {
       );
     const answer = [p.answer.trim(), ...lines].join("\n");
     if (answer.length > 2000) throw new Error("Jawaban terlalu panjang");
-    result = { answer, decision: "allow", provider_error: false };
+    result = { answer, decision: "allow", emotion: p.emotion || "neutral", provider_error: false };
   }
 } catch (error) {
   result = {

@@ -23,6 +23,8 @@ import { MonitoringScope } from "./MonitoringScope";
 import { EsgReportPanel } from "./EsgReportPanel";
 import { downloadCsv, readingsCsv } from "@/lib/csv-export";
 import { gruChartValue, gruEstimates } from "@/lib/gru";
+import { NodeRegistration } from "./NodeRegistration";
+import { useAccess } from "@/hooks/useAccess";
 
 export function SensorWorkspace({
   mode = "overview",
@@ -30,6 +32,7 @@ export function SensorWorkspace({
   mode?: "overview" | "map" | "nodes" | "detail" | "analytics" | "alerts" | "report";
 }) {
   const { user, isLoading } = useAuth();
+  const { canManage } = useAccess();
   const { id } = useParams();
   const [mapParams, setMapParams] = useSearchParams();
   const mapLayer = ["mixed", "events"].includes(mapParams.get("layer") || "")
@@ -261,6 +264,14 @@ export function SensorWorkspace({
           <RefreshCw size={17} />
         </button>
       </header>
+      {mode === "nodes" && canManage && (
+        <NodeRegistration
+          onCreated={(id) => {
+            setSelected(id);
+            dashboard.refresh();
+          }}
+        />
+      )}
       {mode === "report" && <MonitoringScope report />}
       {isLoading ? (
         <DataState loading />

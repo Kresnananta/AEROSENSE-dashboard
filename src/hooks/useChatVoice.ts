@@ -154,7 +154,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
     }
   }
 
-  async function speak(jobId?: string, text?: string) {
+  async function speak(jobId?: string, text?: string, emotion?: string) {
     const id = jobId || "test";
     if (speaking === id) {
       stopSpeaker();
@@ -196,12 +196,17 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
         audioUrl.current = URL.createObjectURL(blob);
         const audio = new Audio(audioUrl.current);
         player.current = audio;
-        audio.onplaying = () =>
-          publishRobotFace(userId, { action: "speak", text: parts[part], audio: blob }, false);
+        audio.onplaying = () => {
+          setPreparingSpeech(false);
+          publishRobotFace(
+            userId,
+            { action: "speak", text: parts[part], audio: blob, emotion },
+            false,
+          );
+        };
         audio.load();
-        await prepareRobotFaceSpeech(userId, blob, parts[part], controller.signal);
+        await prepareRobotFaceSpeech(userId, blob, parts[part], controller.signal, emotion);
         if (controller.signal.aborted) return;
-        setPreparingSpeech(false);
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve();
           audio.onerror = () => reject(new Error("Speaker gagal memutar suara."));

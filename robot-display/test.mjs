@@ -8,8 +8,9 @@ const source = await fs
   .catch(() => new URL("../public/robot-display/expression.js", import.meta.url));
 const { expressionFor, poseFor, parts } = await import(source.href);
 const artwork = await fs.readFile(new URL("./screen/face.svg", import.meta.url), "utf8");
-test("danger overrides cheerful legacy metadata, negation is respected, unknown expressions stay neutral", () => {
-  assert.equal(expressionFor("Bahaya. Jauhi area.", undefined, "happy"), "danger");
+test("explicit severity wins, Gemini mood precedes keyword fallback, and negation is respected", () => {
+  assert.equal(expressionFor("Bahaya adalah nama kategori.", undefined, "neutral"), "neutral");
+  assert.equal(expressionFor("Bahaya. Jauhi area."), "danger");
   assert.equal(expressionFor("Tidak ada bahaya."), "neutral");
   assert.equal(expressionFor("Halo.", "danger", "happy"), "danger");
   assert.equal(expressionFor("Pembacaan terakhir.", undefined, "__proto__"), "neutral");
@@ -32,7 +33,7 @@ test("sleep, wake, whole-head color, and beak silence are deterministic", () => 
 });
 test("reference expressions differ visibly and speaking opens a hinged beak without opening on silence", () => {
   assert.equal(
-    expressionFor("Ada laporan bencana banjir di Jawa.", undefined, "happy"),
+    expressionFor("Ada laporan bencana banjir di Jawa.", undefined, "concerned"),
     "concerned",
   );
   assert.equal(expressionFor("Gempa terdeteksi.", "danger"), "danger");

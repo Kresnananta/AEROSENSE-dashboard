@@ -15,11 +15,13 @@ import { configureRobotFace, publishRobotFace } from "@/lib/robot-face-bus";
 import { useAccess } from "@/hooks/useAccess";
 import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 import { detectWakePhrase } from "@/lib/handsfree";
+import { startProcessingSound } from "@/lib/processing-sound";
 
 interface Message {
   id: string;
   sender: "bot" | "user";
   text: string;
+  emotion?: string;
 }
 const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   off: ["Mode suara mati", "Aktifkan untuk bertanya tanpa menekan tombol."],
@@ -98,6 +100,9 @@ export function ChatPanel() {
   voiceStop.current = voice.stopSpeaker;
   const [pending, setPending] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if ((busy || voice.preparingSpeech) && !handsFree.active) return startProcessingSound();
+  }, [busy, voice.preparingSpeech, handsFree.active]);
   const [error, setError] = useState("");
   const [pollRun, setPollRun] = useState(0);
   const sending = useRef(false);
@@ -148,16 +153,28 @@ export function ChatPanel() {
           setMessages((prev) =>
             prev.some((m) => m.id === job.id)
               ? prev
-              : [...prev, { id: job.id, sender: "bot", text: job.result!.text! }],
+              : [
+                  ...prev,
+                  {
+                    id: job.id,
+                    sender: "bot",
+                    text: job.result!.text!,
+                    emotion: job.result!.emotion,
+                  },
+                ],
           );
           setPending(null);
           setBusy(false);
-          publishRobotFace(userId, { action: "expression", text: job.result.text });
+          publishRobotFace(userId, {
+            action: "expression",
+            text: job.result.text,
+            emotion: job.result.emotion,
+          });
           if (spoken) {
             voiceJobs.current.delete(job.id);
             if (spoken === "handsfree")
-              void handsFreeControls.speakAnswer(job.id, job.result!.text!);
-            else void voiceSpeak.current(job.id, job.result!.text!);
+              void handsFreeControls.speakAnswer(job.id, job.result!.text!, job.result!.emotion);
+            else void voiceSpeak.current(job.id, job.result!.text!, job.result!.emotion);
           }
           return;
         }
@@ -221,7 +238,13 @@ export function ChatPanel() {
     if (submission.current?.scope !== scope)
       submission.current = { scope, key: crypto.randomUUID() };
     try {
-      const job = await chatService.send(text.trim(), submission.current!.key, targetNode, robotId);
+      const job = await chatService.send(
+        text.trim(),
+        submission.current!.key,
+        targetNode,
+        robotId,
+        fromVoice,
+      );
       if (!active.current || owner.current !== sender) return null;
       submission.current = null;
       setMessages((prev) => [
@@ -315,7 +338,7 @@ export function ChatPanel() {
                 <button
                   className="chat-listen"
                   type="button"
-                  onClick={() => void voice.speak(m.id, m.text)}
+                  onClick={() => void voice.speak(m.id, m.text, m.emotion)}
                   disabled={voice.recording || voice.transcribing}
                 >
                   {voice.speaking === m.id && voice.preparingSpeech ? (

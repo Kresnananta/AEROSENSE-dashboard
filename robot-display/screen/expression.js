@@ -1,6 +1,7 @@
 export const MOODS = ["neutral", "happy", "concerned", "warning", "danger", "surprised"];
 export function expressionFor(text = "", severity, supplied) {
   if (severity === "danger" || severity === "warning") return severity;
+  if (MOODS.includes(supplied)) return supplied;
   const clean = String(text)
     .toLowerCase()
     .replace(
@@ -16,7 +17,6 @@ export function expressionFor(text = "", severity, supplied) {
     )
   )
     return "concerned";
-  if (MOODS.includes(supplied)) return supplied;
   if (/\b(maaf|khawatir|sedih|belum tersedia|belum dapat|sorry)\b/.test(clean)) return "concerned";
   if (/\b(wah|wow|ternyata)\b/.test(clean)) return "surprised";
   if (/\b(halo|hello|senang|terima kasih|berhasil|bagus|great|thank)\b/.test(clean)) return "happy";

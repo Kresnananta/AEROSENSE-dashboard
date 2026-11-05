@@ -67,6 +67,7 @@ function microphone() {
       load() {}
       pause() {}
       async play() {
+        this.onplaying?.();
         queueMicrotask(() => this.onended?.());
       }
     },
@@ -114,6 +115,7 @@ test("Gemini wake accepts audio, ignores silence, and requires a fresh call for 
   ];
   let calls = 0,
     speechAvailable = true;
+  const playedMoods = [];
   const engine = createHandsFreeEngine({
     async transcribe(type, base64, signal) {
       assert.equal(type, "audio/wav");
@@ -130,6 +132,9 @@ test("Gemini wake accepts audio, ignores silence, and requires a fresh call for 
       return true;
     },
     onState() {},
+    onPlayback(audio, _text, emotion) {
+      if (audio) playedMoods.push(emotion);
+    },
   });
   try {
     await engine.start();
@@ -141,7 +146,8 @@ test("Gemini wake accepts audio, ignores silence, and requires a fresh call for 
     assert.equal(questions.length, 0);
     await mic.utterance();
     assert.deepEqual(questions, ["bagaimana udara?"]);
-    await engine.speakAnswer("job", "Udara tersedia.");
+    await engine.speakAnswer("job", "Udara tersedia.", "concerned");
+    assert.deepEqual(playedMoods, ["concerned"]);
     assert.equal(engine.state.phase, "waiting");
     await mic.utterance();
     assert.equal(questions.length, 1);

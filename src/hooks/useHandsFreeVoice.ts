@@ -59,14 +59,14 @@ export function useHandsFreeVoice(options: {
   if (!engine.current && typeof window !== "undefined") {
     engine.current = createHandsFreeEngine({
       onState: (next) => setState(next),
-      onPlayback: (audio, text) =>
+      onPlayback: (audio, text, emotion) =>
         publishRobotFace(
           faceOwner.current,
-          audio ? { action: "speak", audio, text } : { action: "stop" },
+          audio ? { action: "speak", audio, text, emotion } : { action: "stop" },
           !audio,
         ),
-      beforePlayback: (audio, text, signal) =>
-        prepareRobotFaceSpeech(faceOwner.current, audio, text, signal),
+      beforePlayback: (audio, text, signal, emotion) =>
+        prepareRobotFaceSpeech(faceOwner.current, audio, text, signal, emotion),
       fetchAnnouncement: (text, signal) =>
         apiRequest<Blob>(
           "/v1/voice/speak",
@@ -135,8 +135,8 @@ export function useHandsFreeVoice(options: {
       resume() {
         void engine.current?.resume();
       },
-      speakAnswer(jobId: string, text: string) {
-        return engine.current?.speakAnswer(jobId, text) ?? Promise.resolve();
+      speakAnswer(jobId: string, text: string, emotion?: string) {
+        return engine.current?.speakAnswer(jobId, text, emotion) ?? Promise.resolve();
       },
       announce(text: string) {
         return engine.current?.announce(text) ?? Promise.resolve();

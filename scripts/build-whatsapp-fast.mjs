@@ -14,7 +14,7 @@ model.parameters.modelId = {
   cachedResultName: "models/gemini-3.5-flash-lite",
 };
 model.retryOnFail = false;
-model.parameters.options = { ...model.parameters.options, maxOutputTokens: 512 };
+model.parameters.options = { ...model.parameters.options, maxOutputTokens: 1024 };
 model.parameters.options.systemMessage = fs.readFileSync(
   new URL("../n8n/chat-system-prompt.txt", import.meta.url),
   "utf8",
@@ -27,6 +27,12 @@ validator.parameters.jsCode = fs
   .readFileSync(new URL("../n8n/chat-answer-validation.js", import.meta.url), "utf8")
   .replaceAll("konteks hub Web", "konteks hub WhatsApp")
   .replaceAll("Periksa input Web", "Periksa input WhatsApp");
+const save = workflow.nodes.find((n) => n.name === "Simpan jawaban WhatsApp");
+if (save?.parameters.jsonBody && !save.parameters.jsonBody.includes("emotion:"))
+  save.parameters.jsonBody = save.parameters.jsonBody.replace(
+    "decision:$json.decision,",
+    "decision:$json.decision,emotion:$json.emotion,",
+  );
 scope.parameters.query = fs.readFileSync(
   new URL("../n8n/whatsapp-conversation.sql", import.meta.url),
   "utf8",

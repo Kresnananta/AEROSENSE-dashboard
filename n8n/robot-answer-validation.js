@@ -1,12 +1,10 @@
 const hub = $("Siapkan konteks hub Robot").first().json;
 const context = hub.context || [];
+const moods = ["neutral", "happy", "concerned", "warning", "danger", "surprised"];
 const input = $("Periksa input Robot").first().json;
 const direct = input.direct_route === true;
-const presence = $("Ambil permintaan yang masuk").item.json.job.body?.presence === true;
 const refusal =
   "Maaf, AERO-BOT hanya membantu pertanyaan tentang udara dan lingkungan. Silakan gunakan bahasa yang sopan.";
-const sttRetry =
-  "Maaf, suara Anda kurang jelas. Silakan ulangi pertanyaan dengan sedikit lebih dekat ke AERO-BOT.";
 const allowed = {
   dust_ug_m3: ["Debu", "µg/m³"],
   pm25_ug_m3: ["PM2.5", "µg/m³"],
@@ -21,38 +19,21 @@ const clean = (s) =>
   String(s || "")
     .replace(/[\r\n<>]/g, " ")
     .slice(0, 100);
-const num = (v) =>
-  Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10).replace(".", ",");
-const when = (v) => {
-  const d = Date.parse(v);
-  return Number.isFinite(d)
-    ? new Date(d).toLocaleString("id-ID", {
-        timeZone: "Asia/Jakarta",
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }) + " WIB"
-    : null;
-};
-let result = { answer: refusal, decision: "deny", provider_error: false };
+let result = { answer: refusal, decision: "deny", emotion: "concerned", provider_error: false };
 try {
   let p;
   if (input.stt_failed === true) {
-    p = {
-      decision: "allow",
-      topic: "greeting",
-      answer: sttRetry,
-      readings: [],
-      environment_refs: [],
-    };
+    p = { decision: "allow", topic: "greeting", emotion: "concerned",
+      answer: "Maaf, suara Anda kurang jelas. Silakan ulangi pertanyaan dengan sedikit lebih dekat ke AERO-BOT.",
+      readings: [], environment_refs: [] };
   } else if (direct) {
     p = {
       decision: "allow",
       topic: "air_quality",
-      answer: presence
-        ? "Halo, selamat datang. Berikut pembacaan terakhir. Mari jaga udara di sekitar kita."
-        : "Berikut pembacaan terakhir. Tetap jaga udara di sekitar kita.",
+      answer:
+        $("Ambil permintaan yang masuk").item.json.job.body?.presence === true
+          ? "Halo, selamat datang. Berikut pembacaan terakhir. Mari jaga udara di sekitar kita."
+          : "Berikut pembacaan terakhir. Tetap jaga udara di sekitar kita.",
       readings: [],
       environment_refs: [],
     };
@@ -79,6 +60,7 @@ try {
       )
         p.readings.push({ node_id: s.node_id, metric: g.target, source: "gru" });
     }
+
     const air = (hub.environment || []).filter(
       (f) =>
         f.category === "air_quality" &&
@@ -92,7 +74,6 @@ try {
     p.environment_refs = [...(aqi ? [aqi] : []), ...air.filter((f) => f !== aqi)]
       .slice(0, 3)
       .map((f) => f.id);
-    const hello = presence ? "Halo, selamat datang. " : "";
     if (aqi) {
       const condition =
         aqi.value <= 50
@@ -107,7 +88,6 @@ try {
                   ? "sangat tidak sehat"
                   : "berbahaya";
       p.answer =
-        hello +
         `Estimasi kualitas udara wilayah tergolong ${condition}. ` +
         (p.readings.length
           ? "Pembacaan sensor lokal juga tersedia sebagai informasi terpisah. "
@@ -116,11 +96,9 @@ try {
           ? "Kurangi aktivitas berat di luar, terutama bila sensitif terhadap polusi."
           : "Tetap hindari asap kendaraan dan pembakaran.");
     } else if (p.environment_refs.length)
-      p.answer =
-        hello +
-        (p.readings.length
-          ? "Pembacaan sensor lokal dan estimasi polutan wilayah tersedia sebagai informasi terpisah. Indeks kualitas udara wilayah belum tersedia."
-          : "Pembacaan sensor lokal belum tersedia. Estimasi polutan wilayah tersedia, tetapi indeks kualitas udaranya belum tersedia.");
+      p.answer = p.readings.length
+        ? "Pembacaan sensor lokal dan estimasi polutan wilayah tersedia sebagai informasi terpisah. Indeks kualitas udara wilayah belum tersedia."
+        : "Pembacaan sensor lokal belum tersedia. Estimasi polutan wilayah tersedia, tetapi indeks kualitas udaranya belum tersedia.";
   } else {
     const text = ($json.candidates?.[0]?.content?.parts || [])
       .filter((p) => !p.thought)
@@ -130,18 +108,17 @@ try {
     if (!text) throw new Error("Respons Gemini kosong");
     p = JSON.parse(
       text
-        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/^```(?:json)?\s*/i, " ")
         .replace(/\s*```$/, "")
         .trim(),
     );
-    if (p && typeof p === "object" && !Array.isArray(p)) {
+    if (p && !Array.isArray(p)) {
       p.readings ??= [];
       p.environment_refs ??= [];
     }
   }
   if (
     !p ||
-    typeof p !== "object" ||
     Array.isArray(p) ||
     !["allow", "deny"].includes(p.decision) ||
     typeof p.answer !== "string" ||
@@ -151,11 +128,34 @@ try {
     p.environment_refs.length > 4
   )
     throw new Error("Format jawaban tidak valid");
+  if (p.emotion !== undefined && !moods.includes(p.emotion))
+    throw new Error("Ekspresi jawaban tidak valid");
   if (p.decision === "allow") {
     if (!p.answer.trim() || p.answer.length > 1000 || /https?:|www\./i.test(p.answer))
       throw new Error("Isi jawaban tidak valid");
-    const lines = [];
+    // Only list where the information came from and when. No values, labels or links.
+    const sources = new Map();
     const seen = new Set();
+    const when = (v) => {
+      const d = Date.parse(v);
+      return Number.isFinite(d)
+        ? new Date(d).toLocaleString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }) + " WIB"
+        : "";
+    };
+    const addSource = (name, time, stale) => {
+      const key = clean(name);
+      if (!key) return;
+      const t = Date.parse(time);
+      const old = sources.get(key);
+      if (!old || (Number.isFinite(t) && t > old.t))
+        sources.set(key, { t: Number.isFinite(t) ? t : -1, label: when(time), stale: !!stale });
+    };
     for (const ref of p.readings) {
       if (!ref || !Object.hasOwn(allowed, ref.metric) || !["measured", "gru"].includes(ref.source))
         throw new Error("Referensi tidak valid");
@@ -167,30 +167,12 @@ try {
       seen.add(key);
       const value = ref.source === "gru" ? modelValue(s.gru, ref.metric) : s.metrics?.[ref.metric];
       if (!Number.isFinite(value)) throw new Error("Nilai sensor tidak tersedia");
-      const stamp = when(s.observed_at);
-      const prediction = ref.source === "gru" ? "Estimasi GRU " : "";
-      lines.push(
-        clean(s.name || s.node_id) +
-          ": " +
-          prediction +
-          allowed[ref.metric][0] +
-          " " +
-          num(value) +
-          " " +
-          allowed[ref.metric][1] +
-          ". " +
-          (stamp ? "Waktu " + stamp : "Waktu belum tersedia") +
-          (s.stale ? " (data lama)" : "") +
-          (ref.source === "gru" && Number.isFinite(s.gru.horizon_seconds)
-            ? ". Horizon " + s.gru.horizon_seconds + " detik"
-            : "") +
-          ".",
-      );
+      addSource("Sensor AEROSENSE " + (s.name || s.node_id), s.observed_at, s.stale);
     }
     for (const id of p.environment_refs) {
       if (typeof id !== "string") throw new Error("Referensi lingkungan tidak valid");
       if (seen.has(id)) continue;
-      const f = (hub.environment || []).find((f) => f.id === id);
+      const f = hub.environment.find((f) => f.id === id);
       const national =
         f &&
         f.area_id === "indonesia" &&
@@ -208,55 +190,40 @@ try {
       if (!(typeof f.value === "string" && f.value.length > 0) && !Number.isFinite(f.value))
         throw new Error("Nilai lingkungan kosong");
       seen.add(id);
-      const area = national ? { name: "Indonesia" } : hub.environment_area;
-      const kinds = {
-        news: "berita sumber",
-        monitoring_notification: "notifikasi model, belum konfirmasi lapangan",
-        model: "hasil model",
-        forecast: "prakiraan",
-        satellite: "data satelit",
-        static_model: "perkiraan profil tanah",
-        regional: "data wilayah",
-        event: "catatan kejadian",
-        historical: "catatan historis",
-      };
-      const stamp = when(f.valid_at);
-      lines.push(
-        clean(area?.name || f.area_id) +
-          ": " +
-          clean(f.label) +
-          " " +
-          (typeof f.value === "number" ? num(f.value) : clean(f.value)) +
-          (f.unit ? " " + clean(f.unit) : "") +
-          ". " +
-          clean(kinds[f.kind] || "data eksternal") +
-          ", " +
-          clean(f.source) +
-          ". " +
-          (stamp ? "Waktu " + stamp : "Waktu pengamatan tidak tersedia") +
-          "." +
-          (f.spatial_context ? " " + clean(f.spatial_context) : "") +
-          (national ? ". Sumber: " + f.source_url : ""),
-      );
+      addSource(f.source || "Sumber eksternal", f.valid_at, false);
     }
-    if (!lines.length && p.topic === "air_quality")
+    const lines = [];
+    if (sources.size)
       lines.push(
+        "",
+        "Sumber: " +
+          [...sources]
+            .map(
+              ([name, v]) =>
+                name + (v.label ? " (" + v.label + (v.stale ? ", data lama" : "") + ")" : ""),
+            )
+            .join("; ") +
+          ".",
+      );
+    else if (p.topic === "air_quality")
+      lines.push(
+        "",
         context.some((s) => s.quality?.invalid === true)
-          ? "Pembacaan tersedia tetapi ditandai tidak valid. Periksa sensor."
+          ? "Pembacaan sensor ditandai tidak valid. Periksa sensor."
           : context.length
-            ? "Nilai yang dapat ditampilkan belum dipilih. Pembacaan lengkap tersedia di dashboard."
+            ? "Pembacaan lengkap tersedia di dashboard."
             : "Data sensor belum tersedia.",
       );
     const answer = [p.answer.trim(), ...lines].join("\n");
     if (answer.length > 2000) throw new Error("Jawaban terlalu panjang");
-    result = { answer, decision: "allow", provider_error: false };
+    result = { answer, decision: "allow", emotion: p.emotion || "neutral", provider_error: false };
   }
 } catch (error) {
   result = {
     answer: "",
     decision: "deny",
     provider_error: true,
-    validation_error: String(error?.message || "Validasi gagal").slice(0, 120),
+    validation_error: String(error.message || "Validasi gagal").slice(0, 120),
   };
 }
 return { json: result };

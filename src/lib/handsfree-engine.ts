@@ -36,8 +36,8 @@ export interface HandsFreeCallbacks {
   fetchSpeech(jobId: string, part: number, signal: AbortSignal): Promise<Blob>;
   onQuestion(text: string): Promise<boolean>;
   onState(state: HandsFreeState): void;
-  onPlayback?(audio: Blob | null, text: string): void;
-  beforePlayback?(audio: Blob, text: string, signal: AbortSignal): Promise<void>;
+  onPlayback?(audio: Blob | null, text: string, emotion?: string): void;
+  beforePlayback?(audio: Blob, text: string, signal: AbortSignal, emotion?: string): Promise<void>;
   fetchAnnouncement?(text: string, signal: AbortSignal): Promise<Blob>;
 }
 
@@ -45,7 +45,7 @@ export interface HandsFreeEngine {
   start(): Promise<void>;
   resume(): Promise<void>;
   stop(): void;
-  speakAnswer(jobId: string, text: string): Promise<void>;
+  speakAnswer(jobId: string, text: string, emotion?: string): Promise<void>;
   announce(text: string): Promise<void>;
   stopSpeaking(): void;
   readonly state: HandsFreeState;
@@ -462,16 +462,25 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     }
   }
 
-  async function playBlob(blob: Blob, controller: AbortController, text = ""): Promise<void> {
+  async function playBlob(
+    blob: Blob,
+    controller: AbortController,
+    text = "",
+    emotion?: string,
+  ): Promise<void> {
     if (!blob.type.startsWith("audio/"))
       return Promise.reject(new Error("Respons suara tidak valid."));
     if (playerUrl) URL.revokeObjectURL(playerUrl);
     playerUrl = URL.createObjectURL(blob);
     const audio = new Audio(playerUrl);
     player = audio;
-    audio.onplaying = () => callbacks.onPlayback?.(blob, text);
+    audio.onplaying = () => {
+      clearInterval(thinkingTimer);
+      set({ phase: "speaking" });
+      callbacks.onPlayback?.(blob, text, emotion);
+    };
     audio.load();
-    await callbacks.beforePlayback?.(blob, text, controller.signal);
+    await callbacks.beforePlayback?.(blob, text, controller.signal, emotion);
     if (controller.signal.aborted) return;
     return new Promise<void>((resolve, reject) => {
       finishSpeech = () => {
@@ -486,13 +495,17 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
 
   // Plays the answer part by part: part 0 is short, so speech starts after one short
   // TTS call while later parts are generated in the background.
-  async function speakAnswer(jobId: string, text: string) {
+  async function speakAnswer(jobId: string, text: string, emotion?: string) {
     if (state.phase === "off" || state.phase === "starting") return;
     const token = run;
     clearInterval(thinkingTimer);
     releaseSpeech();
     clearTimeout(listenTimer);
-    set({ phase: "speaking", notice: "" });
+    set({ phase: "thinking", notice: "" });
+    earcon("tick");
+    thinkingTimer = setInterval(() => {
+      if (state.phase === "thinking") earcon("tick");
+    }, 3000);
     const controller = new AbortController();
     speechController = controller;
     const parts = answerChunks(text);
@@ -507,13 +520,14 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
         const blob = await next;
         if (controller.signal.aborted || token !== run) break;
         if (index + 1 < parts.length) next = fetchPart(index + 1);
-        await playBlob(blob, controller, parts[index]);
+        await playBlob(blob, controller, parts[index], emotion);
         if (controller.signal.aborted || token !== run) break;
       }
     } catch {
       if (!controller.signal.aborted && token === run)
         set({ error: "Suara AERO-BOT belum tersedia. Teks jawaban tetap dapat dibaca." });
     } finally {
+      clearInterval(thinkingTimer);
       if (speechController === controller) speechController = null;
       finishSpeech = null;
       player?.pause();
@@ -535,6 +549,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   }
 
   function stopSpeaking() {
+    clearInterval(thinkingTimer);
     releaseSpeech();
   }
 

@@ -1,9 +1,10 @@
 import { actuatorRoutes } from "./actuators.mjs";
 import { robotFaceRelay } from "./robot-face-relay.mjs";
+import { nodeRoutes } from "./nodes.mjs";
 import http from "node:http";
 import { webRoutes } from "./web.mjs";
 import { canViewModel, simpleReading } from "./access.mjs";
-import { browserVoiceRoutes } from "./browser-voice.mjs";
+import { browserVoiceRoutes, defaultStyle } from "./browser-voice.mjs";
 import { disasterNews } from "./disaster-news.mjs";
 import { normalizeGowa, sendGowa, gowaChoiceIds } from "./gowa.mjs";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -237,7 +238,7 @@ async function speech(text) {
             annotations: [
               {
                 type: "speech_metadata",
-                style: "Calm, friendly Indonesian public information assistant.",
+                style: e.GEMINI_TTS_STYLE || defaultStyle,
               },
             ],
           },
@@ -245,10 +246,10 @@ async function speech(text) {
       },
     ],
     {
-      model: e.GEMINI_TTS_MODEL,
+      model: e.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
       response_format: { type: "audio" },
       generation_config: {
-        speech_config: [{ voice: e.GEMINI_TTS_VOICE || "Kore" }],
+        speech_config: [{ voice: e.GEMINI_TTS_VOICE || "Puck" }],
       },
     },
   );
@@ -294,7 +295,7 @@ async function deliver(j, nativeAudio) {
         body: {
           action: "speak",
           text,
-          face: "happy",
+          face: j.stage.emotion || "neutral",
           audio_path: path,
           muted: robot.quiet,
           fallback: path ? null : "unavailable",
@@ -305,6 +306,7 @@ async function deliver(j, nativeAudio) {
   }
   return finish(j, {
     text,
+    emotion: j.stage.emotion || "neutral",
     denied: j.stage.denied === true,
     sensor_context: j.stage.context,
   });
@@ -726,13 +728,28 @@ async function nativeAnswer(j, p) {
         : REFUSAL;
   }
   const denied = j.stage.denied || text === REFUSAL || text === UNAVAILABLE;
-  await stage(j, { answer: text, denied });
+  const emotion = ["neutral", "happy", "concerned", "warning", "danger", "surprised"].includes(
+    p.emotion,
+  )
+    ? p.emotion
+    : denied
+      ? "concerned"
+      : "neutral";
+  await stage(j, { answer: text, denied, emotion });
+  if (j.kind === "web_chat" && j.body.voice === true && j.owner_id)
+    voiceRoutes.prefetch(j.owner_id, text);
   const robot =
     j.kind === "robot_chat" ? await one("ae_robots", "id=eq." + filter(j.body.robot_id)) : null;
   return {
     id: j.id,
     lease_token: j.lease_token,
     answer: text,
+    emotion,
+    speech: {
+      model: e.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
+      voice: e.GEMINI_TTS_VOICE || "Puck",
+      style: e.GEMINI_TTS_STYLE || defaultStyle,
+    },
     quiet: robot?.quiet === true,
   };
 }
@@ -891,6 +908,7 @@ async function internal(path, p) {
 
 const news = disasterNews({ db });
 const faceRelay = robotFaceRelay({ user, db, filter, rawBody, send, rate });
+const registrationRoutes = nodeRoutes({ db, user, send, filter, rawBody, rate, devices });
 const voiceRoutes = browserVoiceRoutes({ env: e, user, one, member, rate, rawBody, send, gemini });
 const browserRoutes = webRoutes({
   db,
@@ -930,6 +948,7 @@ const server = http.createServer(async (req, res) => {
     if (path.startsWith("/v1/")) res.setHeader("Cache-Control", "no-store");
     if (path === "/v1/disasters" && req.method === "GET") return send(res, 200, await news.read());
     if (await faceRelay(req, res, url)) return;
+    if (await registrationRoutes(req, res, url)) return;
     if (await voiceRoutes(req, res, url)) return;
     if (await browserRoutes(req, res, url)) return;
     if (await sprinklerRoutes(req, res, url)) return;
@@ -1126,7 +1145,11 @@ const server = http.createServer(async (req, res) => {
           const j = await enqueue(
             "web_chat",
             "web:" + u.id + ":" + key,
-            { text: cleanText(p.text), node_ids: p.node_id ? [p.node_id] : [] },
+            {
+              text: cleanText(p.text),
+              node_ids: p.node_id ? [p.node_id] : [],
+              voice: p.voice === true,
+            },
             u.id,
           );
           return send(res, 202, { id: j.id, status: j.status });
@@ -1224,12 +1247,13 @@ const server = http.createServer(async (req, res) => {
           const key = req.headers["idempotency-key"] || randomUUID();
           if (!/^[a-zA-Z0-9_-]{1,80}$/.test(key)) throw new Error("Invalid idempotency key");
           const j = await enqueue(
-            "robot_chat",
+            p.voice === true ? "web_chat" : "robot_chat",
             "touch:" + u.id + ":" + key,
             {
               robot_id: rob.id,
               node_ids: [rob.node_id],
               text: cleanText(p.text || "Bagaimana kondisi udara sekarang?"),
+              voice: p.voice === true,
             },
             u.id,
           );

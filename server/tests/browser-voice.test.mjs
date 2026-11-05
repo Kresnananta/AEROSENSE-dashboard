@@ -2,6 +2,59 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { browserVoiceRoutes } from "../api/browser-voice.mjs";
 import { detectWakePhrase } from "../../src/lib/handsfree.ts";
+import { startProcessingSound } from "../../src/lib/processing-sound.ts";
+
+test("processing cue plays locally and releases its audio context when stopped", async () => {
+  const original = globalThis.AudioContext;
+  const frequencies = [];
+  let closed = false;
+  globalThis.AudioContext = class {
+    state = "running";
+    currentTime = 0;
+    destination = {};
+    async resume() {}
+    async close() {
+      closed = true;
+    }
+    createOscillator() {
+      const tone = {
+        frequency: { value: 0 },
+        connect() {
+          return this;
+        },
+        start() {
+          frequencies.push(this.frequency.value);
+        },
+        stop() {},
+      };
+      return tone;
+    }
+    createGain() {
+      return {
+        gain: {
+          setValueAtTime() {},
+          linearRampToValueAtTime() {},
+          exponentialRampToValueAtTime() {},
+        },
+        connect() {
+          return this;
+        },
+      };
+    }
+  };
+  let stop;
+  try {
+    stop = startProcessingSound();
+    await new Promise(setImmediate);
+    assert.deepEqual(frequencies, [523.25, 659.25]);
+    stop();
+    assert.equal(closed, true);
+  } finally {
+    stop?.();
+    if (original) globalThis.AudioContext = original;
+    else delete globalThis.AudioContext;
+  }
+});
 
 test("strict wake requires Halo AERO-BOT at the start of every voice question", () => {
   for (const text of [
@@ -96,6 +149,12 @@ test("browser voice requires auth and owned replies, validates recordings, and n
     callsBeforeReplay,
     "repeat playback reuses audio after access checks",
   );
+  reply.result.text = "Kondisi wilayah perlu diperhatikan. Hindari paparan asap di sekitar Anda.";
+  const beforePrefetch = modelCalls.length;
+  route.prefetch("owner", reply.result.text);
+  payload = { job_id: "own", part: 0 };
+  await run("speak");
+  assert.equal(modelCalls.length, beforePrefetch + 1, "warmup and playback share one TTS request");
   authorized = false;
   await assert.rejects(run("speak"), { status: 401 });
   authorized = true;
