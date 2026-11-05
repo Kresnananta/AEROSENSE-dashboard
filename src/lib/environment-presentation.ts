@@ -78,7 +78,7 @@ export function environmentHighlights(
       [/AQI US|US AQI/i, "US AQI wilayah"],
     ],
     soil: [
-      [/kadar air tanah/i, "Air tanah permukaan"],
+      [/kadar air tanah/i, "Kelembapan tanah (0–1 cm)"],
       [/suhu tanah/i, "Suhu tanah"],
     ],
     fire: [[/Jumlah (?:deteksi )?titik panas/i, "Deteksi dalam feed 24 jam"]],

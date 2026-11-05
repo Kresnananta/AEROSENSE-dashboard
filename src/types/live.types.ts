@@ -71,6 +71,12 @@ export interface Alert {
   created_at: string;
   acknowledged_at: string | null;
 }
+export interface SoilHistoryPoint {
+  at: string;
+  moisture_pct: number | null;
+  rain_mm: number | null;
+}
+
 export interface EnvironmentFact {
   id: string;
   area_id: string;
@@ -86,6 +92,7 @@ export interface EnvironmentFact {
   kind: string;
   spatial_context: string;
   data_origin: string;
+  soil_history?: SoilHistoryPoint[];
 }
 export interface EnvironmentResponse {
   events?: EnvironmentEvent[];

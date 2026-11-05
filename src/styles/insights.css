@@ -780,6 +780,44 @@
 .scene-offscreen img {
   animation-play-state: paused;
 }
+.soil-history {
+  padding: clamp(1rem, 3vw, 2rem);
+  background: #fff;
+  border: 1px solid #dce8f4;
+  border-radius: 1rem;
+  color: #16334c;
+}
+
+.soil-history h3 {
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.soil-history p {
+  max-width: 70ch;
+  margin: 0.5rem 0;
+}
+
+.soil-history small {
+  color: #405b73;
+}
+
+.soil-history-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: 1rem 2rem;
+  margin: 1.25rem 0 0.75rem;
+}
+
+.soil-history-chart {
+  min-width: 0;
+}
+
+.soil-history-chart h4 {
+  padding-left: 0.5rem;
+  font-weight: 700;
+}
+
 .insight-glances {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

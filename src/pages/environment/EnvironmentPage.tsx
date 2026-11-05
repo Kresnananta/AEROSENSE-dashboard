@@ -21,6 +21,7 @@ import { useLiveData } from "@/hooks/useLiveData";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
+import { SoilHistory } from "@/components/environment/SoilHistory";
 import { dateLabel, type EnvironmentResponse, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
 import { Atmosphere, ConditionScene } from "@/components/environment/ConditionScene";
@@ -333,6 +334,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               </dl>
             )}
           </article>
+          {!compact && selected.category === "soil" && (
+            <SoilHistory
+              history={selectedFacts.find((f) => selected.fact_ids.includes(f.id))?.soil_history}
+            />
+          )}
           {!compact && node && ["fire", "earthquake"].includes(category) && (
             <Link
               className="insight-text-link map-event-link"

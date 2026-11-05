@@ -37,7 +37,7 @@ function planRequests(input, settings, now = Date.now()) {
         "https://open-meteo.com/en/docs",
         3600,
         [n],
-        `https://api.open-meteo.com/v1/forecast?${coords}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&hourly=soil_temperature_0cm,soil_moisture_0_to_1cm&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max&forecast_days=2&timezone=Asia%2FJakarta`,
+        `https://api.open-meteo.com/v1/forecast?${coords}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&hourly=soil_temperature_0cm,soil_moisture_0_to_1cm,precipitation&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,uv_index_max&past_days=3&forecast_days=2&timezone=Asia%2FJakarta`,
       );
     if (due("openmeteo_air", n))
       put(

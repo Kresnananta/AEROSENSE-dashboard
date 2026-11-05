@@ -179,9 +179,9 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   if (soil)
     add(
       "soil",
-      "Kadar air tanah",
-      "Estimasi kadar air tanah tersedia untuk lapisan paling atas.",
-      "Cek tanah langsung sebelum menentukan kebutuhan siram.",
+      "Kelembapan tanah permukaan",
+      "Estimasi wilayah untuk lapisan tanah 0–1 cm.",
+      "Bandingkan perubahan kelembapan permukaan dengan hujan beberapa hari terakhir.",
       [soil],
       "calm",
     );

@@ -286,9 +286,9 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (soil)
     add(
       "soil",
-      "Kadar air tanah",
-      "Estimasi kadar air tanah tersedia untuk lapisan paling atas.",
-      "Cek tanah langsung sebelum menentukan kebutuhan siram.",
+      "Kelembapan tanah permukaan",
+      "Estimasi wilayah untuk lapisan tanah 0–1 cm.",
+      "Bandingkan perubahan kelembapan permukaan dengan hujan beberapa hari terakhir.",
       [soil],
       "calm",
     );
@@ -550,6 +550,18 @@ function normalizeResponse(response, request, now = Date.now()) {
             add(k, "weather", label, d.current[k], unit, d.current.time, "model");
           const hi = d.hourly.time.findLastIndex((t) => Date.parse(iso(t)) <= now);
           if (hi >= 0) {
+            const hourly = d.hourly;
+            const soilHistory = hourly.time
+              .map((time, i) => {
+                const moisture = hourly.soil_moisture_0_to_1cm?.[i];
+                const rain = hourly.precipitation?.[i];
+                return {
+                  at: iso(time),
+                  moisture_pct: Number.isFinite(moisture) && moisture >= 0 && moisture <= 1 ? moisture * 100 : null,
+                  rain_mm: Number.isFinite(rain) && rain >= 0 ? rain : null,
+                };
+              })
+              .filter(({ at }) => Date.parse(at) > now - 72 * 3600000 && Date.parse(at) <= now);
             add(
               "soil_t",
               "soil",
@@ -567,6 +579,8 @@ function normalizeResponse(response, request, now = Date.now()) {
               "m³/m³",
               d.hourly.time[hi],
               "model",
+              21600,
+              { soil_history: soilHistory },
             );
           }
           const daily = {
@@ -576,7 +590,9 @@ function normalizeResponse(response, request, now = Date.now()) {
             precipitation_probability_max: ["Prakiraan peluang presipitasi maksimum", "%"],
             uv_index_max: ["Prakiraan indeks UV maksimum", ""],
           };
-          for (let i = 0; i < (d.daily?.time || []).length; i++)
+          const today = new Date(now + 7 * 3600000).toISOString().slice(0, 10);
+          for (let i = 0; i < (d.daily?.time || []).length; i++) {
+            if (d.daily.time[i] < today) continue;
             for (const [k, [label, unit]] of Object.entries(daily))
               add(
                 k + i,
@@ -588,6 +604,7 @@ function normalizeResponse(response, request, now = Date.now()) {
                 "forecast",
                 10800,
               );
+          }
         } else if (request.provider === "openmeteo_air") {
           if (!d.current) throw Error("Data polutan kosong");
           const labels = {
