@@ -1,5 +1,5 @@
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { ArrowUp, Ear, Loader2, RefreshCw, Mic, MicOff, Square, Volume2 } from "lucide-react";
@@ -16,6 +16,9 @@ import { useAccess } from "@/hooks/useAccess";
 import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 import { detectWakePhrase } from "@/lib/handsfree";
 import { startProcessingSound } from "@/lib/processing-sound";
+import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
+
+const CHAT_LOCATION_RADIUS_KM = 5;
 
 interface Message {
   id: string;
@@ -58,6 +61,43 @@ export function ChatPanel() {
   }, [onChat, params]);
   const nodes = useLiveData<{ nodes: LiveNode[] }>(user ? "/v1/dashboard" : null, 60000);
   const [nodeId, setNodeId] = useState("");
+  const [devicePoint, setDevicePoint] = useState<{ owner: string; point: GeoPoint } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "locating" | "unavailable">("idle");
+  const locate = useCallback(() => {
+    if (!userId || !navigator.geolocation) return;
+    setLocationStatus("locating");
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        setLocationStatus(validPoint(coords) ? "idle" : "unavailable");
+        if (validPoint(coords)) {
+          setDevicePoint({ owner: userId, point: { latitude: coords.latitude, longitude: coords.longitude } });
+          setNodeId("");
+        }
+      },
+      () => setLocationStatus("unavailable"),
+      { timeout: 10000, maximumAge: 60000 },
+    );
+  }, [userId]);
+  useEffect(() => {
+    if (!userId || !onChat || robotId || !navigator.permissions || !navigator.geolocation) return;
+    let active = true;
+    void navigator.permissions
+      .query({ name: "geolocation" })
+      .then((permission) => {
+        if (active && permission.state === "granted") locate();
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [userId, onChat, robotId, locate]);
+  const availableNodes = nodes.data?.nodes || [];
+  const point = devicePoint?.owner === userId ? devicePoint?.point : undefined;
+  const nearest = point && availableNodes
+    .filter(validPoint)
+    .map((node) => ({ node, distance: distanceKm(point, node) }))
+    .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
+    .sort((a, b) => a.distance - b.distance)[0];
+  const manual = availableNodes.find((node) => node.id === nodeId);
+  const contextNode = manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -130,6 +170,8 @@ export function ChatPanel() {
       setBusy(false);
       setError("");
       setNodeId("");
+      setDevicePoint(null);
+      setLocationStatus("idle");
       owner.current = user?.id;
     }
   }, [user?.id]);
@@ -223,10 +265,8 @@ export function ChatPanel() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [handsFreeControls]);
-  // Voice questions use the first available node when none is selected.
-  const voiceNode = nodeId || nodes.data?.nodes?.[0]?.id || "";
   async function send(text = input, fromVoice = false): Promise<string | null> {
-    const targetNode = fromVoice && !robotId ? voiceNode : nodeId;
+    const targetNode = robotId ? undefined : contextNode?.id;
     if (!text.trim() || sending.current || pending || !user) return null;
     if (!fromVoice && (voice.recording || voice.transcribing)) return null;
     voice.stopSpeaker();
@@ -303,19 +343,45 @@ export function ChatPanel() {
             </select>
           </label>
         )}
-        <label className="chat-scope">
-          Sensor
-          <MonitoringSelect
-            label="Sumber sensor percakapan"
-            value={nodeId || "__no_sensor__"}
-            onValueChange={(value) => setNodeId(value === "__no_sensor__" ? "" : value)}
-            disabled={!!robotId || busy || !!pending}
-            options={[
-              { value: "__no_sensor__", label: "Tanpa sensor" },
-              ...(nodes.data?.nodes || []).map((n) => ({ value: n.id, label: n.name })),
-            ]}
-          />
-        </label>
+        {user && !robotId && availableNodes.length > 0 && (
+          <div className="chat-scope">
+            <span aria-live="polite">
+              {locationStatus === "locating"
+                ? "Mencari titik terdekat…"
+                : contextNode
+                  ? `Acuan: ${contextNode.name}${!manual && nearest ? ` · ${distanceLabel(nearest.distance)}` : ""}`
+                  : point
+                    ? "Tidak ada node dalam 5 km"
+                    : "Tanpa acuan lokasi"}
+              {locationStatus === "unavailable" && " · Lokasi perangkat tidak tersedia"}
+            </span>
+            {typeof navigator !== "undefined" && navigator.geolocation && (
+              <button
+                type="button"
+                className="font-semibold text-[#0059b9] underline underline-offset-2"
+                disabled={busy || !!pending || locationStatus === "locating"}
+                onClick={locate}
+              >
+                {point ? "Perbarui lokasi" : "Gunakan lokasi saya"}
+              </button>
+            )}
+            {availableNodes.length > 1 && (
+              <details className="w-full">
+                <summary className="cursor-pointer">Pilih titik lain</summary>
+                <MonitoringSelect
+                  label="Acuan percakapan"
+                  value={nodeId || "__auto__"}
+                  onValueChange={(value) => setNodeId(value === "__auto__" ? "" : value)}
+                  disabled={busy || !!pending || locationStatus === "locating"}
+                  options={[
+                    { value: "__auto__", label: "Otomatis" },
+                    ...availableNodes.map((n) => ({ value: n.id, label: n.name })),
+                  ]}
+                />
+              </details>
+            )}
+          </div>
+        )}
         {nodes.error && <p className="live-notice">{nodes.error}</p>}
         <div className="live-messages" role="log" aria-live="polite">
           {messages.map((m) => (
@@ -459,12 +525,6 @@ export function ChatPanel() {
         )}
         {user && voice.configured && handsFree.supported && (
           <div className={`handsfree-card is-${handsFree.phase}`}>
-            {!handsFree.active && (
-              <p className="chat-note">
-                Mode suara mengirim potongan ucapan ke Gemini untuk mengenali “Halo AERO-BOT”. Hanya
-                pertanyaan setelah panggilan yang diproses sebagai chat.
-              </p>
-            )}
             <button
               className="handsfree-toggle"
               type="button"
