@@ -43,11 +43,12 @@ export function SensorOverview() {
         : summary.tone === "pending"
           ? "Periksa koneksi node dan tunggu pembacaan baru."
           : "Pantau lagi jika kondisi sekitar berubah.";
-  const heroTitle = summary.tone === "calm" ? "Udara terpantau baik." : summary.title;
+  const heroTitle = summary.tone === "calm" ? "Pembacaan dalam batas." : summary.title;
   const titleParts = heroTitle.trim().split(/\s+/);
   const titleAccent = titleParts.pop();
-  const fresh = !!node?.latest?.reading_id && !node.latest.stale;
-  const keys = [node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3", "eco2_ppm", "temperature_c"];
+  const fresh =
+    !!node?.latest?.reading_id && !node.latest.stale && node.latest.quality?.invalid !== true;
+  const keys = [node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3", "tvoc_ppb", "temperature_c"];
   return (
     <section className="insights-hub sensor-overview">
       <header className="insights-heading">
@@ -126,14 +127,15 @@ export function SensorOverview() {
                     <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
                       <dt>{metricLabels[key][0]}</dt>
                       <dd>
-                        {typeof value === "number" && Number.isFinite(value)
+                        {typeof value === "number" && Number.isFinite(value) &&
+                        (key === "temperature_c" || value >= 0)
                           ? value.toLocaleString("id-ID", {
                               maximumFractionDigits: 1,
                             })
                           : "—"}
                         <small>{metricLabels[key][1]}</small>
                       </dd>
-                      {key === "eco2_ppm" && <span>Estimasi eCO₂</span>}
+                      {key === "tvoc_ppb" && <span>Indikator senyawa organik volatil</span>}
                     </div>
                   );
                 })}
@@ -231,8 +233,9 @@ export function SensorOverview() {
                 diberi status bersih.
               </p>
               <p>
-                Status ini untuk pemantauan sensor, bukan AQI, ISPU, kategori kesehatan, atau bukti
-                sumber emisi. Debu optik dan eCO₂ tetap merupakan indikator sensor.
+                Status ini mengikuti ambang perangkat. Indeks udara wilayah tersedia di Hub
+                Lingkungan. TVOC adalah estimasi kelompok senyawa organik volatil. eCO₂ adalah
+                estimasi ekuivalen CO₂ dan tidak mengukur karbon monoksida (CO).
               </p>
               {node?.rules?.map((r) => (
                 <p key={r.metric}>

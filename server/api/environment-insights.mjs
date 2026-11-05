@@ -61,7 +61,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   )
     add(
       "weather",
-      "Hujan di sekitar titik robot",
+      "Hujan di sekitar titik acuan",
       "Model wilayah menunjukkan hujan pada interval terbaru.",
       "Siapkan payung sebelum keluar.",
       [...(rain ? [rain] : []), ...(weatherCode ? [weatherCode] : []), ...(temp ? [temp] : [])],
@@ -70,7 +70,11 @@ export function summarizeEnvironment(facts, now = Date.now()) {
   else if (temp)
     add(
       "weather",
-      temp.value >= 32 ? "Terasa panas" : temp.value >= 26 ? "Terasa hangat" : "Terasa sejuk",
+      temp.value >= 32
+        ? "Cuaca terasa panas"
+        : temp.value >= 26
+          ? "Cuaca terasa hangat"
+          : "Cuaca terasa sejuk",
       chance && chance.value >= 60
         ? "Prakiraan hari ini juga menunjukkan peluang hujan."
         : `Suhu wilayah diperkirakan sekitar ${Math.round(temp.value)}°C. Kondisi di tiap lokasi bisa berbeda.`,
