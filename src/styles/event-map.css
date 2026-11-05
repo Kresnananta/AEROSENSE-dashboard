@@ -286,9 +286,6 @@
   line-height: 1.7;
   margin: 12px 0;
 }
-.map-event-link {
-  margin-top: 18px;
-}
 @media (max-width: 720px) {
   .map-controls-main,
   .map-controls[data-public="false"] .map-controls-main {

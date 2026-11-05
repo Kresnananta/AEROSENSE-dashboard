@@ -99,7 +99,7 @@ function ThresholdEditor({
       <div className="threshold-form-heading">
         <div>
           <h3>Ambang {metricLabels[metric][0]}</h3>
-          <p>Atur batas operasional untuk perangkat ini.</p>
+          <p>Batas ini berlaku untuk pembacaan sensor di titik ini. Kategori ISPU wilayah dihitung terpisah.</p>
         </div>
         <span>{unit}</span>
       </div>
@@ -277,7 +277,7 @@ export function ManagementPage() {
               <div className="management-section-heading">
                 <div>
                   <h2>Aturan peringatan</h2>
-                  <p>Pilih parameter untuk melihat atau memperbarui ambangnya.</p>
+                  <p>Pilih jenis pembacaan untuk mengatur kapan AEROSENSE memberi status waspada atau bahaya.</p>
                 </div>
               </div>
               {rules.error ? (

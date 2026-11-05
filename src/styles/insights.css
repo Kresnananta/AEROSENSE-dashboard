@@ -356,8 +356,11 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 22px;
-  margin: 24px 0;
+  gap: 8px clamp(14px, 2vw, 22px);
+  margin: clamp(14px, 2vw, 20px) 0;
+}
+.insight-secondary .insight-text-link {
+  min-height: 44px;
 }
 .credibility-section {
   margin-top: 20px;
@@ -609,7 +612,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 12px;
   color: var(--panel-light);
   font-size: 12px;
   line-height: 1.65;
@@ -781,6 +784,7 @@
   animation-play-state: paused;
 }
 .soil-history {
+  margin-top: clamp(16px, 2.5vw, 24px);
   padding: clamp(1rem, 3vw, 2rem);
   background: #fff;
   border: 1px solid #dce8f4;
@@ -1277,7 +1281,7 @@
     font-size: 25px;
   }
   .insight-secondary {
-    gap: 15px;
+    gap: 4px 14px;
   }
   .insight-fact-list > div {
     grid-template-columns: 1fr;

@@ -25,7 +25,7 @@ import { SoilHistory } from "@/components/environment/SoilHistory";
 import { dateLabel, type EnvironmentResponse, type LiveNode } from "@/types/live.types";
 import "@/styles/insights.css";
 import { Atmosphere, ConditionScene } from "@/components/environment/ConditionScene";
-import { conditionScene, environmentHighlights } from "@/lib/environment-presentation";
+import { conditionScene, environmentHighlights, riverDayLabel } from "@/lib/environment-presentation";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 
 const categories = [
@@ -302,7 +302,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 {selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
               <h2>{selected.title}</h2>
-
+              {selected.category !== "weather" && <p>{selected.body}</p>}
               <div className="insight-action">
                 <ArrowRight size={18} aria-hidden="true" />
                 <strong>{selected.action}</strong>
@@ -310,12 +310,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               {selected.valid_at && (
                 <small className="insight-date">
                   <Clock3 size={13} aria-hidden="true" />
-                  {selected.period === "reference"
+                  {selected.category === "flood" && selected.period === "forecast"
+                    ? "Prakiraan harian"
+                    : selected.period === "reference"
                     ? "Catatan sumber"
                     : selected.period === "forecast"
                       ? "Berlaku pada"
                       : "Waktu data"}{" "}
-                  {dateLabel(selected.valid_at)}
+                  {selected.category === "flood" && selected.period === "forecast"
+                    ? `${riverDayLabel(selected.valid_at)} UTC`
+                    : dateLabel(selected.valid_at)}
                 </small>
               )}
             </div>
@@ -338,15 +342,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <SoilHistory
               history={selectedFacts.find((f) => selected.fact_ids.includes(f.id))?.soil_history}
             />
-          )}
-          {!compact && node && ["fire", "earthquake"].includes(category) && (
-            <Link
-              className="insight-text-link map-event-link"
-              to={`/sensor-map?layer=events&event_type=${category}&node_id=${encodeURIComponent(node.id)}`}
-            >
-              <MapPin size={16} />
-              Lihat lokasi di peta <ArrowUpRight size={15} />
-            </Link>
           )}
           {compact && (
             <div className="insight-glances" aria-label="Sekilas lingkungan">
@@ -381,6 +376,18 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           )}
           {!compact && (
             <div className="insight-secondary">
+              {node && ["fire", "earthquake"].includes(category) && (
+                <Link
+                  className="insight-text-link"
+                  to={`/sensor-map?layer=events&event_type=${category}&node_id=${encodeURIComponent(node.id)}`}
+                >
+                  <MapPin size={16} />
+                  {data?.event_layers?.some((layer) => layer.category === category && layer.event_count > 0)
+                    ? "Lihat lokasi di peta"
+                    : "Lihat cakupan di peta"}
+                  <ArrowUpRight size={15} />
+                </Link>
+              )}
               <Link
                 className="live-button"
                 to={`/aerobot?question=${encodeURIComponent(`Jelaskan kondisi ${activeCategory?.label.toLowerCase()} ${locationMode === "device" ? `di sekitar lokasi saya dengan node acuan ${node?.name || "terdekat"}` : `di sekitar titik ${node?.name || "robot"}`} dari informasi publik terbaru.`)}`}

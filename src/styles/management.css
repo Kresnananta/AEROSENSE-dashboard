@@ -1,6 +1,9 @@
 .management-page {
   display: grid;
-  gap: 24px;
+  gap: clamp(16px, 2.4vw, 24px);
+}
+.management-page > .live-heading {
+  margin-bottom: 0;
 }
 .management-page :is(h2, h3) {
   color: #173d63;

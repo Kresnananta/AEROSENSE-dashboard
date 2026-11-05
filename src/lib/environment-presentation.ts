@@ -21,6 +21,8 @@ export type Scene =
 export type Highlight = { label: string; value: string; unit: string };
 
 const number = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
+const riverDay = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
+export const riverDayLabel = (at: string) => riverDay.format(new Date(at));
 
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
   return facts
@@ -81,11 +83,11 @@ export function environmentHighlights(
       [/kadar air tanah/i, "Kelembapan tanah (0–1 cm)"],
       [/suhu tanah/i, "Suhu tanah"],
     ],
-    fire: [[/Jumlah (?:deteksi )?titik panas/i, "Deteksi dalam feed 24 jam"]],
+    fire: [[/Jumlah (?:deteksi )?titik panas/i, "Titik panas tercatat dalam 24 jam"]],
   };
   const picks = byCategory[insight.category] || [];
   if (insight.category === "flood") {
-    const river = facts.find(
+    const rivers = facts.filter(
       (f) =>
         insight.fact_ids.includes(f.id) &&
         f.kind === "forecast" &&
@@ -93,15 +95,11 @@ export function environmentHighlights(
         Date.parse(f.fresh_until) > now &&
         typeof f.value === "number",
     );
-    return river
-      ? [
-          {
-            label: "Prakiraan debit sungai",
-            value: number(river.value as number),
-            unit: river.unit,
-          },
-        ]
-      : [];
+    return rivers.sort((a, b) => Date.parse(a.valid_at || "") - Date.parse(b.valid_at || "")).map((river) => ({
+      label: river.valid_at ? `Debit · ${riverDayLabel(river.valid_at)} (UTC)` : "Prakiraan debit sungai",
+      value: number(river.value as number),
+      unit: river.unit,
+    }));
   }
   return picks.flatMap(([pattern, label]) => {
     const f = fresh.find(

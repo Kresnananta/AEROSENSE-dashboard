@@ -97,7 +97,7 @@ test("forecasts and reference records retain their own time and meaning", () => 
   });
   assert.match(
     summarizeEnvironment([fire], now).find((x) => x.category === "fire").action,
-    /bukan jaminan/,
+    /petugas setempat/,
   );
 });
 
@@ -135,7 +135,9 @@ test("ISPU uses the Indonesian PM2.5 conversion on 24 consecutive hours, with US
   const index = facts.find((f) => f.label.startsWith("Estimasi ISPU"));
   assert.equal(index.value, 70);
   assert.equal(index.valid_at, new Date(now).toISOString());
-  assert.match(insights.find((i) => i.category === "air_quality").title, /ISPU PM2\.5: sedang/);
+  const air = insights.find((i) => i.category === "air_quality");
+  assert.equal(air.title, "Kualitas udara sedang");
+  assert.deepEqual(air.fact_ids, [index.id]);
   for (const [concentration, score] of [[15.5, 50], [55.4, 100], [150.4, 200], [250.4, 300], [500, 500]]) {
     assert.equal(run(Array(24).fill(concentration)).facts.find((f) =>
       f.label.startsWith("Estimasi ISPU"),
@@ -143,10 +145,31 @@ test("ISPU uses the Indonesian PM2.5 conversion on 24 consecutive hours, with US
   }
   const incomplete = run([null, ...sample.slice(1)]);
   assert(!incomplete.facts.some((f) => f.label.startsWith("Estimasi ISPU")));
-  assert.match(incomplete.insights.find((i) => i.category === "air_quality").title, /US AQI/);
-  assert.match(summarizeEnvironment(
+  const us = facts.find((f) => f.label.includes("AQI US"));
+  assert.deepEqual(incomplete.insights.find((i) => i.category === "air_quality").fact_ids, [us.id]);
+  assert.deepEqual(summarizeEnvironment(
     facts.map((f) => f === index ? { ...f, stale: true } : f), now,
-  ).find((i) => i.category === "air_quality").title, /US AQI/);
+  ).find((i) => i.category === "air_quality").fact_ids, [us.id]);
+});
+
+test("quake coverage without events differs from a missing feed or a recorded event", () => {
+  const zero = fact({ category: "earthquake", kind: "event", label: "Cakupan hasil gempa BMKG", valid_at: null });
+  const quake = fact({ category: "earthquake", kind: "event", label: "Catatan BMKG dari daftar gempa M5+ sekitar lokasi" });
+  const title = (facts) => summarizeEnvironment(facts, now).find((i) => i.category === "earthquake").title;
+  assert.match(title([zero]), /Tidak ada catatan/);
+  assert.match(title([{ ...zero, stale: true }]), /belum tersedia/);
+  assert.match(title([zero, quake]), /Ada catatan/);
+});
+
+test("river direction requires two consecutive daily forecasts from the same provider", () => {
+  const river = fact({ id: "river-day-1", category: "flood", provider: "openmeteo_flood",
+    kind: "forecast", label: "Prakiraan debit sungai grid sekitar 5 km", valid_at: "2026-10-17T23:59:59Z", value: 2.13 });
+  const next = { ...river, id: "river-day-2", valid_at: "2026-10-18T23:59:59Z", value: 2.25 };
+  const pick = (facts) => summarizeEnvironment(facts, now).find((i) => i.category === "flood");
+  assert.match(pick([next, river]).title, /naik/);
+  assert.deepEqual(pick([next, river]).fact_ids, [river.id, next.id]);
+  assert.match(pick([river, { ...next, value: 1.25 }]).title, /turun/);
+  assert.match(pick([river, { ...next, provider: "other" }]).body, /belum bisa dibandingkan/);
 });
 test("rincian puts live data before forecasts, references, and expired facts", () => {
   const a = fact({ id: "old", stale: true }),

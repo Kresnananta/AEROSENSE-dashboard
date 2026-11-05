@@ -63,7 +63,7 @@ function DashboardShell() {
 
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar onMenuClick={() => setMobileMenuOpen((prev) => !prev)} />
-        <main className="flex-1 p-5 sm:p-8 max-w-[1760px] w-full mx-auto animate-[appear_0.32s_ease_both]">
+        <main className="flex-1 p-4 sm:p-6 xl:p-8 max-w-[1760px] w-full mx-auto animate-[appear_0.32s_ease_both]">
           {chatVisited && (
             <div hidden={!onChat}>
               <Suspense fallback={null}>

@@ -18,8 +18,8 @@ export function PageHeading({
   actions,
 }: PageHeadingProps) {
   return (
-    <div className="page-heading flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
-      <div>
+    <div className="page-heading flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5 lg:mb-6">
+      <div className="min-w-0">
         {eyebrow && (
           <p className="text-[10px] font-extrabold uppercase tracking-[1.6px] text-[#6fa0ca] mb-2 flex items-center gap-1.5">
             {eyebrow}
@@ -31,10 +31,12 @@ export function PageHeading({
         {description && <p className="text-xs text-[#7A8CA4] mt-2 font-medium">{description}</p>}
       </div>
 
-      <div className="flex items-center gap-3 shrink-0">
-        {badge}
-        {actions}
-      </div>
+      {(badge || actions) && (
+        <div className="flex max-w-full flex-wrap items-center gap-2.5">
+          {badge}
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

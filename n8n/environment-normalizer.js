@@ -212,18 +212,18 @@ function summarizeEnvironment(facts, now = Date.now()) {
   const ispu = match(current, "air_quality", /^Estimasi ISPU PM2\.5 \(24 jam\)$/);
   if (ispu && ispu.value >= 0) {
     const bands = [
-      [50, "baik", "calm"],
-      [100, "sedang", "notice"],
-      [200, "tidak sehat", "warning"],
-      [300, "sangat tidak sehat", "danger"],
-      [Infinity, "berbahaya", "danger"],
+      [50, "baik", "Partikel halus berada pada kategori baik untuk wilayah ini.", "calm"],
+      [100, "sedang", "Orang yang peka terhadap polusi mungkin perlu mengurangi aktivitas berat di luar.", "notice"],
+      [200, "tidak sehat", "Pertimbangkan mengurangi aktivitas berat atau lama di luar.", "warning"],
+      [300, "sangat tidak sehat", "Jika memungkinkan, pindahkan aktivitas luar ke dalam ruangan.", "danger"],
+      [Infinity, "berbahaya", "Hindari aktivitas luar ruangan dan ikuti arahan resmi.", "danger"],
     ];
-    const [, label, tone] = bands.find(([max]) => ispu.value <= max);
+    const [, label, action, tone] = bands.find(([max]) => ispu.value <= max);
     add(
       "air_quality",
-      `ISPU PM2.5: ${label}`,
-      "Kategori Indonesia untuk partikel halus PM2.5, berdasarkan rata-rata model 24 jam.",
-      "Estimasi wilayah dari model 24 jam, bukan pengukuran stasiun resmi.",
+      `Kualitas udara ${label}`,
+      "Kategori wilayah berdasarkan estimasi partikel halus selama 24 jam.",
+      action,
       [ispu],
       tone,
     );
@@ -273,7 +273,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
       ],
     ];
     const [, title, body, action, tone] = bands.find(([max]) => aqi.value <= max);
-    add("air_quality", `${title} (US AQI)`, body, action, [aqi], tone);
+    add("air_quality", title, body, action, [aqi], tone);
   } else
     add(
       "air_quality",
@@ -313,11 +313,11 @@ function summarizeEnvironment(facts, now = Date.now()) {
   if (fire)
     add(
       "fire",
-      fire.value > 0 ? "Titik panas terdeteksi" : "Tidak ada deteksi titik panas",
-      "Cakupan pantauan adalah feed 24 jam pada radius yang ditetapkan.",
+      fire.value > 0 ? "Titik panas terdeteksi" : "Tidak ada titik panas tercatat",
+      "Pantauan satelit NASA FIRMS selama 24 jam dalam radius 50 km dari titik acuan.",
       fire.value > 0
         ? "Cek lokasi dan informasi resmi. Titik panas belum tentu kebakaran."
-        : "Hasil ini bukan jaminan tidak ada kebakaran.",
+        : "Bila melihat asap atau api, cek informasi dari petugas setempat.",
       [fire],
       fire.value > 0 ? "warning" : "neutral",
       "monitoring",
@@ -329,38 +329,60 @@ function summarizeEnvironment(facts, now = Date.now()) {
       "Feed satelit untuk area ini belum diperbarui.",
       "Gunakan informasi resmi untuk memeriksa kejadian.",
     );
-  const river = match(
-    fresh
-      .filter((f) => f.kind === "forecast" && time(f) >= now && time(f) <= now + 48 * 3600000)
-      .sort((a, b) => time(a) - time(b)),
-    "flood",
-    /debit sungai/i,
-  );
-  if (river)
+  const rivers = fresh
+    .filter((f) =>
+      f.category === "flood" && f.kind === "forecast" && /debit sungai/i.test(f.label) &&
+      typeof f.value === "number" && Number.isFinite(f.value) && f.value >= 0 &&
+      time(f) >= now && time(f) <= now + 48 * 3600000,
+    )
+    .sort((a, b) => time(a) - time(b));
+  const [river] = rivers;
+  if (river) {
+    const next = rivers.find((f) => f.provider === river.provider && time(f) - time(river) === 86400000);
+    const delta = next ? Math.round(next.value * 100) - Math.round(river.value * 100) : null;
     add(
       "flood",
-      "Prakiraan aliran sungai",
-      "Model memperkirakan debit sungai di grid sekitar wilayah.",
-      "Lihat peringatan resmi untuk memastikan risiko banjir.",
-      [river],
+      delta === null ? "Prakiraan aliran sungai"
+        : delta > 0 ? "Aliran sungai diperkirakan naik"
+          : delta < 0 ? "Aliran sungai diperkirakan turun" : "Aliran sungai diperkirakan relatif tetap",
+      next
+        ? "Perbandingan dua hari untuk sungai yang dipilih model di sekitar titik acuan."
+        : "Baru ada satu hari prakiraan. Arah perubahan aliran belum bisa dibandingkan.",
+      "Jika beraktivitas dekat sungai, pantau kondisi setempat dan peringatan resmi.",
+      next ? [river, next] : [river],
       "neutral",
       "forecast",
     );
-  else
+  } else
     add(
       "flood",
       "Prakiraan sungai belum tersedia",
       "Belum ada prakiraan debit untuk hari ini.",
       "Pantau informasi resmi bila hujan meningkat.",
     );
-  const quakes = fresh.filter((f) => f.category === "earthquake");
+  const quakes = fresh
+    .filter((f) => f.category === "earthquake" && f.kind === "event" && time(f) > 0 && time(f) <= now)
+    .sort((a, b) => time(b) - time(a));
+  const quakeCoverage = fresh.find((f) =>
+    f.category === "earthquake" && !f.valid_at && /^Cakupan hasil gempa BMKG$/i.test(f.label),
+  );
   if (quakes.length)
     add(
       "earthquake",
-      "Gempa sekitar titik robot",
-      "Daftar ini memuat catatan M5+ yang tercakup di sekitar koordinat node.",
-      "Buka rincian untuk waktu kejadian dan informasi resminya.",
+      "Ada catatan gempa di sekitar wilayah",
+      "Daftar BMKG mencatat gempa magnitudo 5,0 atau lebih dalam radius 300 km dari titik acuan.",
+      "Lihat waktu kejadian dan lokasi pusat gempa di peta.",
       quakes.slice(0, 2),
+      "neutral",
+      "reference",
+    );
+  else if (quakeCoverage)
+    add(
+      "earthquake",
+      "Tidak ada catatan gempa dalam cakupan",
+      "Tidak ada gempa M5,0+ dalam radius 300 km pada daftar BMKG yang diperiksa untuk 7 hari terakhir.",
+      "Gempa di bawah M5,0 bisa tidak muncul di daftar ini.",
+      [quakeCoverage],
       "neutral",
       "reference",
     );
