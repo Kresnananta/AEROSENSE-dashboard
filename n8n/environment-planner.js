@@ -46,7 +46,7 @@ function planRequests(input, settings, now = Date.now()) {
         "https://open-meteo.com/en/docs/air-quality-api",
         10800,
         [n],
-        `https://air-quality-api.open-meteo.com/v1/air-quality?${coords}&domains=cams_global&current=pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&forecast_days=1&timezone=Asia%2FJakarta`,
+        `https://air-quality-api.open-meteo.com/v1/air-quality?${coords}&domains=cams_global&current=pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm2_5&past_days=1&forecast_days=1&timezone=Asia%2FJakarta`,
       );
     if (due("openmeteo_flood", n))
       put(

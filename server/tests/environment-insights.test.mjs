@@ -100,6 +100,54 @@ test("forecasts and reference records retain their own time and meaning", () => 
     /bukan jaminan/,
   );
 });
+
+test("ISPU uses the Indonesian PM2.5 conversion on 24 consecutive hours, with US AQI fallback", async () => {
+  const code = await readFile(
+    new URL("../../n8n/environment-normalizer.js", import.meta.url), "utf8",
+  );
+  const normalize = new Function(
+    code.slice(0, code.lastIndexOf("return normalizeResponse(")) + "return normalizeResponse;",
+  )();
+  const hour = 3600000;
+  const request = {
+    provider: "openmeteo_air",
+    ttl: 10800,
+    targets: [{ id: "its", name: "ITS", latitude: -7.28, longitude: 112.79 }],
+  };
+  const time = Array.from({ length: 25 }, (_, i) =>
+    new Date(now + (i - 23 + 7) * hour).toISOString().slice(0, 16),
+  );
+  const run = (values) => {
+    const result = normalize({
+      latitude: -7.25,
+      longitude: 112.75,
+      utc_offset_seconds: 25200,
+      current: { time: time[23], pm2_5: 40, us_aqi: 130 },
+      hourly_units: { pm2_5: "μg/m³" },
+      hourly: { time, pm2_5: [...values, 500] },
+    }, request, now + 15 * 60000).json.entries[0];
+    assert.equal(result.ok, true);
+    return result.payload;
+  };
+  const sample = [48, 37, 30, 29, 30, 30, 37, 44, 42, 35, 29, 27,
+    23, 26, 27, 25, 25, 25, 27, 27, 29, 29, 35, 37];
+  const { facts, insights } = run(sample);
+  const index = facts.find((f) => f.label.startsWith("Estimasi ISPU"));
+  assert.equal(index.value, 70);
+  assert.equal(index.valid_at, new Date(now).toISOString());
+  assert.match(insights.find((i) => i.category === "air_quality").title, /ISPU PM2\.5: sedang/);
+  for (const [concentration, score] of [[15.5, 50], [55.4, 100], [150.4, 200], [250.4, 300], [500, 500]]) {
+    assert.equal(run(Array(24).fill(concentration)).facts.find((f) =>
+      f.label.startsWith("Estimasi ISPU"),
+    ).value, score);
+  }
+  const incomplete = run([null, ...sample.slice(1)]);
+  assert(!incomplete.facts.some((f) => f.label.startsWith("Estimasi ISPU")));
+  assert.match(incomplete.insights.find((i) => i.category === "air_quality").title, /US AQI/);
+  assert.match(summarizeEnvironment(
+    facts.map((f) => f === index ? { ...f, stale: true } : f), now,
+  ).find((i) => i.category === "air_quality").title, /US AQI/);
+});
 test("rincian puts live data before forecasts, references, and expired facts", () => {
   const a = fact({ id: "old", stale: true }),
     b = fact({

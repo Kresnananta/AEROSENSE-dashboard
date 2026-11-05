@@ -459,8 +459,20 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               <p>
                 Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat,
                 browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server
-                atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data. Kategori udara
-                memakai US AQI, bukan ISPU.
+                atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data.
+              </p>
+              <p>
+                Estimasi ISPU PM2.5 memakai rata-rata 24 jam dari model Open-Meteo / CAMS dan
+                rumus{" "}
+                <a
+                  href="https://peraturan.bpk.go.id/Details/163466/permen-lhk-no-14-tahun-2020"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Permen LHK No. 14 Tahun 2020
+                </a>
+                . Nilai ini hanya mencakup partikel halus PM2.5. US AQI memakai standar Amerika
+                Serikat dan ditampilkan sebagai pembanding.
               </p>
               <p>
                 Web memeriksa data tiap 60 detik. Pengambilan sumber mengikuti jadwal Hub: cuaca dan

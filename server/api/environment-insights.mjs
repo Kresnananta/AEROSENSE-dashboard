@@ -102,7 +102,25 @@ export function summarizeEnvironment(facts, now = Date.now()) {
       "Coba perbarui beberapa saat lagi.",
     );
   const aqi = match(current, "air_quality", /(AQI US|US AQI)/i);
-  if (aqi && aqi.value >= 0) {
+  const ispu = match(current, "air_quality", /^Estimasi ISPU PM2\.5 \(24 jam\)$/);
+  if (ispu && ispu.value >= 0) {
+    const bands = [
+      [50, "baik", "calm"],
+      [100, "sedang", "notice"],
+      [200, "tidak sehat", "warning"],
+      [300, "sangat tidak sehat", "danger"],
+      [Infinity, "berbahaya", "danger"],
+    ];
+    const [, label, tone] = bands.find(([max]) => ispu.value <= max);
+    add(
+      "air_quality",
+      `ISPU PM2.5: ${label}`,
+      "Kategori Indonesia untuk partikel halus PM2.5, berdasarkan rata-rata model 24 jam.",
+      "Estimasi wilayah dari model 24 jam, bukan pengukuran stasiun resmi.",
+      [ispu],
+      tone,
+    );
+  } else if (aqi && aqi.value >= 0) {
     const bands = [
       [
         50,
@@ -148,7 +166,7 @@ export function summarizeEnvironment(facts, now = Date.now()) {
       ],
     ];
     const [, title, body, action, tone] = bands.find(([max]) => aqi.value <= max);
-    add("air_quality", title, body, action, [aqi], tone);
+    add("air_quality", `${title} (US AQI)`, body, action, [aqi], tone);
   } else
     add(
       "air_quality",

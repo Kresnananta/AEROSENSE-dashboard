@@ -63,6 +63,7 @@ export function environmentHighlights(
 ): Highlight[] {
   if (!insight.available) return [];
   const fresh = currentFacts(facts, now).filter((f) => f.category === insight.category);
+  const pm24h = /^Estimasi rata-rata PM2\.5 24 jam$/;
   const byCategory: Record<string, [RegExp, string][]> = {
     weather: [
       [/^Suhu udara$/i, "Suhu wilayah"],
@@ -70,8 +71,11 @@ export function environmentHighlights(
       [/Kecepatan angin/i, "Angin"],
     ],
     air_quality: [
+      [/^Estimasi ISPU PM2\.5 \(24 jam\)$/i, "Estimasi ISPU PM2.5"],
+      fresh.some((f) => pm24h.test(f.label))
+        ? [pm24h, "PM2.5 rata-rata 24 jam"]
+        : [/^Estimasi PM2\.5 wilayah$/i, "PM2.5 wilayah"],
       [/AQI US|US AQI/i, "US AQI wilayah"],
-      [/PM2\.5/i, "PM2.5 wilayah"],
     ],
     soil: [
       [/kadar air tanah/i, "Air tanah permukaan"],

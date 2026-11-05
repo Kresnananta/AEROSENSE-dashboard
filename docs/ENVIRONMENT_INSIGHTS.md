@@ -31,7 +31,8 @@ Masukkan hasilnya ke node **Rapikan fakta dan sumber** pada workflow **AEROSENSE
 
 Ringkasan memakai aturan lokal, tanpa panggilan Gemini atau API tambahan. Cache dan jadwal penyedia tetap digunakan. Gemini tetap tersedia saat pengguna bertanya melalui AERO-BOT.
 
-- Kategori udara menggunakan **US AQI dari penyedia**, bukan konversi PM2.5 sesaat dan bukan ISPU. Acuan kategori: [AirNow](https://www.airnow.gov/aqi/aqi-basics/) dan [Open-Meteo](https://open-meteo.com/en/docs/air-quality-api).
+- **Estimasi ISPU PM2.5** memakai 24 nilai model per jam yang lengkap hingga jam data terkini. Rata-ratanya dikonversi dengan acuan [Permen LHK No. 14 Tahun 2020](https://peraturan.bpk.go.id/Details/163466/permen-lhk-no-14-tahun-2020). Ini subindeks model wilayah, bukan ISPU resmi stasiun. **US AQI** tetap tampil sebagai pembanding dan dipakai untuk ringkasan jika subindeks belum tersedia.
+- Untuk mengaktifkannya, perbarui **Rencanakan pengambilan API** dari `n8n/environment-planner.js`, **Rapikan fakta dan sumber** dari `n8n/environment-normalizer.js`, lalu perbarui API dan web. Fakta baru tersedia setelah cache udara diperbarui. Tidak ada perubahan skema Supabase atau penambahan panggilan API per node.
 - Sebutan sejuk, hangat, dan panas adalah deskripsi antarmuka, bukan ambang bahaya atau peringatan kesehatan resmi.
 - Kadar air tanah tidak cukup untuk menetapkan kekeringan, kesuburan, atau kebutuhan siram tanpa sifat tanah dan tanaman.
 - Titik panas bukan kebakaran terkonfirmasi. Debit sungai bukan status banjir. Cakupan feed dan waktu kejadian tetap tersedia pada rincian.

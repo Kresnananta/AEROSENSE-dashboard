@@ -209,7 +209,25 @@ function summarizeEnvironment(facts, now = Date.now()) {
       "Coba perbarui beberapa saat lagi.",
     );
   const aqi = match(current, "air_quality", /(AQI US|US AQI)/i);
-  if (aqi && aqi.value >= 0) {
+  const ispu = match(current, "air_quality", /^Estimasi ISPU PM2\.5 \(24 jam\)$/);
+  if (ispu && ispu.value >= 0) {
+    const bands = [
+      [50, "baik", "calm"],
+      [100, "sedang", "notice"],
+      [200, "tidak sehat", "warning"],
+      [300, "sangat tidak sehat", "danger"],
+      [Infinity, "berbahaya", "danger"],
+    ];
+    const [, label, tone] = bands.find(([max]) => ispu.value <= max);
+    add(
+      "air_quality",
+      `ISPU PM2.5: ${label}`,
+      "Kategori Indonesia untuk partikel halus PM2.5, berdasarkan rata-rata model 24 jam.",
+      "Estimasi wilayah dari model 24 jam, bukan pengukuran stasiun resmi.",
+      [ispu],
+      tone,
+    );
+  } else if (aqi && aqi.value >= 0) {
     const bands = [
       [
         50,
@@ -255,7 +273,7 @@ function summarizeEnvironment(facts, now = Date.now()) {
       ],
     ];
     const [, title, body, action, tone] = bands.find(([max]) => aqi.value <= max);
-    add("air_quality", title, body, action, [aqi], tone);
+    add("air_quality", `${title} (US AQI)`, body, action, [aqi], tone);
   } else
     add(
       "air_quality",
@@ -356,6 +374,14 @@ function summarizeEnvironment(facts, now = Date.now()) {
   return out;
 }
 function normalizeResponse(response, request, now = Date.now()) {
+  function pm25Ispu(mean) {
+    const concentrations = [0, 15.5, 55.4, 150.4, 250.4, 500];
+    const scores = [0, 50, 100, 200, 300, 500];
+    const x = Math.min(mean, 500);
+    const i = concentrations.findIndex((limit, index) => index > 0 && x <= limit);
+    const fraction = (x - concentrations[i - 1]) / (concentrations[i] - concentrations[i - 1]);
+    return Math.round(scores[i - 1] + fraction * (scores[i] - scores[i - 1]));
+  }
   const fetched_at = new Date(now).toISOString();
   const clean = (v) =>
     String(v ?? "")
@@ -584,6 +610,32 @@ function normalizeResponse(response, request, now = Date.now()) {
               "model",
               21600,
             );
+          const { time, pm2_5 } = d.hourly || {};
+          const currentHour = Date.parse(iso(d.current.time));
+          if (
+            Number.isFinite(currentHour) &&
+            Array.isArray(time) &&
+            Array.isArray(pm2_5) &&
+            time.length === pm2_5.length &&
+            /^[µμ]g\/m³$/.test(d.hourly_units?.pm2_5)
+          ) {
+            const hour = 3600000;
+            const end = Math.floor(Math.min(currentHour, now) / hour) * hour;
+            const hourly = new Map(time.map((at, i) => [Date.parse(iso(at)), pm2_5[i]]));
+            const window = Array.from({ length: 24 }, (_, i) => hourly.get(end - i * hour));
+            if (window.every((value) => Number.isFinite(value) && value >= 0)) {
+              const mean = window.reduce((sum, value) => sum + value, 0) / window.length;
+              const at = new Date(end).toISOString();
+              add(
+                "ispu_pm2_5", "air_quality", "Estimasi ISPU PM2.5 (24 jam)",
+                pm25Ispu(mean), "indeks", at, "model",
+              );
+              add(
+                "pm2_5_24h", "air_quality", "Estimasi rata-rata PM2.5 24 jam",
+                mean, "µg/m³", at, "model",
+              );
+            }
+          }
         } else if (request.provider === "openmeteo_flood") {
           if (!d.daily?.time) throw Error("Data debit kosong");
           for (let i = 0; i < d.daily.time.length; i++)
