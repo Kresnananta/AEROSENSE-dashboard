@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1200" viewBox="280 450 650 650" preserveAspectRatio="xMidYMid meet" fill="none" role="img" aria-label="Wajah AERO-BOT">
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1200" viewBox="280 563 620 486" preserveAspectRatio="xMidYMid meet" fill="none" role="img" aria-label="Wajah AERO-BOT">
   <defs>
     <linearGradient id="eye-color" x2="0.7" y2="1">
       <stop stop-color="#0759B7"/>
@@ -23,7 +23,7 @@
       <stop offset="1" stop-color="#14599A"/>
     </linearGradient>
   </defs>
-  <path id="forelock" d="M482 448H704C704 478 694 501 680 515Q674 522 670 515C667 508 662 500 654 498Q647 498 645 508C638 535 620 557 600 567Q590 572 594 560C604 536 587 514 560 503C529 491 497 477 482 448Z" fill="url(#forelock-color)"/>
+  <path id="forelock" transform="translate(0 43)" d="M482 448H704C704 478 694 501 680 515Q674 522 670 515C667 508 662 500 654 498Q647 498 645 508C638 535 620 557 600 567Q590 572 594 560C604 536 587 514 560 503C529 491 497 477 482 448Z" fill="url(#forelock-color)"/>
   <g id="head-rig">
     <path id="brow-left" fill="#759CD9"/>
     <path id="brow-right" fill="#759CD9"/>
