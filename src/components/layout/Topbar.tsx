@@ -3,12 +3,15 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
+import type { Ref } from "react";
 
 interface TopbarProps {
   onMenuClick: () => void;
+  menuButton: Ref<HTMLButtonElement>;
+  menuOpen: boolean;
 }
 
-export function Topbar({ onMenuClick }: TopbarProps) {
+export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -26,8 +29,11 @@ export function Topbar({ onMenuClick }: TopbarProps) {
       <div className="flex items-center gap-3 min-w-0">
         <button
           type="button"
+          ref={menuButton}
           onClick={onMenuClick}
           aria-label="Buka menu navigasi"
+          aria-controls="mobile-navigation"
+          aria-expanded={menuOpen}
           className="md:hidden w-8 h-8 rounded-lg bg-[#e8f3ff] text-[#0870f0] grid place-items-center hover:bg-[#d9ecff] transition-colors cursor-pointer"
         >
           <Menu className="w-4 h-4 stroke-[2]" />

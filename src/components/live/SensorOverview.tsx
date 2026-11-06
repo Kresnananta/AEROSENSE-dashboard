@@ -29,6 +29,13 @@ export function SensorOverview() {
     60000,
   );
   const summary = sensorSummary(node, rules.data?.rules || node?.rules);
+  const reading = node?.latest;
+  const hasReading = !!reading?.reading_id;
+  const stale = hasReading && reading.stale;
+  const invalid = hasReading && reading.quality?.invalid === true;
+  const fresh = hasReading && !stale && !invalid;
+  const lastReadingTime = reading?.observed_at || reading?.received_at;
+  const hubUrl = node ? `/environment?node_id=${encodeURIComponent(node.id)}` : "/environment";
   const pose =
     summary.tone === "danger"
       ? "alert"
@@ -40,14 +47,26 @@ export function SensorOverview() {
       ? "Minta pengelola memeriksa lokasi dan sensor."
       : summary.tone === "warning"
         ? "Cek titik terdekat dan perubahan di lokasi."
-        : summary.tone === "pending"
-          ? "Periksa koneksi node dan tunggu pembacaan baru."
-          : "Pantau lagi jika kondisi sekitar berubah.";
-  const heroTitle = summary.tone === "calm" ? "Pembacaan dalam batas." : summary.title;
+        : stale || invalid
+          ? "Kondisi terkini di titik ini belum diketahui."
+          : !hasReading
+            ? "Pembacaan pertama akan muncul saat node mulai mengirim data."
+            : summary.tone === "pending"
+              ? "Status belum dapat dinilai dari pembacaan ini."
+              : "Pantau lagi jika kondisi sekitar berubah.";
+  const heroTitle = !node
+    ? "Node belum tersedia."
+    : !hasReading
+      ? "Belum ada pembacaan."
+      : stale
+        ? "Data sensor sudah lama."
+        : invalid
+          ? "Pembacaan tidak valid."
+          : summary.tone === "calm"
+            ? "Pembacaan dalam batas."
+            : summary.title;
   const titleParts = heroTitle.trim().split(/\s+/);
   const titleAccent = titleParts.pop();
-  const fresh =
-    !!node?.latest?.reading_id && !node.latest.stale && node.latest.quality?.invalid !== true;
   const keys = [
     node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3",
     "tvoc_ppb",
@@ -94,9 +113,16 @@ export function SensorOverview() {
                 <p className="sensor-recommendation">
                   <ArrowRight size={17} aria-hidden="true" />
                   <span>
-                    {!nodes.length ? "Belum ada node publik yang tersedia." : recommendation}
+                    {!node ? "Lihat estimasi wilayah di Hub Lingkungan." : recommendation}
                   </span>
                 </p>
+                {hasReading && !fresh && (
+                  <div className="sensor-reading-time">
+                    Pembacaan terakhir · <time dateTime={lastReadingTime || undefined}>
+                      {dateLabel(lastReadingTime)}
+                    </time>
+                  </div>
+                )}
                 <div className="sensor-node-controls">
                   {nodes.length > 0 && (
                     <label className="sensor-select">
@@ -117,14 +143,13 @@ export function SensorOverview() {
                   )}
                   <Link
                     className="panel-link"
-                    to={node ? `/nodes/${encodeURIComponent(node.id)}` : "/nodes"}
+                    to={fresh && node ? `/nodes/${encodeURIComponent(node.id)}` : hubUrl}
                   >
-                    Lihat detail sensor
+                    {fresh ? "Lihat detail sensor" : "Buka Hub Lingkungan"}
                     <ArrowUpRight size={16} />
                   </Link>
                 </div>
               </div>
-              <ConditionScene scene="sensor" muted={!fresh} />
               <dl className="panel-metrics sensor-key-metrics">
                 {keys.map((key) => {
                   const value = fresh ? node?.latest?.metrics[key] : null;
@@ -146,16 +171,25 @@ export function SensorOverview() {
                 })}
               </dl>
               <footer className="sensor-panel-footer">
-                <span>
-                  <Radio size={13} />
-                  {fresh ? dateLabel(node?.latest?.observed_at) : "Belum ada pembacaan"}
-                </span>
+                {fresh ? (
+                  <span>
+                    <Radio size={13} />
+                    {dateLabel(lastReadingTime)}
+                  </span>
+                ) : (
+                  node && (
+                    <Link className="panel-link" to={`/nodes/${encodeURIComponent(node.id)}`}>
+                      Lihat detail sensor <ArrowUpRight size={16} />
+                    </Link>
+                  )
+                )}
                 {node && (
                   <span>
                     Titik node: {node.latitude.toFixed(4)}, {node.longitude.toFixed(4)}
                   </span>
                 )}
               </footer>
+              <ConditionScene scene="sensor" muted={!fresh} />
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
               <span className="assist-orbit assist-orbit-one" aria-hidden="true" />
@@ -243,21 +277,6 @@ export function SensorOverview() {
               ))}
             </div>
           </details>
-          {node?.latest?.reading_id && node.latest.stale && (
-            <details className="insight-disclosure">
-              <summary>
-                <span>Pembacaan terakhir sudah lama</span>
-                <ChevronDown size={17} />
-              </summary>
-              <div className="insight-detail-body">
-                <p>
-                  Terakhir diterima {dateLabel(node.latest.observed_at)}. Nilai lama tidak digunakan
-                  sebagai kondisi sekarang.
-                </p>
-                <Link to={`/nodes/${encodeURIComponent(node.id)}`}>Buka riwayat node</Link>
-              </div>
-            </details>
-          )}
         </>
       )}
     </section>

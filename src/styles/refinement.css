@@ -1591,9 +1591,9 @@ input {
 }
 @media (max-width: 600px) {
   .app-shell .sensor-hero > .condition-scene.scene-sensor {
-    width: min(100%, 280px);
-    height: 230px;
-    margin: 18px auto 8px;
+    width: min(100%, 164px);
+    height: 136px;
+    margin: 4px auto 16px;
   }
   .app-shell .sensor-hero .scene-sensor img {
     scale: 0.9;
@@ -1601,6 +1601,12 @@ input {
   .app-shell .sensor-recommendation {
     font-size: 12px;
     margin: 14px 0 18px;
+  }
+}
+@media (min-width: 601px) {
+  .sensor-hero > .condition-scene.scene-sensor {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
@@ -1634,6 +1640,12 @@ input {
 .app-shell .sensor-hero-copy .sensor-recommendation {
   margin: 12px 0 0;
   line-height: 1.6;
+}
+.sensor-reading-time {
+  margin-top: 8px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .sensor-node-controls {
   display: grid;
