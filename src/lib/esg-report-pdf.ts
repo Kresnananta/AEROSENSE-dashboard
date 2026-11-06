@@ -435,10 +435,6 @@ export function renderEsgReportPdf(report: EsgReport, digest: string): Uint8Arra
       size: 8,
       color: MUTED,
     });
-  L.paragraph("eCO2 adalah estimasi sensor gas, bukan CO2e inventaris gas rumah kaca.", {
-    size: 8,
-    color: MUTED,
-  });
   L.y += 10;
   L.keyValues([
     ["Identitas node", report.node.id],

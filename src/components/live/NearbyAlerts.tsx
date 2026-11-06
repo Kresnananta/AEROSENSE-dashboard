@@ -41,7 +41,7 @@ export function NearbyAlerts() {
   const other = nodes.filter((x) => x.status.tone !== "danger" && x.status.tone !== "warning");
   const coverage = point
     ? `${nodes.length} node dalam ${distanceLabel(radius)}`
-    : "Aktifkan lokasi untuk melihat node terdekat.";
+    : "Aktifkan lokasi untuk melihat sensor terdekat. Koordinat diproses di peramban dan tidak disimpan.";
   function locate() {
     setLocationError("");
     if (!navigator.geolocation) {
@@ -141,7 +141,7 @@ export function NearbyAlerts() {
           </p>
         </div>
         <button className="live-button nearby-locate" disabled={locating} onClick={locate}>
-          <LocateFixed size={16} />
+          <LocateFixed size={16} aria-hidden="true" />
           {locating
             ? "Mencari lokasi…"
             : source === "device"
@@ -176,13 +176,7 @@ export function NearbyAlerts() {
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : dashboard.loading && !dashboard.data ? (
         <DataState loading />
-      ) : !point ? (
-        <div className="nearby-empty">
-          <LocateFixed size={32} />
-          <h2>Cari sensor di sekitar Anda</h2>
-          <span>Koordinat diproses di peramban dan tidak disimpan.</span>
-        </div>
-      ) : (
+      ) : point ? (
         <>
           <div className={`nearby-summary ${raised.length ? "has-alerts" : ""}`} aria-live="polite">
             {raised.length ? (
@@ -253,7 +247,7 @@ export function NearbyAlerts() {
             </aside>
           </div>
         </>
-      )}
+      ) : null}
       <details className="insight-disclosure nearby-method">
         <summary>
           <span>Lokasi & cara membaca status</span>
@@ -266,9 +260,7 @@ export function NearbyAlerts() {
             sensor; data lama atau tidak valid ditandai menunggu data.
           </p>
           <p>
-            Status bukan AQI, jaminan kesehatan, atau bukti sumber pencemar. eCO₂ adalah estimasi
-            sensor gas. Lokasi hanya dipakai pada halaman ini, tanpa disimpan atau dikirim ke server
-            AEROSENSE.
+            Status sensor bukan AQI, jaminan kesehatan, atau bukti sumber pencemar.
           </p>
           {point && (
             <p>

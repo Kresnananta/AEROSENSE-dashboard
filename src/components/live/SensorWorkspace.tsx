@@ -257,7 +257,7 @@ export function SensorWorkspace({
           }}
         />
       )}
-      {mode === "report" && <MonitoringScope report />}
+      {mode === "report" && <MonitoringScope />}
       {isLoading ? (
         <DataState loading />
       ) : dashboard.error ? (
@@ -431,8 +431,7 @@ export function SensorWorkspace({
                       ))}
                   </div>
                   <p className="hub-footnote">
-                    Pembacaan: {dateLabel(node.latest?.observed_at)}. eCO₂ merupakan estimasi setara
-                    CO₂ dari sensor gas. Debu optik tidak otomatis menjadi PM2.5 tervalidasi.
+                    Pembacaan: {dateLabel(node.latest?.observed_at)}. Debu optik tidak otomatis menjadi PM2.5 tervalidasi.
                   </p>
                 </>
               )}

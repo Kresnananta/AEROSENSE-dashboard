@@ -28,8 +28,6 @@ interface DisasterItem {
 interface DisasterResponse {
   status?: string;
   items: DisasterItem[];
-  sources: { name: string; last_success_at: string | null; error: string | null }[];
-  help: { title: string; text: string; url: string }[];
 }
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const { data, error, loading, refresh } = useLiveData<DisasterResponse>(
@@ -174,52 +172,14 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
       <div className="disaster-help">
         <HeartHandshake size={21} aria-hidden="true" />
         <strong>Ingin membantu?</strong>
-        {(
-          data?.help || [
-            {
-              title: "Bantu lewat PMI",
-              url: "https://donasi.pmi.or.id/donation/monetary/donate-now",
-            },
-            { title: "Arahan BNPB", url: "https://www.bnpb.go.id/" },
-          ]
-        ).map((h) => (
-          <a href={h.url} key={h.url} target="_blank" rel="noreferrer">
-            {h.title}
-            <ArrowUpRight size={14} />
-          </a>
-        ))}
+        <a
+          href="https://donasi.pmi.or.id/donation/monetary/donate-now"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Bantu lewat PMI <ArrowUpRight size={14} aria-hidden="true" />
+        </a>
       </div>
-      <details className="insight-disclosure disaster-sources">
-        <summary>
-          <span>Sumber & cara membantu</span>
-          <ChevronDown size={17} />
-        </summary>
-        <div className="insight-detail-body">
-          <ul>
-            <li>
-              ANTARA: judul berita dengan lokasi Indonesia yang dapat dikenali. GDACS: notifikasi
-              yang berkode negara IDN.
-            </li>
-            <li>
-              Luas dari GDACS merupakan estimasi model. Angka antarperistiwa tidak dijumlahkan
-              menjadi total nasional.
-            </li>
-            <li>
-              Dukung lewat kanal resmi. Relawan perlu berkoordinasi dengan BNPB, BPBD atau PMI
-              sebelum berangkat.
-            </li>
-          </ul>
-          <p>
-            Daftar ini mengikuti ketersediaan feed dan tidak mencakup seluruh kejadian. Ikuti arahan
-            petugas setempat.
-          </p>
-          {data?.sources.map((s, i) => (
-            <p key={i}>
-              {s.name}: {s.error || dateLabel(s.last_success_at)}
-            </p>
-          ))}
-        </div>
-      </details>
     </section>
   );
 }

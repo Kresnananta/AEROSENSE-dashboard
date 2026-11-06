@@ -213,6 +213,7 @@ input {
 }
 .app-section-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--section-gap);
 }
 .app-shell :is(.app-section-stack, .management-page) > .live-heading {
@@ -1663,6 +1664,7 @@ input {
   min-height: 44px;
 }
 .app-shell .sensor-hero .sensor-key-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 16px;
 }
 .app-shell .sensor-hero .sensor-key-metrics > div {
@@ -1753,9 +1755,6 @@ input {
     width: 100%;
     min-width: 0;
     margin-top: 12px;
-  }
-  .app-shell .sensor-hero .sensor-key-metrics > div:last-child {
-    grid-column: 1/-1;
   }
   .app-shell .sensor-hero .sensor-key-metrics > div {
     padding: 16px 10px;

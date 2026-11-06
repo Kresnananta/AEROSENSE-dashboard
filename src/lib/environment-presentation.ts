@@ -131,7 +131,6 @@ export function sensorSummary(node: LiveNode | undefined, rules: SensorRule[] = 
       r.enabled &&
       [
         "dust_ug_m3",
-        "eco2_ppm",
         "tvoc_ppb",
         ...(node?.pm25_validated ? ["pm25_ug_m3"] : []),
       ].includes(r.metric),

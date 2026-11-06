@@ -1,21 +1,20 @@
 import { ExternalLink, ChevronDown } from "lucide-react";
 
-export function MonitoringScope({ report = false }: { report?: boolean }) {
+export function MonitoringScope() {
   return (
     <section className="monitoring-scope" aria-label="Cakupan pemantauan">
       <details>
         <summary>
-          <span>{report ? "Metode & cakupan laporan" : "Tentang data pemantauan"}</span>
+          <span>Metode & cakupan laporan</span>
           <ChevronDown size={16} aria-hidden="true" />
         </summary>
         <div className="scope-content">
           <p>
-            {report
-              ? "Laporan memuat pembacaan dan peringatan di lokasi terpilih. Statistik memakai pembacaan yang lolos pemeriksaan kualitas."
-              : "Pembacaan sensor berlaku di titik pemasangan. Estimasi wilayah tersedia di Hub Lingkungan."}
+            Laporan memuat pembacaan dan peringatan di lokasi terpilih. Statistik memakai
+            pembacaan yang lolos pemeriksaan kualitas.
           </p>
           <p>
-            Debu optik dan PM2.5 tervalidasi ditampilkan terpisah. eCO₂ dan hasil model adalah estimasi.
+            Debu optik dan PM2.5 tervalidasi ditampilkan terpisah. Hasil model adalah estimasi.
           </p>
           <p className="scope-limit">
             Pemantauan ambien mendukung evaluasi lingkungan, bukan penetapan sumber pencemar,

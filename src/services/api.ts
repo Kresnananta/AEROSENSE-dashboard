@@ -1,6 +1,7 @@
 import { API_CONFIG } from "@/lib/constants";
 import { getSupabase } from "./supabase";
 import { DEMO_MODE } from "@/lib/demo-mode";
+import { visibleSensorResponse } from "@/lib/sensor-display";
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -8,9 +9,15 @@ export async function apiRequest<T>(
   authenticated = true,
   responseType: "json" | "blob" = "json",
 ): Promise<T> {
+  const sensorRead =
+    (!options.method || options.method === "GET") &&
+    /^\/v1\/(?:public\/)?(?:dashboard|nodes|history|rules|alerts|esg\/report)(?:\?|$)/.test(endpoint);
   if (DEMO_MODE) {
     const { demoRequest } = await import("@/demo/api");
-    return (await demoRequest(endpoint, options)) as T;
+    const body = await demoRequest(endpoint, options);
+    return (sensorRead
+      ? visibleSensorResponse(body as Parameters<typeof visibleSensorResponse>[0])
+      : body) as T;
   }
   const headers = new Headers(options.headers);
   const publicRead =
@@ -50,7 +57,7 @@ export async function apiRequest<T>(
   if (responseType === "blob") return (await response.blob()) as T;
   const body = await response.json().catch(() => null);
   if (body === null) throw new Error("API belum mengembalikan data JSON. Periksa koneksi backend.");
-  return body as T;
+  return (sensorRead ? visibleSensorResponse(body) : body) as T;
 }
 export const api = {
   get: <T>(path: string) => apiRequest<T>(path),

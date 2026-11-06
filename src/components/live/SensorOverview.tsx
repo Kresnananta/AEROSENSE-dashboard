@@ -48,7 +48,12 @@ export function SensorOverview() {
   const titleAccent = titleParts.pop();
   const fresh =
     !!node?.latest?.reading_id && !node.latest.stale && node.latest.quality?.invalid !== true;
-  const keys = [node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3", "tvoc_ppb", "temperature_c"];
+  const keys = [
+    node?.pm25_validated ? "pm25_ug_m3" : "dust_ug_m3",
+    "tvoc_ppb",
+    "temperature_c",
+    "humidity_pct",
+  ];
   return (
     <section className="insights-hub sensor-overview">
       <header className="insights-heading">
@@ -225,8 +230,7 @@ export function SensorOverview() {
               </p>
               <p>
                 Status ini mengikuti ambang perangkat. Indeks udara wilayah tersedia di Hub
-                Lingkungan. TVOC adalah estimasi kelompok senyawa organik volatil. eCO₂ adalah
-                estimasi ekuivalen CO₂ dan tidak mengukur karbon monoksida (CO).
+                Lingkungan. TVOC adalah estimasi kelompok senyawa organik volatil.
               </p>
               {node?.rules?.map((r) => (
                 <p key={r.metric}>

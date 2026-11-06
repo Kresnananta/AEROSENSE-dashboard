@@ -47,7 +47,6 @@ export interface ReportAlert {
 export const REPORT_METRICS: { key: string; label: string; unit: string }[] = [
   { key: "dust_ug_m3", label: "Debu optik", unit: "µg/m³" },
   { key: "pm25_ug_m3", label: "PM2.5 tervalidasi", unit: "µg/m³" },
-  { key: "eco2_ppm", label: "eCO2", unit: "ppm" },
   { key: "tvoc_ppb", label: "TVOC", unit: "ppb" },
   { key: "temperature_c", label: "Suhu", unit: "°C" },
   { key: "humidity_pct", label: "Kelembapan", unit: "%" },
@@ -189,7 +188,7 @@ export const FRAMEWORKS = [
 
 export const LIMITATIONS = [
   "Laporan ini memuat pemantauan udara ambien di titik node, bukan pengukuran emisi cerobong atau inventaris gas rumah kaca.",
-  "Debu optik bukan PM2.5 tervalidasi kecuali node ditandai tervalidasi. eCO2 adalah estimasi sensor gas, bukan CO2e.",
+  "Debu optik bukan PM2.5 tervalidasi kecuali node ditandai tervalidasi.",
   "Hasil model GRU adalah estimasi dan dipisahkan dari pembacaan terukur.",
   "Data tidak menetapkan sumber pencemar, kepatuhan regulasi, skor ESG, atau penurunan emisi.",
   "Sensor berbiaya rendah memerlukan pengujian pembanding sebelum digunakan sebagai dasar keputusan regulasi.",

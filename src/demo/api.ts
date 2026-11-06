@@ -285,9 +285,9 @@ export async function demoRequest(
         "Buka Hub lingkungan atau Peta sensor untuk melihat feed publik terbaru beserta waktu dan sumbernya. Titik panas satelit belum berarti kebakaran terkonfirmasi. Bantuan dapat disalurkan lewat kanal resmi PMI. Lihat pembaruan kejadian beserta waktu dan sumbernya di Hub lingkungan.";
     else if (/esg|emisi|industri|karbon/.test(text))
       answer =
-        "Pembacaan di sekitar industri membantu pemeriksaan kondisi udara. Data ini belum menetapkan asal pencemar, jumlah emisi, atau kepatuhan ESG. eCO₂ sensor berbeda dari CO₂e inventaris gas rumah kaca. Gunakan laporan pemantauan sebagai bahan koordinasi dengan pengelola lingkungan.";
+        "Pembacaan di sekitar industri membantu pemeriksaan kondisi udara. Data ini belum menetapkan asal pencemar, jumlah emisi, atau kepatuhan ESG. Gunakan laporan pemantauan sebagai bahan koordinasi dengan pengelola lingkungan.";
     else if (/udara|sensor|node|debu|kondisi/.test(text))
-      answer = `Contoh pembacaan ${node.name}: debu optik ${m.dust_ug_m3} µg/m³, eCO₂ ${m.eco2_ppm} ppm, dan suhu ${m.temperature_c} °C. ${Number(m.dust_ug_m3) >= 40 ? "Debu melewati ambang skenario. Periksa kondisi lokasi dan perangkat." : "Debu berada di bawah ambang skenario."} Debu optik belum disebut PM2.5 tervalidasi. Data wilayah tambahan: US AQI 68.`;
+      answer = `Contoh pembacaan ${node.name}: debu optik ${m.dust_ug_m3} µg/m³, TVOC ${m.tvoc_ppb} ppb, dan suhu ${m.temperature_c} °C. ${Number(m.dust_ug_m3) >= 40 ? "Debu melewati ambang skenario. Periksa kondisi lokasi dan perangkat." : "Debu berada di bawah ambang skenario."} Debu optik belum disebut PM2.5 tervalidasi. Data wilayah tambahan: US AQI 68.`;
     const id = crypto.randomUUID();
     jobs.set(id, {
       id,

@@ -189,7 +189,7 @@
   align-items: center;
   gap: 6px;
   color: #175b9d;
-  min-height: 30px;
+  min-height: 44px;
   font-weight: 600;
 }
 .disaster-more {
@@ -219,14 +219,6 @@
   font-size: 12px;
   color: #7d4e18;
   margin-bottom: 16px;
-}
-.disaster-sources ul {
-  padding-left: 18px;
-  list-style: disc;
-  margin-bottom: 16px;
-}
-.disaster-sources li + li {
-  margin-top: 8px;
 }
 @media (max-width: 1100px) {
   .disaster-grid {
@@ -917,9 +909,17 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(160px, 0.65fr);
 }
 .insights-compact .insight-message h2 {
-  font-size: 28px;
+  font-size: clamp(34px, 4.3vw, 66px);
   margin-top: 14px;
-  max-width: 24ch;
+  max-width: 20ch;
+}
+.insights-compact .insight-status,
+.insights-compact .insight-date {
+  font-size: clamp(12px, 1vw, 16px);
+}
+.insights-compact .insight-action,
+.insights-compact .insight-message > p {
+  font-size: clamp(14px, 1.25vw, 20px);
 }
 .insights-compact .condition-scene {
   max-width: 220px;
@@ -1185,7 +1185,7 @@
   .insight-message h2,
   .sensor-hero-copy h2,
   .insights-compact .insight-message h2 {
-    font-size: 30px;
+    font-size: clamp(28px, 5.2vw, 36px);
     max-width: 20ch;
     margin-top: 17px;
   }

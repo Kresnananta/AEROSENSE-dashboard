@@ -5,6 +5,7 @@ import {
   environmentHighlights,
   sensorSummary,
 } from "../../src/lib/environment-presentation.ts";
+import { visibleSensorResponse } from "../../src/lib/sensor-display.ts";
 import { summarizeEnvironment } from "../api/environment-insights.mjs";
 
 const now = Date.now();
@@ -140,4 +141,34 @@ test("node bands use sensor evidence and configured thresholds, with no invented
     sensorSummary(node(22), [{ ...rule, metric: "pm25_ug_m3" }]).label,
     "Data belum cukup",
   );
+});
+
+test("displayed and exported sensor data omit legacy eCO2 while retaining TVOC and humidity", () => {
+  const metrics = { eco2_ppm: 400, tvoc_ppb: 15, humidity_pct: 57 };
+  const rule = { metric: "eco2_ppm" };
+  const latest = {
+    metrics,
+    quality: { channels: { eco2_ppm: { flag: "suspect" }, tvoc_ppb: { flag: "suspect" } } },
+    gru: {
+      task: "fault_detection",
+      estimates: metrics,
+      fault_scores: { eco2_ppm: 0.2, tvoc_ppb: 0.8 },
+      thresholds: { eco2_ppm: 0.4, tvoc_ppb: 0.7 },
+      suspect: ["eco2_ppm", "tvoc_ppb"],
+    },
+  };
+  const filtered = visibleSensorResponse({
+    nodes: [{ latest, rules: [rule] }],
+    readings: [
+      { metrics, raw_metrics: metrics, gru: { target: "eco2_ppm", value: 410 } },
+      { metrics, gru: { target: "tvoc_ppb", value: 16 } },
+    ],
+    alerts: [rule, { metric: "tvoc_ppb" }],
+  });
+  assert.doesNotMatch(JSON.stringify(filtered), /eco2_ppm/);
+  assert.deepEqual(filtered.nodes[0].latest.metrics, { tvoc_ppb: 15, humidity_pct: 57 });
+  assert.deepEqual(filtered.nodes[0].latest.gru.suspect, ["tvoc_ppb"]);
+  assert.equal(filtered.readings[0].gru, null);
+  assert.equal(filtered.readings[1].gru.value, 16);
+  assert.equal(metrics.eco2_ppm, 400);
 });

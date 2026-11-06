@@ -42,7 +42,8 @@ test("current multi-output GRU survives ingestion, charting, CSV and chat refere
     validateTelemetry({ ...reading, gru: { ...gru, estimates: { pm25_ug_m3: 22 } } }, node),
   );
   const csv = readingsCsv(node, [reading], true);
-  assert.match(csv, /416.211/);
+  assert.doesNotMatch(csv, /416\.211|eCO₂/);
+  assert.match(csv, /5\.873/);
   assert.match(csv, /Skor gangguan/);
   assert.match(csv, /shadow/);
   const source = readFileSync(
