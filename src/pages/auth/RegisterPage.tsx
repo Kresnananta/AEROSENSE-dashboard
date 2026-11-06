@@ -43,9 +43,6 @@ export function RegisterPage() {
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               Buat Akun <span className="text-primary-600">AEROSENSE</span>
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 max-w-xs">
-              Mulai memantau kualitas udara lingkungan Anda dengan visualisasi modern.
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

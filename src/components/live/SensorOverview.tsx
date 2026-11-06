@@ -161,19 +161,10 @@ export function SensorOverview() {
                     ? "Periksa titik ini sekarang."
                     : summary.tone === "warning"
                       ? "Ada yang perlu dicek."
-                      : summary.tone === "pending"
-                        ? "Tunggu data terbaru."
-                        : "Kenali kondisi sekitar."}
+                      : "Tanya soal kondisi sekitar"}
                 </h2>
-                <p>
-                  {summary.tone === "danger"
-                    ? "Cek lokasi dan perangkat sebelum menentukan tindakan."
-                    : summary.tone === "warning"
-                      ? "Bandingkan dengan titik terdekat dan periksa sumber perubahan."
-                      : summary.tone === "pending"
-                        ? "Status baru muncul setelah pembacaan dan aturan tersedia."
-                        : "Lihat titik terdekat sebelum beraktivitas di luar."}
-                </p>
+                {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
+                {summary.tone === "warning" && <p>Bandingkan dengan titik terdekat.</p>}
                 <Link to="/aerobot" className="assist-link">
                   Tanya AERO-BOT <ArrowUpRight size={15} />
                 </Link>

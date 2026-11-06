@@ -1,7 +1,7 @@
 /* Laporan lingkungan: summary preview of the ESG audit export. */
 .esg-report {
   display: grid;
-  gap: 22px;
+  gap: var(--section-gap, 22px);
 }
 .esg-report-head {
   display: flex;
@@ -64,12 +64,6 @@
   color: #a62d42;
 }
 
-.esg-report-summary {
-  max-width: 72ch;
-  font-size: 14px;
-  line-height: 1.7;
-  color: #173a5e;
-}
 
 .esg-report-table td,
 .esg-report-table th {

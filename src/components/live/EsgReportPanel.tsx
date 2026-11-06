@@ -8,7 +8,6 @@ import {
   formatWhen,
   readingsFingerprintSource,
   sha256Hex,
-  summarySentence,
   type EsgReport,
 } from "@/lib/esg-report";
 import "@/styles/esg-report.css";
@@ -183,7 +182,6 @@ export function EsgReportPanel({
               <small>{preview.alerts.acknowledged} sudah ditinjau</small>
             </div>
           </div>
-          <p className="esg-report-summary">{summarySentence(preview)}</p>
           <div className="live-table-wrap">
             <table className="live-table esg-report-table">
               <caption>Statistik parameter dari pembacaan valid</caption>

@@ -8,6 +8,7 @@ import { expressionFor } from "./screen/expression.js";
 import { createPresence } from "./presence.mjs";
 import { readIr, listIrPorts } from "./ir-serial.mjs";
 import { randomUUID } from "node:crypto";
+import { spawn } from "node:child_process";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(here, "screen");
 try {
@@ -15,6 +16,10 @@ try {
 } catch (error) {
   if (error.code !== "ENOENT") throw error;
 }
+const ttsPython = process.env.AEROBOT_TTS_PYTHON;
+const ttsUrl = process.env.AEROBOT_LOCAL_TTS_URL || (ttsPython ? "http://127.0.0.1:4220/speak" : "");
+const ttsKey = process.env.AEROBOT_LOCAL_TTS_KEY || (ttsPython ? randomUUID() : "");
+let ttsProcess;
 const port = Number(process.env.AEROBOT_DISPLAY_PORT || 4210),
   host = "127.0.0.1",
   origin = `http://${host}:${port}`,
@@ -112,7 +117,7 @@ async function remote(endpoint, options = {}) {
   return r;
 }
 async function localSpeech(text) {
-  const target = new URL(process.env.AEROBOT_LOCAL_TTS_URL);
+  const target = new URL(ttsUrl);
   if (target.protocol !== "http:" || !["127.0.0.1", "localhost"].includes(target.hostname))
     throw new Error("Local TTS must run on this mini PC");
   if (typeof text !== "string" || !text.trim() || text.length > 2000)
@@ -121,7 +126,7 @@ async function localSpeech(text) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-Local-TTS-Key": process.env.AEROBOT_LOCAL_TTS_KEY,
+      "X-Local-TTS-Key": ttsKey,
     },
     body: JSON.stringify({ text }),
     signal: AbortSignal.timeout(45000),
@@ -162,7 +167,7 @@ const server = http.createServer(async (req, res) => {
     }
     const url = new URL(req.url, origin);
     if (url.pathname === "/tts" && req.method === "POST") {
-      if (!process.env.AEROBOT_LOCAL_TTS_URL || !process.env.AEROBOT_LOCAL_TTS_KEY) {
+      if (!ttsUrl || !ttsKey) {
         res.writeHead(503);
         return res.end("Local TTS is not enabled");
       }
@@ -341,7 +346,7 @@ async function poll() {
           throw new Error("Audio response was invalid");
         bytes = Buffer.from(await reply.arrayBuffer());
       } catch (error) {
-        if (!process.env.AEROBOT_LOCAL_TTS_URL || !process.env.AEROBOT_LOCAL_TTS_KEY) throw error;
+        if (!ttsUrl || !ttsKey) throw error;
         bytes = await localSpeech(body.text);
       }
       if (bytes.length > 12000000) throw new Error("Audio exceeds local limit");
@@ -370,6 +375,14 @@ async function poll() {
   }
 }
 server.listen(port, host, async () => {
+  if (ttsPython && !process.env.AEROBOT_LOCAL_TTS_URL) {
+    ttsProcess = spawn(ttsPython, [path.join(here, "tts-wibowo.py"), "--managed"], {
+      env: { ...process.env, AEROBOT_LOCAL_TTS_KEY: ttsKey },
+      stdio: ["pipe", "inherit", "inherit"],
+      windowsHide: true,
+    });
+    ttsProcess.on("error", (error) => console.error("[Wibowo]", error.message));
+  }
   console.log(`AERO-BOT physical face: ${origin}`);
   console.log(
     device && key
@@ -461,18 +474,34 @@ input.on("line", async (line) => {
     }
     return;
   }
-  if (value) emit({ action: "speak", local: true, text: value.replace(/^say /, "") });
+  if (!value) return;
+  const text = value.replace(/^say /, "");
+  if (ttsUrl && ttsKey) {
+    try {
+      const wav = await localSpeech(text);
+      if (!pending) {
+        emit({ action: "speak", text, audioBase64: wav.toString("base64"), mime: "audio/wav" });
+      }
+    } catch (error) {
+      console.error("[Wibowo]", error.message);
+    }
+  } else {
+    emit({ action: "speak", local: true, text });
+  }
 });
 function close() {
   closed = true;
   irReader?.kill();
+  ttsProcess?.stdin.end();
   browserSession?.close();
   clearInterval(interval);
   for (const client of clients) client.end();
   input.close();
   server.close();
 }
-process.on("SIGINT", () => {
-  close();
-  process.exit(0);
-});
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.on(signal, () => {
+    close();
+    process.exit(0);
+  });
+}

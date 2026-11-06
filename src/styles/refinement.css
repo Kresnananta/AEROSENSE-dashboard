@@ -32,6 +32,7 @@ input {
   outline-offset: 4px;
 }
 .app-shell {
+  --section-gap: clamp(16px, 2.4vw, 24px);
   background: linear-gradient(145deg, #f7fbff 0%, #eef6ff 48%, #f8fbff 100%);
   color: var(--ui-ink);
 }
@@ -208,7 +209,14 @@ input {
   padding: 32px clamp(20px, 3vw, 48px) 48px;
 }
 .app-shell :is(.live-heading, .insights-heading) {
-  margin-bottom: 24px;
+  margin-bottom: var(--section-gap);
+}
+.app-section-stack {
+  display: grid;
+  gap: var(--section-gap);
+}
+.app-shell :is(.app-section-stack, .management-page) > .live-heading {
+  margin-bottom: 0;
 }
 .app-shell :is(.live-heading h1, .insights-heading h1) {
   max-width: 24ch;
@@ -375,16 +383,6 @@ input {
 .insights-heading .environment-location-error {
   color: #a63a43;
   font-weight: 600;
-}
-.environment-sync {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: -8px 0 18px;
-  color: #526c87;
-  font-size: 11px;
-  line-height: 1.6;
 }
 .app-shell .sensor-toolbar {
   align-items: center;
@@ -650,19 +648,13 @@ input {
   color: #54718d;
   text-decoration: none;
   padding: 14px 0;
-  margin-bottom: 37px;
+  margin-bottom: 24px;
 }
 .login-form-inner h2 {
   font-size: 31px;
   color: #173a57;
   font-weight: 600;
   letter-spacing: -0.045em;
-}
-.login-caption {
-  color: #637a90;
-  font-size: 13px;
-  line-height: 1.7;
-  margin: 10px 0 30px;
 }
 .login-form-inner form > label {
   display: block;
@@ -805,9 +797,6 @@ input {
     padding: 10px 18px;
     height: 66px;
   }
-  .app-shell :is(.live-heading, .insights-heading) {
-    margin-bottom: 21px;
-  }
   .app-shell :is(.sensor-hero, .insight-lead) {
     border-radius: 24px;
   }
@@ -890,9 +879,6 @@ input {
   .login-back {
     margin-bottom: 18px;
   }
-  .login-caption {
-    margin-bottom: 24px;
-  }
   .login-form-inner h2 {
     font-size: 28px;
   }
@@ -933,7 +919,7 @@ input {
 }
 .app-shell .panel-metrics {
   gap: 14px;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 .app-shell .panel-metrics > div {
   --metric-backdrop: blur(18px) saturate(125%);
@@ -1822,8 +1808,8 @@ input {
     .live-heading:has(h1),
     .environment-hub:not(.insights-compact) > .insights-heading
   ) {
-  padding: 28px 32px;
-  min-height: 136px;
+  padding: 24px 28px;
+  min-height: 108px;
   border-radius: 26px;
   background: linear-gradient(90deg, #0452ce99, transparent 75%), var(--ui-brand-gradient);
   color: #fff;
@@ -1876,10 +1862,7 @@ input {
   border-radius: 26px;
   background: linear-gradient(150deg, #0452ce, #0875d9 48%, #0758b5);
 }
-.app-shell .chat-source-panel :is(h2, dt, dd, svg) {
-  color: #fff;
-}
-.app-shell .chat-source-panel dd {
+.app-shell .chat-source-panel :is(h2, ul) {
   color: #fff;
 }
 .app-shell .live-chat > header {
@@ -1897,7 +1880,7 @@ input {
   max-width: 440px;
 }
 .app-shell .environment-hub:not(.insights-compact) .insight-lead > .condition-scene {
-  max-width: 440px;
+  max-width: 350px;
 }
 .app-shell .environment-hub:not(.insights-compact) .insight-lead {
   grid-template-columns: minmax(0, 1.15fr) minmax(260px, 1fr);
@@ -1950,9 +1933,9 @@ input {
   }
   .app-shell .insight-lead > .condition-scene,
   .app-shell .insights-compact .insight-lead > .condition-scene {
-    width: min(100%, 280px);
-    height: 250px;
-    margin: 16px auto 8px;
+    width: min(100%, 230px);
+    height: auto;
+    margin: 0 auto;
   }
   .app-shell .insight-glance .condition-scene {
     width: 120px;

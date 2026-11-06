@@ -206,7 +206,7 @@ export function demoEnvironment(index: number, now = Date.now()): EnvironmentRes
   const summary: [string, string, string, string, string][] = [
     [
       "weather",
-      "Terasa hangat",
+      "Cuaca terasa hangat",
       "Pilih tempat teduh saat beraktivitas di luar.",
       "warm",
       "current",

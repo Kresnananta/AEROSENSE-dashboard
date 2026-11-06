@@ -9,8 +9,8 @@ import {
   ChartNoAxesCombined,
   Menu,
   X,
-  Check,
   Settings2,
+  LockKeyhole,
   FileSpreadsheet,
 } from "lucide-react";
 import { AeroMascot } from "@/components/environment/AeroMascot";
@@ -23,10 +23,9 @@ const features = [
   {
     title: "Pantau titik di sekitar",
     icon: Radio,
-    heading: "Pembacaan lokal, dalam satu tampilan.",
+    heading: "Pembacaan sensor per lokasi",
     description:
-      "Lihat kondisi sensor di peta, waktu pembaruan, dan parameter yang tersedia. Pilih titik untuk mengenali perubahan di lokasi.",
-    bullets: ["Pembacaan tiap perangkat", "Status dan waktu pembaruan", "Peta titik pemantauan"],
+      "Pilih titik sensor di peta untuk melihat kondisi udara dan waktu pembacaan terakhir.",
     path: "/dashboard",
     action: "Jelajahi pemantauan",
     scene: "sensor" as const,
@@ -34,14 +33,9 @@ const features = [
   {
     title: "Pahami konteks wilayah",
     icon: CloudSun,
-    heading: "Lihat gambaran lingkungan yang lebih luas.",
+    heading: "Kondisi lingkungan wilayah",
     description:
-      "Lengkapi pembacaan sensor dengan informasi cuaca, kualitas udara wilayah, tanah, serta pantauan kejadian dari sumber publik.",
-    bullets: [
-      "Sumber dan waktu data terlihat",
-      "Acuan lokasi yang dapat dipilih",
-      "Data wilayah terpisah dari sensor",
-    ],
+      "Lihat cuaca, kualitas udara, kondisi tanah, dan kejadian di sekitar lokasi pilihan.",
     path: "/environment",
     action: "Buka Hub Lingkungan",
     scene: "air" as const,
@@ -49,14 +43,9 @@ const features = [
   {
     title: "Tanyakan pada AERO-BOT",
     icon: MessageCircle,
-    heading: "Data lingkungan, lebih mudah dipahami.",
+    heading: "Tanya AERO-BOT lewat teks atau suara",
     description:
-      "Tanyakan kondisi sekitar atau langkah sederhana untuk menjaga lingkungan. AERO-BOT membantu menjelaskan konteks sensor dan informasi wilayah yang tersedia.",
-    bullets: [
-      "Percakapan dengan konteks lokasi",
-      "Pertanyaan melalui teks atau suara",
-      "Sumber jawaban dan waktu data",
-    ],
+      "Tanyakan arti pembacaan sensor atau kondisi lingkungan di sekitar Anda.",
     path: "/aerobot",
     action: "Temui AERO-BOT",
     scene: null,
@@ -64,14 +53,9 @@ const features = [
   {
     title: "Telusuri dan unduh data",
     icon: ChartNoAxesCombined,
-    heading: "Dari riwayat menjadi bahan evaluasi.",
+    heading: "Grafik, laporan, dan ekspor data",
     description:
-      "Tinjau perubahan parameter dan susun bahan koordinasi. Pengguna yang berwenang dapat mengekspor data untuk dianalisis di spreadsheet.",
-    bullets: [
-      "Grafik riwayat parameter",
-      "CSV untuk Excel atau Google Sheets",
-      "Laporan lingkungan sesuai akses",
-    ],
+      "Bandingkan pembacaan dari waktu ke waktu. Pengelola dapat mengunduh laporan dan data CSV.",
     path: "/analytics",
     action: "Lihat riwayat udara",
     scene: "sensor" as const,
@@ -128,8 +112,7 @@ export function LandingPage() {
               <span>Tindakan lebih terarah.</span>
             </h1>
             <p>
-              Kenali kondisi di sekitar Anda melalui sensor, informasi lingkungan wilayah, dan
-              AERO-BOT. Satu tempat untuk memantau, memahami, dan menindaklanjuti.
+              Pantau kualitas udara di titik sensor, cek kondisi wilayah, atau tanyakan hasilnya ke AERO-BOT.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
@@ -140,14 +123,6 @@ export function LandingPage() {
                 Masuk ke akun
                 <ArrowUpRight size={17} />
               </Link>
-            </div>
-            <div className="landing-hero-points">
-              <span>
-                <Check size={15} /> Pemantauan publik
-              </span>
-              <span>
-                <Check size={15} /> Konteks berbasis lokasi
-              </span>
             </div>
           </div>
           <div className="landing-hero-art" role="img" aria-label="Maskot AERO-BOT menyambut Anda">
@@ -162,15 +137,7 @@ export function LandingPage() {
 
         <section id="fitur" className="landing-features landing-container">
           <div className="landing-section-heading">
-            <h2>
-              Satu kawasan.
-              <br />
-              <span>Gambaran yang lebih utuh.</span>
-            </h2>
-            <p>
-              Dari pembacaan di titik pemasangan sampai konteks wilayah, temukan informasi yang Anda
-              perlukan.
-            </p>
+            <h2>Fitur pemantauan</h2>
           </div>
           <div className="landing-feature-layout">
             <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">
@@ -190,14 +157,6 @@ export function LandingPage() {
               <div>
                 <h3>{feature.heading}</h3>
                 <p>{feature.description}</p>
-                <ul>
-                  {feature.bullets.map((bullet) => (
-                    <li key={bullet}>
-                      <Check size={15} />
-                      {bullet}
-                    </li>
-                  ))}
-                </ul>
                 <Link className="landing-text-link" to={feature.path}>
                   {feature.action}
                   <ArrowRight size={17} />
@@ -217,11 +176,7 @@ export function LandingPage() {
         </section>
 
         <section id="cara-kerja" className="landing-workflow landing-container">
-          <h2>
-            Dari lingkungan,
-            <br />
-            <span>menjadi dasar tindakan.</span>
-          </h2>
+          <h2>Cara kerja</h2>
           <ol className="landing-workflow-steps">
             <li>
               <span className="landing-step-number" aria-hidden="true">
@@ -230,8 +185,7 @@ export function LandingPage() {
               <div>
                 <h3>Ukur di lokasi</h3>
                 <p>
-                  Sensor merekam parameter pada titik pemasangan dan mengirimkan pembacaan ke
-                  sistem.
+                  Sensor mengirim pembacaan udara dan cuaca mikro dari titik pemasangan.
                 </p>
               </div>
             </li>
@@ -240,10 +194,9 @@ export function LandingPage() {
                 2
               </span>
               <div>
-                <h3>Pahami konteksnya</h3>
+                <h3>Cek kondisi sekitar</h3>
                 <p>
-                  Dashboard menghubungkan pembacaan, riwayat, dan informasi wilayah. AERO-BOT
-                  membantu menjelaskannya.
+                  Lihat pembacaan sensor, riwayat, dan estimasi wilayah di dashboard.
                 </p>
               </div>
             </li>
@@ -252,10 +205,9 @@ export function LandingPage() {
                 3
               </span>
               <div>
-                <h3>Tindak lanjuti bersama</h3>
+                <h3>Tinjau peringatan</h3>
                 <p>
-                  Pengelola meninjau peringatan, menetapkan ambang operasional, dan menyiapkan data
-                  untuk koordinasi.
+                  Pengelola meninjau peringatan dan mengatur tindak lanjut.
                 </p>
               </div>
             </li>
@@ -264,14 +216,9 @@ export function LandingPage() {
 
         <section id="pengelola" className="landing-management landing-container">
           <div>
-            <h2>
-              Kawasan Anda.
-              <br />
-              <span>Pengelolaan lebih terarah.</span>
-            </h2>
+            <h2>Kelola kawasan</h2>
             <p>
-              Untuk tim industri dan kader governance: kelola ambang waspada dan bahaya pada lokasi
-              yang ditugaskan, lalu unduh data untuk evaluasi bersama.
+              Atur ambang peringatan pada lokasi yang ditugaskan dan unduh data untuk evaluasi.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to={user ? "/management" : "/login"}>
@@ -288,31 +235,30 @@ export function LandingPage() {
             <p>
               <Settings2 size={21} />
               <span>
-                <strong>Ambang sesuai kebutuhan lokasi</strong>Waspada, bahaya, batas pulih, dan
+                <strong>Ambang peringatan</strong>Waspada, bahaya, batas pulih, dan
                 jeda notifikasi.
               </span>
             </p>
             <p>
               <FileSpreadsheet size={21} />
               <span>
-                <strong>Data siap diolah</strong>Ekspor CSV untuk Excel dan Google Sheets.
+                <strong>Ekspor CSV</strong>Buka di Excel atau Google Sheets.
               </span>
             </p>
             <p>
-              <Check size={21} />
+              <LockKeyhole size={21} />
               <span>
-                <strong>Akses sesuai penugasan</strong>Admin menetapkan pengelola untuk setiap
+                <strong>Akses per lokasi</strong>Admin menetapkan pengelola untuk setiap
                 lokasi.
               </span>
             </p>
           </div>
         </section>
         <aside id="tentang-data" className="landing-data-note landing-container">
-          <strong>Memahami data dengan tepat.</strong>
+          <strong>Tentang data</strong>
           <p>
-            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah, lengkap dengan waktu dan
-            ketersediaannya. Ambang pengelola digunakan untuk pemantauan operasional; penilaian
-            kepatuhan memerlukan pemeriksaan tersendiri.
+            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah. Ambang pengelola
+            digunakan untuk pemantauan operasional.
           </p>
         </aside>
       </main>
@@ -323,7 +269,6 @@ export function LandingPage() {
             AERO<strong>SENSE</strong>
           </span>
         </Link>
-        <p>Pantau lingkungan sekitar.</p>
         <Link to="/dashboard">
           Buka pemantauan
           <ArrowUpRight size={15} />

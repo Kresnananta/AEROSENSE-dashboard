@@ -52,11 +52,6 @@ export function LoginPage() {
             <br />
             di sekitar Anda.
           </h1>
-          <p>
-            Kondisi node, cuaca, dan lingkungan.
-            <br />
-            Langsung dari satu tempat.
-          </p>
           <Link to={ROUTES.DASHBOARD} className="guest-entry">
             Lihat kondisi sekarang <ArrowRight size={19} />
           </Link>
@@ -72,7 +67,6 @@ export function LoginPage() {
             ← Kembali ke pemantauan
           </Link>
           <h2 id="login-heading">Masuk ke akun</h2>
-          <p className="login-caption">Kelola perangkat dan tindak lanjut peringatan.</p>
           <form onSubmit={handleSubmit}>
             {DEMO_MODE && (
               <div className="demo-login">

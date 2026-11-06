@@ -325,7 +325,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 22px;
+  margin-bottom: var(--section-gap, 20px);
 }
 .insight-topics button {
   display: inline-flex;
@@ -357,7 +357,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px clamp(14px, 2vw, 22px);
-  margin: clamp(14px, 2vw, 20px) 0;
+  margin-block: var(--section-gap, 20px);
 }
 .insight-secondary .insight-text-link {
   min-height: 44px;

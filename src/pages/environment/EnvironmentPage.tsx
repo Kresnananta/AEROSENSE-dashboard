@@ -161,7 +161,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               </>
             ) : (
               <>
-                Lingkungan <span className="heading-accent">robot</span>
+                Lingkungan <span className="heading-accent">sekitar</span>
               </>
             )}
           </Heading>
@@ -170,8 +170,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             {locationMode === "device" && userPoint && node
               ? `${userPoint.latitude.toFixed(4)}, ${userPoint.longitude.toFixed(4)} · node acuan ${node.name}${nearest ? ` (${distanceLabel(nearest.distance)})` : ""}`
               : node
-                ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)} · mengikuti titik node`
-                : "Pilih titik robot"}
+                ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}`
+                : "Pilih titik sensor"}
           </p>
           {locationError && (
             <p className="environment-location-error" role="alert">
@@ -210,9 +210,9 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           {!compact && nodes.length > 0 && (
             <label className="sensor-select sensor-select--light">
               <MapPin size={15} aria-hidden="true" />
-              <span className="sr-only">Pilih titik robot</span>
+              <span className="sr-only">Pilih titik sensor</span>
               <MonitoringSelect
-                label="Pilih titik robot"
+                label="Pilih titik sensor"
                 value={node?.id || ""}
                 options={nodes.map((n) => ({ value: n.id, label: n.name }))}
                 onValueChange={(value) => {
@@ -224,7 +224,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           )}
           {compact && (
             <Link className="insight-text-link" to="/environment">
-              Jelajahi hub <ArrowUpRight size={16} />
+              Buka Hub Lingkungan <ArrowUpRight size={16} />
             </Link>
           )}
           <button
@@ -251,12 +251,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           ))}
         </div>
       )}
-      {!compact && data && (
-        <p className="environment-sync" role="status">
-          <RefreshCw size={13} aria-hidden="true" /> Diperiksa {dateLabel(data.fetched_at)} ·
-          otomatis tiap 60 detik
-        </p>
-      )}
       {pageLoading && !data ? (
         <DataState loading />
       ) : (dashboard.error || error) && !data ? (
@@ -272,8 +266,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           <DataState
             empty={
               user
-                ? "Belum ada titik robot yang diberikan kepada akun ini."
-                : "Belum ada titik robot publik yang bisa dipantau."
+                ? "Belum ada titik sensor untuk akun ini."
+                : "Belum ada titik sensor publik."
             }
           />
           {!user && (
@@ -415,7 +409,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 <ChevronDown size={18} />
               </summary>
               <div className="insight-detail-body">
-                <p>Waktu dan sumber tiap pembacaan.</p>
                 {!selectedFacts.length ? (
                   <p>Belum ada rincian untuk kategori ini.</p>
                 ) : (
@@ -470,9 +463,8 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             </summary>
             <div className="insight-detail-body">
               <p>
-                Data publik mengikuti koordinat node acuan. Jika Anda memakai lokasi perangkat,
-                browser memilih node AEROSENSE terdekat; koordinat perangkat tidak dikirim ke server
-                atau disimpan. Sumber dan waktu pembaruan tercantum di tiap data.
+                Data wilayah mengikuti titik sensor. Jika memakai lokasi perangkat, browser memilih
+                sensor terdekat tanpa menyimpan koordinat atau mengirimkannya ke server.
               </p>
               <p>
                 Estimasi ISPU PM2.5 memakai rata-rata 24 jam dari model Open-Meteo / CAMS dan
@@ -488,9 +480,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 Serikat dan ditampilkan sebagai pembanding.
               </p>
               <p>
-                Web memeriksa data tiap 60 detik. Pengambilan sumber mengikuti jadwal Hub: cuaca dan
-                titik panas per jam, udara tiap 3 jam, dan debit sungai harian. Waktu data mengikuti
-                penyedia.
+                Jadwal sumber: cuaca dan titik panas tiap jam, udara tiap 3 jam, debit sungai harian.
               </p>
               <ul className="insight-source-list">
                 {data?.providers.map((p) => {
@@ -535,7 +525,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 {locationMode === "device" && nearest
                   ? ` · ${nearest.node.name}, ${distanceLabel(nearest.distance)} dari lokasi perangkat`
                   : ""}
-                . Data dan atribusi tersedia pada tautan sumber di atas.{" "}
+                .{" "}
                 <a href="https://www.airnow.gov/aqi/aqi-basics/" target="_blank" rel="noreferrer">
                   Tentang kategori US AQI
                 </a>

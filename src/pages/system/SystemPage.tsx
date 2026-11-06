@@ -8,11 +8,10 @@ export function SystemPage() {
     navigate = useNavigate();
   const [notice, setNotice] = useState("");
   return (
-    <div className="space-y-6">
+    <div className="app-section-stack">
       <header className="live-heading">
         <div>
           <h1>Pengaturan</h1>
-          <p>Akun, ambang peringatan, dan langganan WhatsApp.</p>
         </div>
       </header>
       {!auth.user ? (

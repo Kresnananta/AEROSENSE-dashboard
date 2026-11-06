@@ -1,9 +1,6 @@
 .management-page {
   display: grid;
-  gap: clamp(16px, 2.4vw, 24px);
-}
-.management-page > .live-heading {
-  margin-bottom: 0;
+  gap: var(--section-gap);
 }
 .management-page :is(h2, h3) {
   color: #173d63;
@@ -57,7 +54,6 @@
   border-radius: 20px;
   padding: 28px;
 }
-.management-section-heading p,
 .threshold-form-heading p {
   font-size: 13px;
   color: #506f8c;
@@ -247,13 +243,6 @@
   font-weight: 650;
   margin-top: 17px;
   min-height: 36px;
-}
-.management-side .management-context {
-  background: transparent;
-  border: 1px solid #d7e6f3;
-}
-.management-context p:last-child {
-  margin-bottom: 0;
 }
 .management-access,
 .management-readonly {

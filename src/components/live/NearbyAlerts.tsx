@@ -114,7 +114,6 @@ export function NearbyAlerts() {
       <header className="live-heading">
         <div>
           <h1>Peringatan sekitar</h1>
-          <p>Node yang perlu diperiksa di dekat Anda.</p>
         </div>
         <button
           className="live-icon-button"
@@ -180,8 +179,7 @@ export function NearbyAlerts() {
       ) : !point ? (
         <div className="nearby-empty">
           <LocateFixed size={32} />
-          <h2>Di mana Anda berada?</h2>
-          <p>Izinkan lokasi untuk mencari node sekitar.</p>
+          <h2>Cari sensor di sekitar Anda</h2>
           <span>Koordinat diproses di peramban dan tidak disimpan.</span>
         </div>
       ) : (
@@ -252,7 +250,6 @@ export function NearbyAlerts() {
                   locationLabel={source === "demo" ? "Lokasi contoh" : "Lokasi Anda"}
                 />
               </Suspense>
-              <p>Klik node untuk melihat pembacaannya.</p>
             </aside>
           </div>
         </>

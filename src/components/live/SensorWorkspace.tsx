@@ -235,21 +235,6 @@ export function SensorWorkspace({
       <header className="live-heading">
         <div>
           <h1>{title}</h1>
-          {mode !== "map" && (
-            <p>
-              {
-                {
-                  report: "Ringkasan dan ekspor untuk pemeriksaan ESG.",
-                  nodes: "Status setiap perangkat yang dapat Anda akses.",
-                  analytics: "Perubahan kualitas udara 24 jam terakhir di satu titik.",
-                  alerts: "Peringatan yang tercatat di satu titik.",
-                  detail: "Kondisi terkini, riwayat, dan peringatan titik ini.",
-                  overview: "Pembacaan node dan hasil model, terpisah dari informasi wilayah.",
-                  map: "",
-                }[mode]
-              }
-            </p>
-          )}
         </div>
         <button
           aria-label="Perbarui data sensor"

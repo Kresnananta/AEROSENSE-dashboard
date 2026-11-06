@@ -6,12 +6,12 @@ import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
 export function AlertsPage() {
   const { user } = useAuth();
   return (
-    <div className="space-y-6">
+    <div className="app-section-stack">
       <NearbyAlerts />
       <section className="wa-alert-entry" aria-label="AEROSENSE di WhatsApp">
         <div>
           <h2>Lanjutkan lewat WhatsApp</h2>
-          <p>Tanya AERO-BOT atau hubungkan notifikasi node.</p>
+          <p>Langganan peringatan atau tanya AERO-BOT.</p>
         </div>
         <WhatsAppEntry />
       </section>

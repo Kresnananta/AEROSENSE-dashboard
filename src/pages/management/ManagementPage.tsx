@@ -99,7 +99,7 @@ function ThresholdEditor({
       <div className="threshold-form-heading">
         <div>
           <h3>Ambang {metricLabels[metric][0]}</h3>
-          <p>Batas ini berlaku untuk pembacaan sensor di titik ini. Kategori ISPU wilayah dihitung terpisah.</p>
+          <p>Ambang ini untuk operasional di titik sensor. ISPU wilayah dan baku mutu dinilai terpisah.</p>
         </div>
         <span>{unit}</span>
       </div>
@@ -223,10 +223,7 @@ export function ManagementPage() {
   return (
     <section className="management-page">
       <header className="live-heading">
-        <div>
-          <h1>Kelola kawasan</h1>
-          <p>Ambang peringatan dan kendali sprinkler pada lokasi Anda.</p>
-        </div>
+        <h1>Kelola kawasan</h1>
         <Settings2 size={27} aria-hidden="true" />
       </header>
       {auth.isLoading || (auth.user && dashboard.loading && !dashboard.data) ? (
@@ -235,10 +232,7 @@ export function ManagementPage() {
         <div className="management-access">
           <LockKeyhole size={28} />
           <h2>Masuk sebagai pengelola lokasi</h2>
-          <p>
-            Tim industri dan kader governance dapat mengatur ambang setelah memperoleh penugasan
-            lokasi dari admin.
-          </p>
+          <p>Minta admin memberi akses pengelola untuk lokasi Anda.</p>
           <Link className="live-button" to="/login">
             Masuk ke akun
             <ArrowUpRight size={16} />
@@ -277,7 +271,6 @@ export function ManagementPage() {
               <div className="management-section-heading">
                 <div>
                   <h2>Aturan peringatan</h2>
-                  <p>Pilih jenis pembacaan untuk mengatur kapan AEROSENSE memberi status waspada atau bahaya.</p>
                 </div>
               </div>
               {rules.error ? (
@@ -323,10 +316,7 @@ export function ManagementPage() {
                   ) : (
                     <div className="management-readonly">
                       <LockKeyhole size={21} />
-                      <p>
-                        Akun ini hanya dapat melihat aturan. Pengubahan ambang memerlukan penugasan
-                        pengelola oleh admin pada lokasi ini.
-                      </p>
+                      <p>Untuk mengubah ambang, minta akses pengelola kepada admin.</p>
                       {saved ? (
                         <dl>
                           <div>
@@ -365,11 +355,7 @@ export function ManagementPage() {
             <aside className="management-side">
               <section>
                 <FileSpreadsheet size={25} />
-                <h2>Data siap diolah</h2>
-                <p>
-                  Unduh konfigurasi ambang saat ini atau buka riwayat untuk mengekspor pembacaan ke
-                  CSV.
-                </p>
+                <h2>Ekspor data</h2>
                 <button
                   className="live-button secondary"
                   disabled={
@@ -390,18 +376,6 @@ export function ManagementPage() {
                   <ArrowUpRight size={15} />
                 </Link>
                 {exportNotice && <p role="status">{exportNotice}</p>}
-              </section>
-              <section className="management-context">
-                <LockKeyhole size={21} />
-                <h3>Akses mengikuti lokasi</h3>
-                <p>
-                  Admin menetapkan pengelola per lokasi. Ambang yang Anda simpan berlaku bersama
-                  untuk perangkat tersebut.
-                </p>
-                <p>
-                  Ini adalah ambang operasional pengelola. Pemeriksaan baku mutu dan kepatuhan
-                  mengikuti metodologi tersendiri.
-                </p>
               </section>
             </aside>
           </div>

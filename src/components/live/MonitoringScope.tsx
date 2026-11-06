@@ -11,12 +11,11 @@ export function MonitoringScope({ report = false }: { report?: boolean }) {
         <div className="scope-content">
           <p>
             {report
-              ? "Laporan merangkum pembacaan sensor, waktu pengamatan, dan peringatan pada lokasi terpilih. Statistik menggunakan data yang lolos pemeriksaan kualitas."
-              : "Sensor AEROSENSE menunjukkan kondisi di titik pemasangan. Informasi cuaca, kualitas udara wilayah, dan kejadian publik melengkapi pembacaan lokal."}
+              ? "Laporan memuat pembacaan dan peringatan di lokasi terpilih. Statistik memakai pembacaan yang lolos pemeriksaan kualitas."
+              : "Pembacaan sensor berlaku di titik pemasangan. Estimasi wilayah tersedia di Hub Lingkungan."}
           </p>
           <p>
-            Debu optik dan PM2.5 tervalidasi dilaporkan terpisah. eCO₂ merupakan estimasi sensor
-            gas; hasil model ditandai sebagai estimasi.
+            Debu optik dan PM2.5 tervalidasi ditampilkan terpisah. eCO₂ dan hasil model adalah estimasi.
           </p>
           <p className="scope-limit">
             Pemantauan ambien mendukung evaluasi lingkungan, bukan penetapan sumber pencemar,
