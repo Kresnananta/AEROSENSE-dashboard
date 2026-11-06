@@ -8,10 +8,14 @@ export type { SensorRule } from "../types/live.types";
 
 export type Scene =
   | "sunny"
+  | "partly-cloudy"
   | "cloudy"
+  | "fog"
   | "rain"
+  | "steady-rain"
   | "storm"
   | "air"
+  | "air-moderate"
   | "haze"
   | "soil"
   | "fire"
@@ -38,21 +42,32 @@ export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
     .sort((a, b) => (Date.parse(b.valid_at || "") || 0) - (Date.parse(a.valid_at || "") || 0));
 }
 
-export function conditionScene(insight: EnvironmentInsight, facts: EnvironmentFact[]): Scene {
+export function conditionScene(
+  insight: EnvironmentInsight,
+  facts: EnvironmentFact[],
+  now = Date.now(),
+): Scene {
   if (insight.category === "weather") {
     if (!insight.available) return "cloudy";
-    const current = currentFacts(facts).filter((f) => f.category === "weather");
-    const code = current.find((f) => /WMO|weather.?code/i.test(f.label));
-    if (typeof code?.value === "number") {
-      if ([95, 96, 99].includes(code.value)) return "storm";
-      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code.value)) return "rain";
-      if (code.value === 0) return "sunny";
+    const code = currentFacts(facts, now).find(
+      (f) => f.category === "weather" && /WMO|weather.?code/i.test(f.label),
+    )?.value;
+    if (typeof code === "number") {
+      if (code === 0) return "sunny";
+      if ([1, 2].includes(code)) return "partly-cloudy";
+      if (code === 3) return "cloudy";
+      if ([45, 48].includes(code)) return "fog";
+      if ([95, 96, 97, 99].includes(code)) return "storm";
+      if ([80, 81, 82].includes(code)) return "rain";
+      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67].includes(code)) return "steady-rain";
     }
-    if (/hujan/i.test(insight.title)) return "rain";
+    if (/hujan/i.test(insight.title)) return "steady-rain";
     return "cloudy";
   }
-  if (insight.category === "air_quality")
-    return ["warning", "danger", "notice"].includes(insight.tone) ? "haze" : "air";
+  if (insight.category === "air_quality") {
+    if (insight.available && insight.tone === "notice") return "air-moderate";
+    return ["warning", "danger"].includes(insight.tone) ? "haze" : "air";
+  }
   return (
     ["soil", "fire", "flood", "earthquake"].includes(insight.category) ? insight.category : "cloudy"
   ) as Scene;

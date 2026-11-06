@@ -41,9 +41,13 @@ test("condition illustration follows fresh weather evidence, not temperature alo
   const current = fact();
   for (const [code, scene] of [
     [0, "sunny"],
+    [2, "partly-cloudy"],
     [3, "cloudy"],
-    [63, "rain"],
+    [45, "fog"],
+    [63, "steady-rain"],
+    [80, "rain"],
     [95, "storm"],
+    [97, "storm"],
   ]) {
     const evidence = [
       current,
@@ -55,7 +59,7 @@ test("condition illustration follows fresh weather evidence, not temperature alo
       }),
     ];
     const insight = summarizeEnvironment(evidence, now)[0];
-    assert.equal(conditionScene(insight, evidence), scene);
+    assert.equal(conditionScene(insight, evidence, now), scene);
     if (code === 95) assert.match(insight.title, /petir/);
   }
   const oldCode = fact({
@@ -65,9 +69,19 @@ test("condition illustration follows fresh weather evidence, not temperature alo
     fresh_until: new Date(now - 1).toISOString(),
   });
   assert.equal(
-    conditionScene(summarizeEnvironment([current], now)[0], [oldCode, current]),
+    conditionScene(summarizeEnvironment([current], now)[0], [oldCode, current], now),
     "cloudy",
   );
+});
+test("moderate regional air quality gets its own illustration", () => {
+  const ispu = fact({
+    category: "air_quality",
+    label: "Estimasi ISPU PM2.5 (24 jam)",
+    value: 85,
+  });
+  const insight = summarizeEnvironment([ispu], now).find((item) => item.category === "air_quality");
+  assert.equal(conditionScene(insight, [ispu], now), "air-moderate");
+  assert.equal(conditionScene({ ...insight, available: false }, [], now), "air");
 });
 test("sensor summary respects hysteresis, validation and missing readings", () => {
   const rule = {

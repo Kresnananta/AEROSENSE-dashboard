@@ -612,7 +612,7 @@
 }
 .insight-action svg {
   flex-shrink: 0;
-  margin-top: 1px;
+  margin-block-start: calc((1lh - 18px) / 2);
   color: var(--panel-accent);
 }
 .insight-action strong {
@@ -738,14 +738,13 @@
   width: 3px;
   height: 3px;
 }
-.scene-rain img {
+:is(.scene-rain, .scene-steady-rain) img {
   animation: rain-hover 4s ease-in-out infinite;
 }
 .scene-storm img {
   animation: storm-hover 6s ease-in-out infinite;
 }
-.scene-air img,
-.scene-haze img {
+:is(.scene-air, .scene-air-moderate, .scene-haze, .scene-fog) img {
   animation: air-hover 8s ease-in-out infinite;
 }
 .scene-soil img {
