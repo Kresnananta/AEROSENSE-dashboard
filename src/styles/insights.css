@@ -738,7 +738,7 @@
   width: 3px;
   height: 3px;
 }
-:is(.scene-rain, .scene-steady-rain) img {
+.scene-steady-rain img {
   animation: rain-hover 4s ease-in-out infinite;
 }
 .scene-storm img {

@@ -8,10 +8,11 @@ export type { SensorRule } from "../types/live.types";
 
 export type Scene =
   | "sunny"
+  | "sunny-morning"
+  | "sunny-night"
   | "partly-cloudy"
   | "cloudy"
   | "fog"
-  | "rain"
   | "steady-rain"
   | "storm"
   | "air"
@@ -26,6 +27,11 @@ export type Highlight = { label: string; value: string; unit: string };
 
 const number = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
 const riverDay = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
+const weatherHour = new Intl.DateTimeFormat("id-ID", {
+  hour: "numeric",
+  hourCycle: "h23",
+  timeZone: "Asia/Jakarta",
+});
 export const riverDayLabel = (at: string) => riverDay.format(new Date(at));
 
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
@@ -49,17 +55,25 @@ export function conditionScene(
 ): Scene {
   if (insight.category === "weather") {
     if (!insight.available) return "cloudy";
-    const code = currentFacts(facts, now).find(
+    const weather = currentFacts(facts, now).find(
       (f) => f.category === "weather" && /WMO|weather.?code/i.test(f.label),
-    )?.value;
+    );
+    const code = weather?.value;
     if (typeof code === "number") {
-      if (code === 0) return "sunny";
-      if ([1, 2].includes(code)) return "partly-cloudy";
+      if ([0, 1, 2].includes(code)) {
+        const timestamp = Date.parse(weather?.valid_at ?? "");
+        if (Number.isFinite(timestamp)) {
+          const hour = Number(weatherHour.format(timestamp));
+          if (hour < 5 || hour >= 18) return "sunny-night";
+          if (hour < 11) return "sunny-morning";
+        }
+        return code === 0 ? "sunny" : "partly-cloudy";
+      }
       if (code === 3) return "cloudy";
       if ([45, 48].includes(code)) return "fog";
       if ([95, 96, 97, 99].includes(code)) return "storm";
-      if ([80, 81, 82].includes(code)) return "rain";
-      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67].includes(code)) return "steady-rain";
+      if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code))
+        return "steady-rain";
     }
     if (/hujan/i.test(insight.title)) return "steady-rain";
     return "cloudy";

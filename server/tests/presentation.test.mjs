@@ -40,12 +40,10 @@ test("highlighted numbers ignore expired readings and future measurements", () =
 test("condition illustration follows fresh weather evidence, not temperature alone", () => {
   const current = fact();
   for (const [code, scene] of [
-    [0, "sunny"],
-    [2, "partly-cloudy"],
     [3, "cloudy"],
     [45, "fog"],
     [63, "steady-rain"],
-    [80, "rain"],
+    [80, "steady-rain"],
     [95, "storm"],
     [97, "storm"],
   ]) {
@@ -72,6 +70,25 @@ test("condition illustration follows fresh weather evidence, not temperature alo
     conditionScene(summarizeEnvironment([current], now)[0], [oldCode, current], now),
     "cloudy",
   );
+});
+test("clear and partly cloudy weather illustrations follow the reading's time in WIB", () => {
+  const insight = { category: "weather", available: true };
+  for (const [validAt, code, scene] of [
+    ["2026-11-05T23:00:00Z", 0, "sunny-morning"],
+    ["2026-11-06T05:00:00Z", 0, "sunny"],
+    ["2026-11-06T05:00:00Z", 2, "partly-cloudy"],
+    ["2026-11-06T13:00:00Z", 2, "sunny-night"],
+    ["2026-11-06T13:00:00Z", 63, "steady-rain"],
+  ]) {
+    const checkedAt = Date.parse(validAt) + 60000;
+    const weather = fact({
+      label: "Kode kondisi cuaca (WMO)",
+      value: code,
+      valid_at: validAt,
+      fresh_until: new Date(checkedAt + 3600000).toISOString(),
+    });
+    assert.equal(conditionScene(insight, [weather], checkedAt), scene);
+  }
 });
 test("moderate regional air quality gets its own illustration", () => {
   const ispu = fact({
