@@ -57,3 +57,21 @@ test("reference expressions differ visibly and speaking opens a hinged beak with
   assert.equal(loud["mouth-cavity"].opacity, "1");
   assert.equal(parts(poseFor("speaking", "neutral", 1, 0))["mouth-cavity"].opacity, "0");
 });
+
+test("a happy greeting moves from open eyes to a smile and an independent wink", () => {
+  const open = poseFor("listening", "happy", 0);
+  const smile = poseFor("listening", "happy", 1.5);
+  const wink = poseFor("listening", "happy", 4.65);
+  assert.equal(open.smile, 0);
+  assert.equal(smile.smile, 1);
+  assert.equal(wink.smile, 0);
+  assert.equal(wink.wink, 1);
+  const bothOpen = parts({ ...wink, wink: 0 });
+  const oneClosed = parts(wink);
+  assert.notEqual(oneClosed["eye-left"].d, bothOpen["eye-left"].d);
+  assert.equal(oneClosed["eye-right"].d, bothOpen["eye-right"].d);
+  assert.notEqual(oneClosed["brow-left"].d, bothOpen["brow-left"].d);
+  assert.equal(oneClosed["brow-right"].d, bothOpen["brow-right"].d);
+  assert.equal(poseFor("listening", "happy", 4.65, 0, true).wink, 0);
+  assert.equal(poseFor("speaking", "danger", 1.5, 1).smile, 0);
+});

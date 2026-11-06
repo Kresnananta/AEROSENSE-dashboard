@@ -31,8 +31,6 @@
     <path id="eye-right" fill="url(#eye-color)"/>
     <path id="star-left" d="M431 690Q442 742 488 759Q442 772 431 827Q419 775 374 759Q419 745 431 690Z" fill="url(#eye-color)" opacity="0"/>
     <path id="star-right" d="M744 681Q755 733 801 750Q755 763 744 818Q732 766 687 750Q732 736 744 681Z" fill="url(#eye-color)" opacity="0"/>
-    <path id="glint-left" d="M479 750L451 765L480 779Z" fill="#ECF0FF"/>
-    <path id="glint-right" d="M792 741L763 757L793 769Z" fill="#E4EBFF"/>
     <path id="mouth-cavity" fill="url(#inside-color)"/>
     <path id="lower-beak" d="M548 951Q550 950 554 945C575 925 610 908 642 920C661 928 680 929 688 918C698 946 671 973 643 978C599 986 562 969 548 951Z" fill="url(#lower-color)"/>
     <path id="upper-beak" d="M548 951C542 951 537 943 531 936C520 922 510 918 494 912C471 907 466 899 477 881C488 865 518 857 543 839C566 823 582 813 596 818C618 826 635 844 657 857C683 873 701 891 700 905C699 917 691 921 688 918C680 929 661 928 642 920C610 908 575 925 554 945Q550 950 548 951Z" fill="url(#upper-color)"/>

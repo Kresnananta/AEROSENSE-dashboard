@@ -260,6 +260,7 @@ function frame(now) {
   for (const key of [
     "open",
     "smile",
+    "wink",
     "sparkle",
     "brow",
     "browLift",
@@ -272,7 +273,7 @@ function frame(now) {
     pose[key] +=
       (target[key] - pose[key]) *
       (key.startsWith("brow")
-        ? 1 - Math.exp(-dt / 210)
+        ? 1 - Math.exp(-dt / 150)
         : key === "beak"
           ? 1 - Math.exp(-dt / 35)
           : mix);

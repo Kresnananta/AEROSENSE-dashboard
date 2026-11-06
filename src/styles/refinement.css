@@ -118,6 +118,9 @@ input {
     background 0.18s,
     transform 0.18s var(--ui-ease);
 }
+.nav-entry:focus-visible {
+  outline-offset: -3px;
+}
 .nav-entry:hover {
   background: #f1f6fc;
   color: #125fc7;

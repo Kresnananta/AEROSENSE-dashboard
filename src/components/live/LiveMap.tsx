@@ -86,6 +86,7 @@ export function LiveMap({
   events = [],
   showNodes = true,
   locateUser = false,
+  autoLocate = false,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -97,6 +98,7 @@ export function LiveMap({
   events?: EnvironmentEvent[];
   showNodes?: boolean;
   locateUser?: boolean;
+  autoLocate?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
   const locationPoint = userLocation || devicePoint;
@@ -127,19 +129,26 @@ export function LiveMap({
             : [active!.latitude, active!.longitude]
         }
         zoom={13}
+        minZoom={7}
+        maxBounds={[[-85.05, -180], [85.05, 180]]}
+        maxBoundsViscosity={1}
         className="h-full w-full"
       >
         {userLocation ? (
           <LocationFocus point={userLocation} radiusKm={radiusKm} />
-        ) : devicePoint ? null : eventPoints.length ? (
+        ) : eventPoints.length ? (
           <EventFocus nodes={showNodes ? valid : []} events={eventPoints} />
-        ) : (
+        ) : devicePoint ? null : (
           <Focus node={active} nodes={valid} />
         )}
         {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
-        {locateUser && <DeviceLocation point={devicePoint} onPoint={setDevicePoint} />}
+        {locateUser && (
+          <DeviceLocation point={devicePoint} onPoint={setDevicePoint} autoLocate={autoLocate} />
+        )}
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          noWrap
+          className="live-map-tiles"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         {locationPoint && (

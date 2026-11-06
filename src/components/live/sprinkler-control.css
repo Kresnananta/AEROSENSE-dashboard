@@ -24,9 +24,6 @@
   gap: 18px;
 }
 .sprinkler-card {
-  border: 1px solid #dce9f5;
-  border-radius: 16px;
-  padding: 22px;
   display: grid;
   gap: 20px;
   min-width: 0;
@@ -170,9 +167,8 @@
   outline-offset: 4px;
 }
 @media (max-width: 640px) {
-  .sprinkler-section,
-  .sprinkler-card {
-    padding: 18px;
+  .sprinkler-section {
+    padding: 22px 18px;
   }
   .sprinkler-actions > * {
     flex: 1;

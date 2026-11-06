@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LocateFixed } from "lucide-react";
 import type { ErrorEvent, LocationEvent } from "leaflet";
 import { useMap } from "react-leaflet";
@@ -7,14 +7,15 @@ import { validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 export function DeviceLocation({
   point,
   onPoint,
+  autoLocate,
 }: {
   point: GeoPoint | null;
   onPoint: (point: GeoPoint) => void;
+  autoLocate: boolean;
 }) {
   const map = useMap();
-  const [locating, setLocating] = useState(true);
+  const [locating, setLocating] = useState(autoLocate);
   const [error, setError] = useState("");
-  const centered = useRef(false);
   const locate = useCallback(() => {
     setError("");
     if (!window.isSecureContext || !navigator.geolocation) {
@@ -23,12 +24,11 @@ export function DeviceLocation({
       return;
     }
     setLocating(true);
-    centered.current = false;
     map.stopLocate();
     map.locate({
       watch: true,
       setView: false,
-      enableHighAccuracy: true,
+      enableHighAccuracy: false,
       timeout: 15000,
       maximumAge: 30000,
     });
@@ -44,34 +44,33 @@ export function DeviceLocation({
           : {}),
       };
       if (!validPoint(next)) return;
+      map.stopLocate();
       onPoint(next);
       setLocating(false);
       setError("");
-      if (!centered.current) {
-        centered.current = true;
-        map.setView(event.latlng, Math.max(13, map.getZoom()), { animate: false });
-      }
+      map.setView(event.latlng, Math.max(14, map.getZoom()), { animate: false });
     }
     function failed(event: ErrorEvent) {
+      map.stopLocate();
       setLocating(false);
       setError(
         event.code === 1
-          ? "Izin lokasi ditolak. Izinkan lokasi di pengaturan situs, lalu coba lagi."
+          ? "Izin lokasi ditolak. Peta tetap bisa digunakan tanpa lokasi."
           : event.code === 3
             ? "Lokasi belum ditemukan. Periksa layanan lokasi, lalu coba lagi."
             : "Lokasi perangkat belum tersedia. Coba lagi.",
       );
-      if (event.code === 1) map.stopLocate();
     }
     map.on("locationfound", found);
     map.on("locationerror", failed);
-    locate();
+    if (autoLocate) locate();
+    else setLocating(false);
     return () => {
       map.stopLocate();
       map.off("locationfound", found);
       map.off("locationerror", failed);
     };
-  }, [map, onPoint, locate]);
+  }, [map, onPoint, locate, autoLocate]);
 
   const label = locating
     ? "Mencari lokasi Anda…"
@@ -93,7 +92,9 @@ export function DeviceLocation({
           onClick={(event) => {
             event.stopPropagation();
             if (point && !error)
-              map.setView([point.latitude, point.longitude], 14, { animate: false });
+              map.setView([point.latitude, point.longitude], Math.max(14, map.getZoom()), {
+                animate: false,
+              });
             else locate();
           }}
         >

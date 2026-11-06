@@ -403,7 +403,8 @@ export function SensorWorkspace({
                       nodes={nodes}
                       selected={node.id}
                       previewed={previewNode}
-                      locateUser={mode === "map"}
+                      locateUser
+                      autoLocate={mapLayer === "sensors" && !mapParams.has("node_id")}
                       onSelect={setSelected}
                       showNodes={mode !== "map" || mapLayer !== "events"}
                       events={mode === "map" && mapLayer !== "sensors" ? events : []}
@@ -626,8 +627,9 @@ export function SensorWorkspace({
                         </table>
                       </div>
                       <p className="hub-footnote">
-                        Estimasi dan skor gangguan model bukan ambang kualitas udara.{" "}
-                        {dateLabel(node.latest.gru.processed_at)}
+                        <time dateTime={node.latest.gru.processed_at}>
+                          {dateLabel(node.latest.gru.processed_at)}
+                        </time>
                       </p>
                     </>
                   ) : (

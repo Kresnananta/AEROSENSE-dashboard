@@ -1,3 +1,41 @@
+.sensor-workspace .live-map {
+  height: clamp(330px, 52dvh, 520px);
+  border: 1px solid #cddfec;
+}
+.live-map .leaflet-container {
+  background: #e5edf1;
+  font-family: var(--font-sans);
+}
+.live-map-tiles {
+  filter: saturate(0.76);
+}
+.live-map .leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid #d8e5f2;
+  border-radius: 12px;
+  box-shadow: 0 3px 7px -4px #14395855;
+}
+.live-map .leaflet-control-zoom a {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #0967e9;
+  border-bottom-color: #d8e5f2;
+}
+.live-map .leaflet-control-zoom a:not(.leaflet-disabled):hover {
+  background: #edf5ff;
+}
+.live-map .leaflet-control-zoom a.leaflet-disabled {
+  color: #61788f;
+}
+.live-map .leaflet-control-zoom a:focus-visible {
+  outline-offset: -3px;
+}
+.live-map .leaflet-control-attribution {
+  padding: 2px 8px;
+  border-radius: 8px 0 0;
+}
 .aerosense-map-marker {
   background: none;
   border: 0;
