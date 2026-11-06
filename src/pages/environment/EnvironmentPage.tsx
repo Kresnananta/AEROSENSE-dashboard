@@ -317,7 +317,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 </small>
               )}
             </div>
-            <ConditionScene scene={scene} muted={!selected.available} />
             {highlights.length > 0 && (
               <dl className="panel-metrics">
                 {highlights.map((h) => (
@@ -331,6 +330,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                 ))}
               </dl>
             )}
+            <ConditionScene scene={scene} muted={!selected.available} />
           </article>
           {!compact && selected.category === "soil" && (
             <SoilHistory

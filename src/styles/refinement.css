@@ -33,6 +33,14 @@ input {
 }
 .app-shell {
   --section-gap: clamp(16px, 2.4vw, 24px);
+  --content-gap: 12px;
+  --panel-inset: clamp(20px, 2.4vw, 32px);
+  --page-title-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  --section-title-size: clamp(1.25rem, 1.6vw, 1.5rem);
+  --status-title-size: clamp(1.75rem, 2.8vw, 2.5rem);
+  --metric-size: clamp(1.625rem, 2.8vw, 2.5rem);
+  --panel-body-size: 0.875rem;
+  --panel-label-size: 0.75rem;
   background: linear-gradient(145deg, #f7fbff 0%, #eef6ff 48%, #f8fbff 100%);
   color: var(--ui-ink);
 }
@@ -222,9 +230,9 @@ input {
 .app-shell :is(.app-section-stack, .management-page) > .live-heading {
   margin-bottom: 0;
 }
-.app-shell :is(.live-heading h1, .insights-heading h1) {
+.app-shell :is(.live-heading h1, .insights-heading h1, .page-heading h1) {
   max-width: 24ch;
-  font-size: clamp(28px, 2.8vw, 40px);
+  font-size: var(--page-title-size);
   line-height: 1.12;
   letter-spacing: -0.04em;
   font-weight: 800;
@@ -235,7 +243,9 @@ input {
   color: #0875f5;
 }
 .app-shell :is(.live-heading h2, .insights-heading h2, .live-panel h2) {
-  font-weight: 600;
+  font-size: var(--section-title-size);
+  font-weight: 700;
+  line-height: 1.2;
   letter-spacing: -0.025em;
 }
 .app-shell :is(.live-heading p, .insights-heading p) {
@@ -243,11 +253,11 @@ input {
   color: #597189;
   line-height: 1.6;
 }
-.app-shell :is(.sensor-hero-copy h2, .insight-message h2) {
-  font-size: clamp(36px, 4.3vw, 62px);
+.app-shell :is(.sensor-hero-copy h2, .environment-hub .insight-message h2) {
+  font-size: var(--status-title-size);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.03;
+  line-height: 1.12;
 }
 .app-shell .panel-metrics dd {
   font-weight: 600;
@@ -941,11 +951,12 @@ input {
 }
 .app-shell .panel-metrics dt {
   color: #fff;
-  font-size: 12px;
+  font-size: var(--panel-label-size);
   line-height: 1.5;
 }
 .app-shell .panel-metrics dd {
   font-family: var(--font-sans);
+  font-size: var(--metric-size);
   font-weight: 780;
   margin-top: 10px;
   color: #fff;
@@ -1299,14 +1310,8 @@ input {
     width: 100%;
     max-width: 235px;
   }
-  .sensor-focus-grid .sensor-hero-copy h2 {
-    font-size: 36px;
-  }
   .sensor-focus-grid .sensor-hero .panel-metrics > div {
     padding: 22px 16px;
-  }
-  .sensor-focus-grid .sensor-hero .panel-metrics dd {
-    font-size: 34px;
   }
   .aero-assist {
     flex-direction: column;
@@ -1339,11 +1344,7 @@ input {
     padding: 20px 12px 18px;
     min-height: 116px;
   }
-  .app-shell .panel-metrics dt {
-    font-size: 10px;
-  }
   .app-shell .panel-metrics dd {
-    font-size: 26px;
     margin-top: 10px;
   }
   .app-shell .sensor-panel-footer {
@@ -1377,9 +1378,6 @@ input {
     height: 300px;
     align-self: center;
     margin: -8px 0 -12px;
-  }
-  .app-shell .sensor-hero-copy h2 {
-    font-size: 30px;
   }
 }
 
@@ -1687,7 +1685,6 @@ input {
   min-height: 0;
 }
 .app-shell .sensor-hero .sensor-key-metrics dd {
-  font-size: clamp(36px, 3.3vw, 48px);
   line-height: 1.12;
   margin-top: 8px;
 }
@@ -1774,9 +1771,6 @@ input {
   .app-shell .sensor-hero .sensor-key-metrics > div {
     padding: 16px 10px;
   }
-  .app-shell .sensor-hero .sensor-key-metrics dd {
-    font-size: clamp(26px, 7.7vw, 32px);
-  }
   .app-shell .sensor-hero .sensor-key-metrics dd small {
     font-size: 10px;
   }
@@ -1839,12 +1833,6 @@ input {
   :is(h1, h1 .heading-accent) {
   color: #fff;
 }
-.app-shell .page-heading h1 {
-  font-size: clamp(28px, 2.8vw, 40px);
-  line-height: 1.12;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-}
 .app-shell
   :is(
     .page-heading,
@@ -1891,7 +1879,46 @@ input {
 }
 .app-shell .insight-lead > .condition-scene {
   width: 100%;
-  max-width: 440px;
+  max-width: 340px;
+}
+.app-shell .environment-hub .insight-lead {
+  padding: var(--panel-inset) var(--panel-inset) 0;
+  column-gap: var(--section-gap);
+}
+.app-shell .environment-hub .insight-message {
+  padding: 0;
+}
+.app-shell .environment-hub .insight-message h2 {
+  margin: var(--content-gap) 0 8px;
+}
+.app-shell .environment-hub :is(.insight-action, .insight-message > p),
+.app-shell .sensor-hero .sensor-recommendation {
+  font-size: var(--panel-body-size);
+  line-height: 1.55;
+}
+.app-shell .environment-hub :is(.insight-status, .insight-date) {
+  font-size: var(--panel-label-size);
+}
+.app-shell .environment-hub .insight-date {
+  margin-top: var(--content-gap);
+}
+.app-shell .environment-hub .panel-metrics {
+  gap: var(--content-gap);
+  margin-block: var(--section-gap);
+  padding: 0;
+}
+.app-shell .environment-hub .panel-metrics dd {
+  font-size: var(--metric-size);
+}
+.app-shell .environment-hub .insight-secondary {
+  margin-top: var(--section-gap);
+  gap: var(--content-gap);
+}
+@media (min-width: 601px) {
+  .insight-lead > .condition-scene {
+    grid-column: 2;
+    grid-row: 1;
+  }
 }
 .app-shell .environment-hub:not(.insights-compact) .insight-lead > .condition-scene {
   max-width: 350px;
@@ -1941,15 +1968,45 @@ input {
   }
 }
 @media (max-width: 600px) {
+  .app-shell .environment-hub .insight-topics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0 0 var(--section-gap);
+    padding: 0;
+    overflow: visible;
+  }
+  .app-shell .environment-hub .insight-topics button {
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 4px;
+    gap: 4px;
+    font-size: var(--panel-label-size);
+  }
+  .app-shell .environment-hub .insight-topics button svg {
+    flex: none;
+    width: 14px;
+  }
   .app-shell .environment-hub:not(.insights-compact) .insight-lead,
   .app-shell .insights-compact .insight-lead {
     grid-template-columns: minmax(0, 1fr);
   }
   .app-shell .insight-lead > .condition-scene,
   .app-shell .insights-compact .insight-lead > .condition-scene {
-    width: min(100%, 230px);
+    width: min(100%, 152px);
     height: auto;
-    margin: 0 auto;
+    margin: 4px auto 16px;
+  }
+  .app-shell .environment-hub .panel-metrics > div {
+    min-height: 0;
+    padding: 12px 10px;
+  }
+  .app-shell .environment-hub .panel-metrics dd small {
+    display: block;
+    margin: 4px 0 0;
+  }
+  .app-shell .environment-hub .panel-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 86px), 1fr));
   }
   .app-shell .insight-glance .condition-scene {
     width: 120px;
