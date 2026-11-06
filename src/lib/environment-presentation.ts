@@ -9,12 +9,17 @@ export type { SensorRule } from "../types/live.types";
 export type Scene =
   | "sunny"
   | "sunny-morning"
+  | "sunny-dusk"
   | "sunny-night"
   | "partly-cloudy"
   | "cloudy"
+  | "cloudy-night"
   | "fog"
+  | "fog-night"
   | "steady-rain"
+  | "rain-night"
   | "storm"
+  | "storm-night"
   | "air"
   | "air-moderate"
   | "haze"
@@ -58,25 +63,25 @@ export function conditionScene(
     const weather = currentFacts(facts, now).find(
       (f) => f.category === "weather" && /WMO|weather.?code/i.test(f.label),
     );
+    const timestamp = Date.parse(weather?.valid_at || insight.valid_at || "");
+    const hour = Number.isFinite(timestamp) ? Number(weatherHour.format(timestamp)) : NaN;
+    const night = hour < 5 || hour >= 18;
     const code = weather?.value;
     if (typeof code === "number") {
       if ([0, 1, 2].includes(code)) {
-        const timestamp = Date.parse(weather?.valid_at ?? "");
-        if (Number.isFinite(timestamp)) {
-          const hour = Number(weatherHour.format(timestamp));
-          if (hour < 5 || hour >= 18) return "sunny-night";
-          if (hour < 11) return "sunny-morning";
-        }
+        if (night) return "sunny-night";
+        if (hour < 11) return "sunny-morning";
+        if (hour >= 17) return "sunny-dusk";
         return code === 0 ? "sunny" : "partly-cloudy";
       }
-      if (code === 3) return "cloudy";
-      if ([45, 48].includes(code)) return "fog";
-      if ([95, 96, 97, 99].includes(code)) return "storm";
+      if (code === 3) return night ? "cloudy-night" : "cloudy";
+      if ([45, 48].includes(code)) return night ? "fog-night" : "fog";
+      if ([95, 96, 97, 99].includes(code)) return night ? "storm-night" : "storm";
       if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code))
-        return "steady-rain";
+        return night ? "rain-night" : "steady-rain";
     }
-    if (/hujan/i.test(insight.title)) return "steady-rain";
-    return "cloudy";
+    if (/hujan/i.test(insight.title)) return night ? "rain-night" : "steady-rain";
+    return night ? "cloudy-night" : "cloudy";
   }
   if (insight.category === "air_quality") {
     if (insight.available && insight.tone === "notice") return "air-moderate";

@@ -554,7 +554,7 @@
   --panel-cobalt: #52647e;
   --panel-deep: #20324b;
 }
-.panel-storm {
+:is(.panel-storm, .panel-storm-night) {
   --panel-cobalt: #365781;
 }
 .insight-message,
@@ -738,13 +738,13 @@
   width: 3px;
   height: 3px;
 }
-.scene-steady-rain img {
+:is(.scene-steady-rain, .scene-rain-night) img {
   animation: rain-hover 4s ease-in-out infinite;
 }
-.scene-storm img {
+:is(.scene-storm, .scene-storm-night) img {
   animation: storm-hover 6s ease-in-out infinite;
 }
-:is(.scene-air, .scene-air-moderate, .scene-haze, .scene-fog) img {
+:is(.scene-air, .scene-air-moderate, .scene-haze, .scene-fog, .scene-fog-night) img {
   animation: air-hover 8s ease-in-out infinite;
 }
 .scene-soil img {

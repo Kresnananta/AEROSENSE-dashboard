@@ -38,7 +38,9 @@ test("highlighted numbers ignore expired readings and future measurements", () =
   assert.deepEqual(environmentHighlights({ ...insight, available: false }, [current], now), []);
 });
 test("condition illustration follows fresh weather evidence, not temperature alone", () => {
-  const current = fact();
+  const noon = Date.parse("2026-11-06T05:00:00Z");
+  const midday = { valid_at: new Date(noon - 300000).toISOString(), fresh_until: new Date(noon + 3600000).toISOString() };
+  const current = fact(midday);
   for (const [code, scene] of [
     [3, "cloudy"],
     [45, "fog"],
@@ -50,35 +52,42 @@ test("condition illustration follows fresh weather evidence, not temperature alo
     const evidence = [
       current,
       fact({
+        ...midday,
         id: "code",
         label: "Kode kondisi cuaca (WMO)",
         value: code,
         unit: "",
       }),
     ];
-    const insight = summarizeEnvironment(evidence, now)[0];
-    assert.equal(conditionScene(insight, evidence, now), scene);
+    const insight = summarizeEnvironment(evidence, noon)[0];
+    assert.equal(conditionScene(insight, evidence, noon), scene);
     if (code === 95) assert.match(insight.title, /petir/);
   }
   const oldCode = fact({
+    ...midday,
     id: "code",
     label: "Kode kondisi cuaca (WMO)",
     value: 0,
-    fresh_until: new Date(now - 1).toISOString(),
+    fresh_until: new Date(noon - 1).toISOString(),
   });
   assert.equal(
-    conditionScene(summarizeEnvironment([current], now)[0], [oldCode, current], now),
+    conditionScene(summarizeEnvironment([current], noon)[0], [oldCode, current], noon),
     "cloudy",
   );
 });
-test("clear and partly cloudy weather illustrations follow the reading's time in WIB", () => {
+test("weather illustrations use both the condition and the reading's time in WIB", () => {
   const insight = { category: "weather", available: true };
   for (const [validAt, code, scene] of [
     ["2026-11-05T23:00:00Z", 0, "sunny-morning"],
     ["2026-11-06T05:00:00Z", 0, "sunny"],
     ["2026-11-06T05:00:00Z", 2, "partly-cloudy"],
-    ["2026-11-06T13:00:00Z", 2, "sunny-night"],
-    ["2026-11-06T13:00:00Z", 63, "steady-rain"],
+    ["2026-11-06T10:00:00Z", 0, "sunny-dusk"],
+    ["2026-11-06T10:00:00Z", 63, "steady-rain"],
+    ["2026-11-06T11:00:00Z", 2, "sunny-night"],
+    ["2026-11-06T13:00:00Z", 3, "cloudy-night"],
+    ["2026-11-06T13:00:00Z", 45, "fog-night"],
+    ["2026-11-06T13:00:00Z", 63, "rain-night"],
+    ["2026-11-06T13:00:00Z", 95, "storm-night"],
   ]) {
     const checkedAt = Date.parse(validAt) + 60000;
     const weather = fact({
