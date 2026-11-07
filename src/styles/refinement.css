@@ -2038,7 +2038,6 @@ input {
 }
 
 .app-shell .sensor-focus-grid .sensor-hero--unavailable {
-  grid-template-columns: minmax(0, 1fr);
   padding: clamp(20px, 3vw, 32px);
   gap: 16px;
 }
@@ -2054,7 +2053,29 @@ input {
   margin: 0;
 }
 .app-shell .sensor-focus-grid--unavailable .aero-assist {
-  align-items: flex-start;
   min-height: 0;
   padding: 24px;
+}
+.app-shell .sensor-focus-grid--unavailable .assist-visual {
+  width: min(40%, 180px);
+  height: clamp(100px, 16vw, 176px);
+  min-height: 0;
+  margin: 0;
+}
+@media (min-width: 601px) {
+  .app-shell .sensor-hero--unavailable > .condition-scene.scene-sensor {
+    height: clamp(160px, 20vw, 230px);
+    align-self: center;
+  }
+}
+@media (min-width: 1300px) {
+  .app-shell .sensor-focus-grid--unavailable .assist-visual {
+    width: min(100%, 180px);
+  }
+}
+@media (max-width: 600px) {
+  .app-shell .sensor-focus-grid--unavailable .aero-assist {
+    flex-direction: row;
+    align-items: center;
+  }
 }

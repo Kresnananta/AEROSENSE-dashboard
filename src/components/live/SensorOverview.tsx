@@ -193,7 +193,7 @@ export function SensorOverview() {
                   )}
                 </footer>
               )}
-              {fresh && <ConditionScene scene="sensor" />}
+              <ConditionScene scene="sensor" />
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
               <span className="assist-orbit assist-orbit-one" aria-hidden="true" />
@@ -212,28 +212,26 @@ export function SensorOverview() {
                   Tanya AERO-BOT <ArrowUpRight size={15} />
                 </Link>
               </div>
-              {fresh && (
-                <div className="assist-visual">
-                  <svg
-                    className="assist-airflow"
-                    viewBox="0 0 360 340"
-                    fill="none"
+              <div className="assist-visual">
+                <svg
+                  className="assist-airflow"
+                  viewBox="0 0 360 340"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <ellipse cx="180" cy="230" rx="154" ry="54" transform="rotate(-20 180 230)" />
+                  <path d="M28 160C74 116 123 122 165 145C213 171 283 172 330 120" />
+                  <path d="M44 271C102 301 232 303 312 245" />
+                </svg>
+                {Array.from({ length: 7 }, (_, index) => (
+                  <span
+                    key={index}
+                    className={`assist-particle particle-${index + 1}`}
                     aria-hidden="true"
-                  >
-                    <ellipse cx="180" cy="230" rx="154" ry="54" transform="rotate(-20 180 230)" />
-                    <path d="M28 160C74 116 123 122 165 145C213 171 283 172 330 120" />
-                    <path d="M44 271C102 301 232 303 312 245" />
-                  </svg>
-                  {Array.from({ length: 7 }, (_, index) => (
-                    <span
-                      key={index}
-                      className={`assist-particle particle-${index + 1}`}
-                      aria-hidden="true"
-                    />
-                  ))}
-                  <AeroMascot pose={pose} />
-                </div>
-              )}
+                  />
+                ))}
+                <AeroMascot pose={pose} />
+              </div>
             </aside>
           </div>
           {nodes.length > 1 && (
