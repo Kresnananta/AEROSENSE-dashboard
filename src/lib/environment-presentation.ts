@@ -11,15 +11,14 @@ export type Scene =
   | "sunny-morning"
   | "sunny-dusk"
   | "sunny-night"
+  | "warm-night"
   | "partly-cloudy"
   | "cloudy"
   | "cloudy-night"
-  | "fog"
   | "fog-night"
   | "steady-rain"
   | "rain-night"
   | "storm"
-  | "storm-night"
   | "air"
   | "air-moderate"
   | "haze"
@@ -68,19 +67,22 @@ export function conditionScene(
     const night = hour < 5 || hour >= 18;
     const code = weather?.value;
     if (typeof code === "number") {
-      if ([0, 1, 2].includes(code)) {
-        if (night) return "sunny-night";
-        if (hour < 11) return "sunny-morning";
-        if (hour >= 17) return "sunny-dusk";
-        return code === 0 ? "sunny" : "partly-cloudy";
-      }
-      if (code === 3) return night ? "cloudy-night" : "cloudy";
-      if ([45, 48].includes(code)) return night ? "fog-night" : "fog";
-      if ([95, 96, 97, 99].includes(code)) return night ? "storm-night" : "storm";
+      if ([95, 96, 97, 99].includes(code)) return "storm";
       if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code))
         return night ? "rain-night" : "steady-rain";
     }
+    if (/petir/i.test(insight.title)) return "storm";
     if (/hujan/i.test(insight.title)) return night ? "rain-night" : "steady-rain";
+    if (code === 3) return night ? "cloudy-night" : "cloudy";
+    if (code === 45 || code === 48) return night ? "fog-night" : "cloudy";
+    if (/terasa hangat/i.test(insight.title)) return night ? "warm-night" : "sunny-dusk";
+    if (!night && /terasa panas/i.test(insight.title)) return "sunny";
+    if (code === 0 || code === 1 || code === 2) {
+      if (night) return "sunny-night";
+      if (hour < 11) return "sunny-morning";
+      if (hour >= 17) return "sunny-dusk";
+      return code === 0 ? "sunny" : "partly-cloudy";
+    }
     return night ? "cloudy-night" : "cloudy";
   }
   if (insight.category === "air_quality") {

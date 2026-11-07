@@ -40,10 +40,10 @@ test("highlighted numbers ignore expired readings and future measurements", () =
 test("condition illustration follows fresh weather evidence, not temperature alone", () => {
   const noon = Date.parse("2026-11-06T05:00:00Z");
   const midday = { valid_at: new Date(noon - 300000).toISOString(), fresh_until: new Date(noon + 3600000).toISOString() };
-  const current = fact(midday);
+  const current = fact({ ...midday, value: 24 });
   for (const [code, scene] of [
     [3, "cloudy"],
-    [45, "fog"],
+    [45, "cloudy"],
     [63, "steady-rain"],
     [80, "steady-rain"],
     [95, "storm"],
@@ -77,17 +77,21 @@ test("condition illustration follows fresh weather evidence, not temperature alo
 });
 test("weather illustrations use both the condition and the reading's time in WIB", () => {
   const insight = { category: "weather", available: true };
-  for (const [validAt, code, scene] of [
+  for (const [validAt, code, scene, title] of [
     ["2026-11-05T23:00:00Z", 0, "sunny-morning"],
     ["2026-11-06T05:00:00Z", 0, "sunny"],
     ["2026-11-06T05:00:00Z", 2, "partly-cloudy"],
+    ["2026-11-06T05:00:00Z", 2, "sunny-dusk", "Cuaca terasa hangat"],
+    ["2026-11-06T05:00:00Z", 2, "sunny", "Cuaca terasa panas"],
+    ["2026-11-06T05:00:00Z", 45, "cloudy", "Cuaca terasa hangat"],
     ["2026-11-06T10:00:00Z", 0, "sunny-dusk"],
     ["2026-11-06T10:00:00Z", 63, "steady-rain"],
     ["2026-11-06T11:00:00Z", 2, "sunny-night"],
+    ["2026-11-06T11:00:00Z", 2, "warm-night", "Cuaca terasa hangat"],
     ["2026-11-06T13:00:00Z", 3, "cloudy-night"],
     ["2026-11-06T13:00:00Z", 45, "fog-night"],
     ["2026-11-06T13:00:00Z", 63, "rain-night"],
-    ["2026-11-06T13:00:00Z", 95, "storm-night"],
+    ["2026-11-06T13:00:00Z", 95, "storm", "Cuaca terasa hangat"],
   ]) {
     const checkedAt = Date.parse(validAt) + 60000;
     const weather = fact({
@@ -96,7 +100,7 @@ test("weather illustrations use both the condition and the reading's time in WIB
       valid_at: validAt,
       fresh_until: new Date(checkedAt + 3600000).toISOString(),
     });
-    assert.equal(conditionScene(insight, [weather], checkedAt), scene);
+    assert.equal(conditionScene({ ...insight, title }, [weather], checkedAt), scene);
   }
 });
 test("moderate regional air quality gets its own illustration", () => {
