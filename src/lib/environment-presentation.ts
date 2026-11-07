@@ -73,7 +73,6 @@ export function conditionScene(
     }
     if (/petir/i.test(insight.title)) return "storm";
     if (/hujan/i.test(insight.title)) return night ? "rain-night" : "steady-rain";
-    if (code === 3) return night ? "cloudy-night" : "cloudy";
     if (code === 45 || code === 48) return night ? "fog-night" : "cloudy";
     if (/terasa hangat/i.test(insight.title)) return night ? "warm-night" : "sunny-dusk";
     if (!night && /terasa panas/i.test(insight.title)) return "sunny";
