@@ -50,7 +50,8 @@
   margin-block: 10px;
   color: #36536b;
 }
-.node-registration-fields {
+.node-registration-fields,
+.node-registration-choices {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
@@ -76,6 +77,54 @@
 .node-registration input::placeholder {
   color: #536c83;
 }
+.node-registration-routing {
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid #c7d9eb;
+  border-radius: 12px;
+}
+.node-registration-routing legend {
+  padding-inline: 4px;
+  color: #17364d;
+  font-weight: 700;
+}
+.node-registration-choices {
+  margin: 0;
+}
+.node-registration-choice {
+  min-width: 0;
+}
+.node-registration-choice legend {
+  padding: 0;
+  font-size: 0.9rem;
+}
+.node-registration-choice p {
+  margin: 4px 0 8px;
+  font-size: 0.875rem;
+}
+.node-registration-choice-value,
+.node-registration-option {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #edf5fc;
+  color: #17364d;
+  overflow-wrap: anywhere;
+}
+.node-registration-option {
+  gap: 10px;
+  margin-top: 6px;
+  cursor: pointer;
+}
+.node-registration-option input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: #075fc4;
+}
 .node-registration-public {
   display: flex;
   align-items: center;
@@ -98,7 +147,8 @@
   color: #ac1936;
 }
 @media (max-width: 600px) {
-  .node-registration-fields {
+  .node-registration-fields,
+  .node-registration-choices {
     grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }

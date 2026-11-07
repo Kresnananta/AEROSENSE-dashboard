@@ -208,9 +208,6 @@ export function SensorOverview() {
                 </h2>
                 {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
                 {summary.tone === "warning" && <p>Bandingkan dengan titik terdekat.</p>}
-                <Link to="/aerobot" className="assist-link">
-                  Tanya AERO-BOT <ArrowUpRight size={15} />
-                </Link>
               </div>
               <div className="assist-visual">
                 <svg
@@ -232,6 +229,9 @@ export function SensorOverview() {
                 ))}
                 <AeroMascot pose={pose} />
               </div>
+              <Link to="/aerobot" className="assist-link">
+                Tanya AERO-BOT <ArrowUpRight size={15} />
+              </Link>
             </aside>
           </div>
           {nodes.length > 1 && (

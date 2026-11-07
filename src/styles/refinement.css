@@ -976,8 +976,9 @@ input {
   isolation: isolate;
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 12px;
   min-height: 196px;
   padding: 28px;
@@ -1011,11 +1012,9 @@ input {
 .assist-visual {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
   flex-shrink: 0;
-  width: 46%;
-  max-width: 360px;
-  height: 310px;
+  width: min(100%, 252px);
+  aspect-ratio: 360 / 340;
 }
 .aero-assist .assist-visual > .aero-mascot {
   position: absolute;
@@ -1024,7 +1023,7 @@ input {
   max-width: none;
   height: 100%;
   object-fit: contain;
-  scale: 1.16;
+  scale: 1.06;
   inset: 0;
   margin: 0;
 }
@@ -1043,6 +1042,7 @@ input {
 }
 .assist-particle {
   position: absolute;
+  translate: -50% -50%;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -1117,6 +1117,7 @@ input {
   position: relative;
   z-index: 1;
   max-width: 47ch;
+  text-align: center;
 }
 .assist-copy h2 {
   font-size: 24px;
@@ -1124,12 +1125,13 @@ input {
   font-weight: 800;
   letter-spacing: -0.035em;
   max-width: 19ch;
+  margin-inline: auto;
   color: #123d69;
 }
 .assist-copy p {
   font-size: 13px;
   line-height: 1.7;
-  margin: 12px 0 8px;
+  margin: 12px auto 0;
   max-width: 35ch;
   color: #476b8b;
 }
@@ -1263,27 +1265,6 @@ input {
   .sensor-focus-grid .sensor-hero .panel-metrics > div {
     padding: 22px 16px;
   }
-  .aero-assist {
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 28px 24px 12px;
-  }
-  .aero-assist .aero-mascot {
-    width: calc(100% + 24px);
-    max-width: 300px;
-    height: auto;
-    aspect-ratio: 1;
-    align-self: center;
-    margin: 12px -12px 0;
-  }
-  .aero-assist .assist-visual {
-    width: calc(100% + 48px);
-    max-width: none;
-    min-height: 280px;
-    height: 320px;
-    margin: 4px -24px -12px;
-  }
 }
 @media (max-width: 600px) {
   .app-shell .panel-metrics {
@@ -1312,22 +1293,6 @@ input {
   }
   .assist-copy p {
     font-size: 12px;
-  }
-  .aero-assist {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .aero-assist .aero-mascot {
-    width: 200px;
-    height: 200px;
-    align-self: center;
-  }
-  .aero-assist .assist-visual {
-    width: 100%;
-    max-width: 340px;
-    height: 300px;
-    align-self: center;
-    margin: -8px 0 -12px;
   }
 }
 
@@ -2057,25 +2022,11 @@ input {
   padding: 24px;
 }
 .app-shell .sensor-focus-grid--unavailable .assist-visual {
-  width: min(40%, 180px);
-  height: clamp(100px, 16vw, 176px);
-  min-height: 0;
-  margin: 0;
+  width: min(100%, 210px);
 }
 @media (min-width: 601px) {
   .app-shell .sensor-hero--unavailable > .condition-scene.scene-sensor {
     height: clamp(160px, 20vw, 230px);
     align-self: center;
-  }
-}
-@media (min-width: 1300px) {
-  .app-shell .sensor-focus-grid--unavailable .assist-visual {
-    width: min(100%, 180px);
-  }
-}
-@media (max-width: 600px) {
-  .app-shell .sensor-focus-grid--unavailable .aero-assist {
-    flex-direction: row;
-    align-items: center;
   }
 }
