@@ -17,6 +17,7 @@ import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 import { detectWakePhrase } from "@/lib/handsfree";
 import { startProcessingSound } from "@/lib/processing-sound";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
+import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
 
 const CHAT_LOCATION_RADIUS_KM = 5;
 
@@ -45,7 +46,7 @@ const suggestions = [
   "Kabar karhutla di Indonesia?",
 ];
 export function ChatPanel() {
-  const { user, error: authError } = useAuth();
+  const { user, isLoading, error: authError } = useAuth();
   const userId = user?.id;
   const [slot, setSlot] = useRobotSlot(userId);
   const onChat = useLocation().pathname === "/aerobot";
@@ -307,6 +308,25 @@ export function ChatPanel() {
   }
   sendRef.current = send;
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
+  if (!user) {
+    return (
+      <section className="live-chat chat-entry" aria-label="Mulai percakapan AERO-BOT">
+        {isLoading ? (
+          <p role="status">Memeriksa sesi…</p>
+        ) : (
+          <>
+            <h2>Mulai percakapan</h2>
+            <p>Masuk untuk bertanya di sini atau lanjut lewat WhatsApp.</p>
+            {authError && <p role="alert">{authError}</p>}
+            <div className="chat-entry-actions">
+              <Link className="live-button" to="/login">Masuk untuk bertanya</Link>
+              <WhatsAppEntry />
+            </div>
+          </>
+        )}
+      </section>
+    );
+  }
   return (
     <>
       <section className="live-chat" aria-label="Percakapan AERO-BOT">
@@ -319,13 +339,7 @@ export function ChatPanel() {
             <strong>AERO-BOT</strong>
             <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
           </div>
-          {user ? (
-            <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
-          ) : (
-            <Link className="live-tag" to="/login">
-              Masuk untuk bertanya
-            </Link>
-          )}
+          <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
         </header>
         {canManage && (
           <label className="chat-scope">
@@ -430,11 +444,6 @@ export function ChatPanel() {
           )}
           <div ref={end} />
         </div>
-        {!user && authError && (
-          <p className="live-notice" role="alert">
-            {authError}
-          </p>
-        )}
         {error && (
           <div className="live-notice" role="alert">
             {error}

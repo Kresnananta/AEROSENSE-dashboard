@@ -20,7 +20,6 @@ export type Scene =
   | "rain-night"
   | "storm"
   | "air"
-  | "air-moderate"
   | "haze"
   | "soil"
   | "fire"
@@ -85,8 +84,9 @@ export function conditionScene(
     return night ? "cloudy-night" : "cloudy";
   }
   if (insight.category === "air_quality") {
-    if (insight.available && insight.tone === "notice") return "air-moderate";
-    return ["warning", "danger"].includes(insight.tone) ? "haze" : "air";
+    return insight.available && ["notice", "warning", "danger"].includes(insight.tone)
+      ? "haze"
+      : "air";
   }
   return (
     ["soil", "fire", "flood", "earthquake"].includes(insight.category) ? insight.category : "cloudy"

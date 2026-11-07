@@ -621,6 +621,21 @@ select,
   border-radius: 16px;
   overflow: hidden;
 }
+.live-chat.chat-entry {
+  min-height: 0;
+  gap: 12px;
+  padding: clamp(20px, 4vw, 32px);
+}
+.chat-entry h2 {
+  font-size: 1.35rem;
+  font-weight: 750;
+}
+.chat-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
 .live-chat > header {
   display: flex;
   align-items: center;

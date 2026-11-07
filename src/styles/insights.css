@@ -744,7 +744,7 @@
 .scene-storm img {
   animation: storm-hover 6s ease-in-out infinite;
 }
-:is(.scene-air, .scene-air-moderate, .scene-haze, .scene-fog-night) img {
+:is(.scene-air, .scene-haze, .scene-fog-night) img {
   animation: air-hover 8s ease-in-out infinite;
 }
 .scene-soil img {

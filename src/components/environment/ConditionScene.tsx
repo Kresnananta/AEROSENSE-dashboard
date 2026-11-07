@@ -34,7 +34,7 @@ export function ConditionScene({
         </>
       )}
       <img
-        src={`/assets/environment/${scene === "sensor" ? "sensor-node-v3" : scene}.webp?v=20261107`}
+        src={`/assets/environment/${scene === "sensor" ? "sensor-node-v3" : scene}.webp?v=20261107b`}
         alt=""
         width="360"
         height="360"

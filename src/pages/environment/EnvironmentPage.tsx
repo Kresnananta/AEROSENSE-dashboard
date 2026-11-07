@@ -15,7 +15,6 @@ import {
   ShieldCheck,
   ChevronDown,
   Clock3,
-  LocateFixed,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useAuth } from "@/hooks/useAuth";
@@ -180,48 +179,31 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           )}
         </div>
         <div className="live-actions">
-          {!compact && (
-            <div
-              className="environment-reference"
-              role="group"
-              aria-label="Acuan lokasi lingkungan"
-            >
-              <button
-                type="button"
-                aria-pressed={locationMode === "node"}
-                onClick={() => {
-                  setLocationMode("node");
-                  setLocationError("");
-                }}
-              >
-                <MapPin size={15} aria-hidden="true" /> Titik node
-              </button>
-              <button
-                type="button"
-                aria-pressed={locationMode === "device"}
-                disabled={locating}
-                onClick={useDeviceLocation}
-              >
-                <LocateFixed size={15} aria-hidden="true" />
-                {locating ? "Mencari…" : "Lokasi saya"}
-              </button>
-            </div>
-          )}
           {!compact && nodes.length > 0 && (
             <label className="sensor-select sensor-select--light">
               <MapPin size={15} aria-hidden="true" />
-              <span className="sr-only">Pilih titik sensor</span>
+              <span className="sr-only">Acuan lokasi</span>
               <MonitoringSelect
-                label="Pilih titik sensor"
-                value={node?.id || ""}
-                options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+                label="Acuan lokasi"
+                value={locationMode === "device" ? "__device__" : node?.id || ""}
+                disabled={locating}
+                options={[
+                  ...nodes.map((n) => ({ value: n.id, label: n.name })),
+                  { value: "__device__", label: "Lokasi saya" },
+                ]}
                 onValueChange={(value) => {
+                  if (value === "__device__") {
+                    useDeviceLocation();
+                    return;
+                  }
                   setLocationMode("node");
+                  setLocationError("");
                   updateParams({ node_id: value });
                 }}
               />
             </label>
           )}
+          {locating && <span className="sr-only" role="status">Mencari lokasi…</span>}
           {compact && (
             <Link className="insight-text-link" to="/environment">
               Buka Hub Lingkungan <ArrowUpRight size={16} />
@@ -229,8 +211,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           )}
           <button
             className="live-icon-button"
-            onClick={refresh}
-            disabled={loading}
+            onClick={() => {
+              if (locationMode === "device") useDeviceLocation();
+              refresh();
+            }}
+            disabled={loading || locating}
             aria-label="Perbarui informasi lingkungan"
           >
             <RefreshCw size={17} className={loading ? "refreshing" : ""} />
@@ -320,7 +305,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             {highlights.length > 0 && (
               <dl className="panel-metrics">
                 {highlights.map((h) => (
-                  <div key={h.label} style={{ backdropFilter: "var(--metric-backdrop)" }}>
+                  <div key={h.label}>
                     <dt>{h.label}</dt>
                     <dd>
                       {h.value}

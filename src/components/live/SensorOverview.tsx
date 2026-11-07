@@ -98,8 +98,8 @@ export function SensorOverview() {
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : (
         <>
-          <div className="sensor-focus-grid">
-            <article className={`sensor-hero tone-${summary.tone}`}>
+          <div className={`sensor-focus-grid${fresh ? "" : " sensor-focus-grid--unavailable"}`}>
+            <article className={`sensor-hero tone-${summary.tone}${fresh ? "" : " sensor-hero--unavailable"}`}>
               <div className="sensor-hero-copy">
                 <span className={`insight-status ${fresh ? "" : "status-pending"}`}>
                   <span />
@@ -150,46 +150,50 @@ export function SensorOverview() {
                   </Link>
                 </div>
               </div>
-              <dl className="panel-metrics sensor-key-metrics">
-                {keys.map((key) => {
-                  const value = fresh ? node?.latest?.metrics[key] : null;
-                  return (
-                    <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
-                      <dt>{metricLabels[key][0]}</dt>
-                      <dd>
-                        {typeof value === "number" && Number.isFinite(value) &&
-                        (key === "temperature_c" || value >= 0)
-                          ? value.toLocaleString("id-ID", {
-                              maximumFractionDigits: 1,
-                            })
-                          : "—"}
-                        <small>{metricLabels[key][1]}</small>
-                      </dd>
-                      {key === "tvoc_ppb" && <span>Indikator senyawa organik volatil</span>}
-                    </div>
-                  );
-                })}
-              </dl>
-              <footer className="sensor-panel-footer">
-                {fresh ? (
-                  <span>
-                    <Radio size={13} />
-                    {dateLabel(lastReadingTime)}
-                  </span>
-                ) : (
-                  node && (
-                    <Link className="panel-link" to={`/nodes/${encodeURIComponent(node.id)}`}>
-                      Lihat detail sensor <ArrowUpRight size={16} />
-                    </Link>
-                  )
-                )}
-                {node && (
-                  <span>
-                    Titik node: {node.latitude.toFixed(4)}, {node.longitude.toFixed(4)}
-                  </span>
-                )}
-              </footer>
-              <ConditionScene scene="sensor" muted={!fresh} />
+              {fresh && (
+                <dl className="panel-metrics sensor-key-metrics">
+                  {keys.map((key) => {
+                    const value = reading?.metrics[key];
+                    return (
+                      <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
+                        <dt>{metricLabels[key][0]}</dt>
+                        <dd>
+                          {typeof value === "number" && Number.isFinite(value) &&
+                          (key === "temperature_c" || value >= 0)
+                            ? value.toLocaleString("id-ID", {
+                                maximumFractionDigits: 1,
+                              })
+                            : "—"}
+                          <small>{metricLabels[key][1]}</small>
+                        </dd>
+                        {key === "tvoc_ppb" && <span>Indikator senyawa organik volatil</span>}
+                      </div>
+                    );
+                  })}
+                </dl>
+              )}
+              {(fresh || node) && (
+                <footer className="sensor-panel-footer">
+                  {fresh ? (
+                    <span>
+                      <Radio size={13} />
+                      {dateLabel(lastReadingTime)}
+                    </span>
+                  ) : (
+                    node && (
+                      <Link className="panel-link" to={`/nodes/${encodeURIComponent(node.id)}`}>
+                        Lihat detail sensor <ArrowUpRight size={16} />
+                      </Link>
+                    )
+                  )}
+                  {node && (
+                    <span>
+                      Titik node: {node.latitude.toFixed(4)}, {node.longitude.toFixed(4)}
+                    </span>
+                  )}
+                </footer>
+              )}
+              {fresh && <ConditionScene scene="sensor" />}
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
               <span className="assist-orbit assist-orbit-one" aria-hidden="true" />
@@ -208,26 +212,28 @@ export function SensorOverview() {
                   Tanya AERO-BOT <ArrowUpRight size={15} />
                 </Link>
               </div>
-              <div className="assist-visual">
-                <svg
-                  className="assist-airflow"
-                  viewBox="0 0 360 340"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <ellipse cx="180" cy="230" rx="154" ry="54" transform="rotate(-20 180 230)" />
-                  <path d="M28 160C74 116 123 122 165 145C213 171 283 172 330 120" />
-                  <path d="M44 271C102 301 232 303 312 245" />
-                </svg>
-                {Array.from({ length: 7 }, (_, index) => (
-                  <span
-                    key={index}
-                    className={`assist-particle particle-${index + 1}`}
+              {fresh && (
+                <div className="assist-visual">
+                  <svg
+                    className="assist-airflow"
+                    viewBox="0 0 360 340"
+                    fill="none"
                     aria-hidden="true"
-                  />
-                ))}
-                <AeroMascot pose={pose} />
-              </div>
+                  >
+                    <ellipse cx="180" cy="230" rx="154" ry="54" transform="rotate(-20 180 230)" />
+                    <path d="M28 160C74 116 123 122 165 145C213 171 283 172 330 120" />
+                    <path d="M44 271C102 301 232 303 312 245" />
+                  </svg>
+                  {Array.from({ length: 7 }, (_, index) => (
+                    <span
+                      key={index}
+                      className={`assist-particle particle-${index + 1}`}
+                      aria-hidden="true"
+                    />
+                  ))}
+                  <AeroMascot pose={pose} />
+                </div>
+              )}
             </aside>
           </div>
           {nodes.length > 1 && (

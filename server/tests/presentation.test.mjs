@@ -105,14 +105,14 @@ test("weather illustrations use both the condition and the reading's time in WIB
     assert.equal(conditionScene({ ...insight, title }, [weather], checkedAt), scene);
   }
 });
-test("moderate regional air quality gets its own illustration", () => {
+test("moderate regional air quality uses the haze illustration", () => {
   const ispu = fact({
     category: "air_quality",
     label: "Estimasi ISPU PM2.5 (24 jam)",
     value: 85,
   });
   const insight = summarizeEnvironment([ispu], now).find((item) => item.category === "air_quality");
-  assert.equal(conditionScene(insight, [ispu], now), "air-moderate");
+  assert.equal(conditionScene(insight, [ispu], now), "haze");
   assert.equal(conditionScene({ ...insight, available: false }, [], now), "air");
 });
 test("sensor summary respects hysteresis, validation and missing readings", () => {
