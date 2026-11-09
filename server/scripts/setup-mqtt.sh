@@ -44,8 +44,9 @@ rm -f /mosquitto/config/passwd
 touch /mosquitto/config/passwd
 chmod 0700 /mosquitto/config/passwd
 while [ "$#" -ge 2 ]; do mosquitto_passwd -b /mosquitto/config/passwd "$1" "$2"; shift 2; done
+sed '/^n8n-aerosense:/d' /mosquitto/config/passwd > /mosquitto/config/device-passwd
 chown -R mosquitto:mosquitto /mosquitto/config /mosquitto/data
-chmod 0700 /mosquitto/config/passwd /mosquitto/config/acl
+chmod 0700 /mosquitto/config/passwd /mosquitto/config/device-passwd /mosquitto/config/acl
 SH
 export MQTT_HOME="$mqtt_home"
 docker compose -f "$repo/deploy/mqtt/compose.yaml" up -d
