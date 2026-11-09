@@ -7,7 +7,7 @@ import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import "./sprinkler-control.css";
 type Command = {
   id: string;
-  action: "pulse" | "stop";
+  action: "pulse" | "session" | "stop";
   state: string;
   reason?: string;
   issued_at: string;
@@ -20,12 +20,16 @@ type Actuator = {
   enabled: boolean;
   online: boolean;
   can_run: boolean;
-  max_duration_ms: number;
   latitude?: number | null;
   longitude?: number | null;
   auto_metric?: string | null;
   next_run_at?: string;
-  status: { output?: string; active_command_id?: string; battery_v?: number; battery_ok?: boolean };
+  status: {
+    output?: string;
+    battery_v?: number;
+    session_active?: boolean;
+    max_session_duration_ms?: number;
+  };
   commands: Command[];
 };
 const labels: Record<string, string> = {
@@ -40,30 +44,29 @@ const labels: Record<string, string> = {
   cancelled: "Dibatalkan",
   stopped: "Dihentikan",
 };
-function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refresh }: {
-  actuator: Actuator; canManage: boolean; canRegister: boolean; nodeId: string;
-  pm25: boolean; refresh: () => void;
+function SprinklerCard({ actuator: a, canManage, nodeId }: {
+  actuator: Actuator; canManage: boolean; nodeId: string;
 }) {
-  const durations = [1, 3, 5, 10].filter((seconds) => seconds * 1000 <= a.max_duration_ms);
-  const [seconds, setSeconds] = useState(String(durations.includes(3) ? 3 : durations[0])),
+  const [minutes, setMinutes] = useState("30"),
     [busy, setBusy] = useState(false),
     [stopping, setStopping] = useState(false),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [confirm, setConfirm] = useState(false),
     [pending, setPending] = useState<Command | null>(null);
-  const durationMs = Number(seconds) * 1000;
-  const durationSupported = durations.includes(Number(seconds));
+  const durationMs = Number(minutes) * 60000;
+  const durationSupported = (a.status.max_session_duration_ms ?? 0) >= durationMs;
+  const durationLabel = minutes === "60" ? "1 jam" : `${minutes} menit`;
   const latest = a.commands[0];
   const command =
     latest && (!pending || Date.parse(latest.issued_at) >= Date.parse(pending.issued_at))
       ? latest
       : pending;
   const active =
-    command &&
+    (a.online && a.status.session_active) || (command &&
     ["queued", "dispatching", "published", "accepted"].includes(command.state) &&
-    Date.parse(command.expires_at) > Date.now();
-  async function send(action: "pulse" | "stop") {
+    Date.parse(command.expires_at) > Date.now());
+  async function send(action: "session" | "stop") {
     if (action === "stop") setStopping(true);
     else setBusy(true);
     setError("");
@@ -72,7 +75,7 @@ function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refr
       const result = await api.post<{ command: Command }>("/v1/actuators/commands", {
         actuator_id: a.id,
         action,
-        duration_ms: action === "pulse" ? durationMs : 0,
+        duration_ms: action === "session" ? durationMs : 0,
         request_id: crypto.randomUUID(),
       });
       setPending((previous) =>
@@ -136,7 +139,9 @@ function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refr
       </dl>
       <div className="sprinkler-command-status" role="status" aria-live="polite">
         <strong>
-          {command ? labels[command.state] || command.state : a.can_run ? "Siap menerima perintah" : "Perangkat belum siap"}
+          {a.online && a.status.session_active
+            ? (a.status.output === "on" ? "Sesi berlangsung · menyemprot" : "Sesi berlangsung · jeda")
+            : command ? labels[command.state] || command.state : a.can_run ? "Siap menerima perintah" : "Perangkat belum siap"}
         </strong>
         {command?.trigger_band && <span>Otomatis · {command.trigger_band === "danger" ? "Bahaya" : "Waspada"}</span>}
         <span>
@@ -150,20 +155,24 @@ function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refr
       {canManage ? (
         <>
           <label className="sprinkler-duration">
-            Durasi semprot
+            Durasi sesi
             <MonitoringSelect
-              label={"Durasi semprot " + a.name}
-              value={seconds}
+              label={"Durasi sesi " + a.name}
+              value={minutes}
               onValueChange={(v) => {
-                setSeconds(v);
+                setMinutes(v);
                 setConfirm(false);
               }}
-              options={durations.map((value) => ({
+              options={[30, 45, 60].map((value) => ({
                 value: String(value),
-                label: `${value} detik`,
+                label: value === 60 ? "1 jam" : `${value} menit`,
               }))}
             />
           </label>
+          <p className="sprinkler-readonly">
+            Total sesi mencakup semprot 10 detik dan jeda 50 detik secara bergantian.
+            {a.online && !durationSupported && " Perbarui firmware WATERSENSE untuk menjalankan sesi."}
+          </p>
           <div className="sprinkler-actions">
             <button
               className="live-button"
@@ -185,15 +194,15 @@ function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refr
           {confirm && (
             <div className="sprinkler-confirm">
               <p>
-                Semprot dengan <strong>{a.name}</strong> selama <strong>{seconds} detik</strong>?
+                Mulai sesi semprot berjeda selama <strong>{durationLabel}</strong> pada <strong>{a.name}</strong>?
               </p>
               <div>
                 <button
                   className="live-button"
-                  disabled={busy || !a.can_run || !durationSupported}
-                  onClick={() => void send("pulse")}
+                  disabled={busy || !a.can_run || !!active || !durationSupported}
+                  onClick={() => void send("session")}
                 >
-                  {busy ? <Loader2 size={16} className="animate-spin" /> : null}Ya, mulai semprot
+                  {busy ? <Loader2 size={16} className="animate-spin" /> : null}Ya, mulai sesi
                 </button>
                 <button
                   className="live-button secondary"
@@ -221,21 +230,21 @@ function SprinklerCard({ actuator: a, canManage, canRegister, nodeId, pm25, refr
           {error}
         </p>
       )}
-      {canRegister && (
-        <SprinklerSettings nodeId={nodeId} actuator={a} pm25={pm25} refresh={refresh} />
-      )}
     </article>
   );
 }
 
-function SprinklerSettings({ nodeId, actuator, pm25, refresh }: {
-  nodeId: string; actuator?: Actuator; pm25: boolean; refresh: () => void;
+function SprinklerSettings({ nodeId, actuators, pm25 }: {
+  nodeId: string; actuators: Actuator[]; pm25: boolean;
 }) {
+  const [selected, setSelected] = useState(actuators[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const actuator = actuators.find((item) => item.id === selected);
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const element = event.currentTarget;
+    const form = new FormData(element);
     const coordinate = (key: string) => {
       const value = String(form.get(key) || "").trim().replace(",", ".");
       return /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : null;
@@ -252,9 +261,11 @@ function SprinklerSettings({ nodeId, actuator, pm25, refresh }: {
     setMessage("");
     try {
       if (actuator) await api.patch("/v1/actuators", values);
-      else await api.post("/v1/actuators", values);
-      setMessage("Pengaturan tersimpan.");
-      refresh();
+      else {
+        await api.post("/v1/actuators", values);
+        element.reset();
+      }
+      setMessage(actuator ? "Pengaturan tersimpan." : "Perangkat berhasil ditambahkan.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Pengaturan belum tersimpan.");
     } finally {
@@ -263,8 +274,25 @@ function SprinklerSettings({ nodeId, actuator, pm25, refresh }: {
   }
   return (
     <details className="sprinkler-settings">
-      <summary>{actuator ? "Pengaturan WATERSENSE" : "Tambah WATERSENSE"}</summary>
-      <form onSubmit={(event) => void save(event)}>
+      <summary>Pengaturan WATERSENSE</summary>
+      <label className="sprinkler-settings-picker">
+        Perangkat
+        <select
+          aria-label="Perangkat"
+          value={actuator?.id ?? ""}
+          disabled={busy}
+          onChange={(event) => {
+            setSelected(event.target.value);
+            setMessage("");
+          }}
+        >
+          {actuators.map((item) => (
+            <option key={item.id} value={item.id}>{item.name} · {item.id}</option>
+          ))}
+          <option value="">Tambah perangkat baru</option>
+        </select>
+      </label>
+      <form key={actuator?.id ?? ""} onSubmit={(event) => void save(event)}>
         {!actuator && <label>ID perangkat<input name="id" required maxLength={40} pattern="[a-z0-9\-]+" placeholder="mist-02" /></label>}
         <label>Nama perangkat<input name="name" required maxLength={80} defaultValue={actuator?.name} /></label>
         <label>Latitude<input name="latitude" inputMode="decimal" required defaultValue={actuator?.latitude ?? ""} /></label>
@@ -326,13 +354,12 @@ export function SprinklerControl({ nodeId }: { nodeId: string }) {
       ) : (
         <div className="sprinkler-list">
           {data.data.actuators.map((a) => (
-            <SprinklerCard key={a.id} actuator={a} canManage={data.data!.can_manage}
-              canRegister={data.data!.can_register} nodeId={nodeId} pm25={data.data!.pm25_validated} refresh={data.refresh} />
+            <SprinklerCard key={a.id} actuator={a} canManage={data.data!.can_manage} nodeId={nodeId} />
           ))}
         </div>
       )}
       {data.data?.can_register && (
-        <SprinklerSettings nodeId={nodeId} pm25={data.data.pm25_validated} refresh={data.refresh} />
+        <SprinklerSettings key={nodeId} nodeId={nodeId} actuators={data.data.actuators} pm25={data.data.pm25_validated} />
       )}
     </section>
   );

@@ -28,6 +28,7 @@ export function actuatorView(a, commands = [], now = Date.now()) {
       a.status?.water_ok === true &&
       !a.status?.manual_off &&
       a.status?.output !== "on" &&
+      a.status?.session_active !== true &&
       (!a.next_run_at || Date.parse(a.next_run_at) <= now)
     ),
   };
@@ -110,6 +111,8 @@ export function actuatorRoutes({
           battery_ok: body.battery_ok === true,
           water_ok: body.water_ok === true,
           manual_off: body.manual_off === true,
+          max_session_duration_ms: body.max_session_duration_ms === 3600000 ? 3600000 : null,
+          session_active: body.session_active === true,
           active_command_id:
             typeof body.active_command_id === "string" ? body.active_command_id.slice(0, 96) : null,
           battery_v: Number.isFinite(body.battery_v) ? body.battery_v : null,
@@ -202,7 +205,7 @@ export function actuatorRoutes({
       if (
         !idPattern.test(p.actuator_id) ||
         !uuid.test(p.request_id) ||
-        !["pulse", "stop"].includes(p.action)
+        !["pulse", "session", "stop"].includes(p.action)
       )
         fail("Perintah sprinkler tidak valid");
       const a = await one("ae_actuators", "id=eq." + filter(p.actuator_id));
@@ -210,7 +213,10 @@ export function actuatorRoutes({
       await member(account, a.node_id, true);
       rate("sprinkler:" + account.id, p.action === "stop" ? 60 : 12);
       const duration = p.action === "stop" ? 0 : p.duration_ms;
-      if (
+      if (p.action === "session") {
+        if (![1800000, 2700000, 3600000].includes(duration)) fail("Pilih durasi sesi 30, 45, atau 60 menit.");
+        if (a.status?.max_session_duration_ms !== 3600000) fail("WATERSENSE belum mendukung sesi.", 409);
+      } else if (
         !Number.isInteger(duration) ||
         duration < 0 ||
         duration > Math.min(a.max_duration_ms, 10000) ||

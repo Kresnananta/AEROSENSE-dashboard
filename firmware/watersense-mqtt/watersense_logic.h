@@ -10,6 +10,15 @@ namespace mist {
 
 constexpr uint32_t MIN_PULSE_MS = 1000;
 constexpr uint32_t MAX_PULSE_MS = 10000;      // hard cap, payload cannot exceed it
+constexpr uint32_t SESSION_PAUSE_MS = 50000;
+constexpr uint32_t MAX_SESSION_MS = 3600000;
+inline bool sessionDurationAllowed(uint32_t duration) {
+  return duration == 1800000 || duration == 2700000 || duration == MAX_SESSION_MS;
+}
+inline uint32_t sessionRemaining(uint32_t start, uint32_t duration, uint32_t now) {
+  const uint32_t elapsed = now - start;
+  return elapsed < duration ? duration - elapsed : 0;
+}
 constexpr int64_t MIN_COOLDOWN_S = 600;        // local minimum, payload can only lengthen it
 constexpr int64_t MAX_COOLDOWN_S = 86400;
 constexpr int64_t MAX_LIFETIME_S = 60;         // expires_at - issued_at
@@ -33,11 +42,13 @@ struct Inputs {
   bool manualOff;       // physical OFF switch engaged
   bool waterOk;         // water/float interlock
   bool batteryOk = true;
+  bool testNoCooldown = false; // Explicit commissioning mode; never bypass other checks.
 };
 
 struct Decision {
   bool accept;
   bool stop;
+  bool session;
   int64_t stopEpoch;
   const char* reason;
   char commandId[ID_LEN];
@@ -92,7 +103,8 @@ inline Decision evaluate(const char* payload, size_t length, const Inputs& in, c
   const char* actuator = doc["actuator_id"].is<const char*>() ? doc["actuator_id"].as<const char*>() : "";
   if (strcmp(actuator, in.actuatorId) != 0) return reject(d, "wrong_actuator");
   const char* action = doc["action"].is<const char*>() ? doc["action"].as<const char*>() : "";
-  if (strcmp(action,"pulse")!=0 && strcmp(action,"stop")!=0) return reject(d,"unsupported_action");
+  d.session = strcmp(action,"session")==0;
+  if (!d.session && strcmp(action,"pulse")!=0 && strcmp(action,"stop")!=0) return reject(d,"unsupported_action");
   if (seen(st, id)) return reject(d, "duplicate");
 
   // An authenticated stop always forces OFF, including during cooldown, low battery or unsynced clock.
@@ -116,15 +128,17 @@ inline Decision evaluate(const char* payload, size_t length, const Inputs& in, c
 
   if (!doc["duration_ms"].is<uint32_t>()) return reject(d, "invalid_duration");
   const uint32_t duration = doc["duration_ms"].as<uint32_t>();
-  if (duration < MIN_PULSE_MS || duration > MAX_PULSE_MS) return reject(d, "invalid_duration");
+  if (d.session ? !sessionDurationAllowed(duration) : (duration < MIN_PULSE_MS || duration > MAX_PULSE_MS))
+    return reject(d, "invalid_duration");
 
   if (in.pulseActive) return reject(d, "pulse_active");
-  if (st.lastPulseEpoch > 0 && in.now - st.lastPulseEpoch < (st.cooldownS > MIN_COOLDOWN_S ? st.cooldownS : MIN_COOLDOWN_S))
+  if (!in.testNoCooldown && st.lastPulseEpoch > 0 && in.now - st.lastPulseEpoch < (st.cooldownS > MIN_COOLDOWN_S ? st.cooldownS : MIN_COOLDOWN_S))
     return reject(d, "cooldown");
 
   int64_t cooldown = doc["cooldown_ms"].is<uint32_t>() ? doc["cooldown_ms"].as<uint32_t>() / 1000 : 0;
   if (cooldown < MIN_COOLDOWN_S) cooldown = MIN_COOLDOWN_S;
   if (cooldown > MAX_COOLDOWN_S) cooldown = MAX_COOLDOWN_S;
+  if (in.testNoCooldown) cooldown = 0;
 
   d.accept = true;
   d.reason = "accepted";

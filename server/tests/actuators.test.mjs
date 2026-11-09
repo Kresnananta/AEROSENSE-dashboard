@@ -45,6 +45,7 @@ function setup() {
       route({ method, headers }, {}, new URL("http://test" + path)),
     set: (p) => (payload = p),
     role: (r) => (role = r),
+    enableSessions: () => (a.status.max_session_duration_ms = 3600000),
     response: () => response,
     writes,
   };
@@ -67,6 +68,21 @@ test("stop remains a separate zero-duration command", async () => {
   t.set({ actuator_id: "mist-01", request_id: id, action: "stop", duration_ms: 9000 });
   await t.run("/v1/actuators/commands");
   assert.equal(t.writes[0].args.p_duration, 0);
+});
+test("long sessions require new firmware and a supported total duration", async () => {
+  const t = setup();
+  const command = { actuator_id: "mist-01", request_id: id, action: "session" };
+  t.set({ ...command, duration_ms: 1800000 });
+  await assert.rejects(t.run("/v1/actuators/commands"), { status: 409 });
+  t.enableSessions();
+  t.set({ ...command, duration_ms: 10000 });
+  await assert.rejects(t.run("/v1/actuators/commands"), { status: 400 });
+  for (const duration_ms of [1800000, 2700000, 3600000]) {
+    t.set({ ...command, duration_ms });
+    await t.run("/v1/actuators/commands");
+    assert.equal(t.writes.at(-1).args.p_duration, duration_ms);
+    assert.equal(t.writes.at(-1).args.p_action, "session");
+  }
 });
 test("registration requires a site admin, starts disabled and shares only authorized map points", async () => {
   const t = setup();
@@ -131,6 +147,9 @@ test("status rendering never infers online from an old retained heartbeat", () =
   assert.equal(actuatorView(a, [], now).can_run, false);
   a.last_seen_at = new Date(now).toISOString();
   assert.equal(actuatorView(a, [], now).can_run, true);
+  a.status.session_active = true;
+  assert.equal(actuatorView(a, [], now).can_run, false);
+  a.status.session_active = false;
   a.status.battery_ok = false;
   assert.equal(actuatorView(a, [], now).can_run, false);
 });

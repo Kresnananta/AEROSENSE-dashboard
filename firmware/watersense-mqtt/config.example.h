@@ -1,10 +1,4 @@
 #pragma once
-#define ACTUATOR_ID "mist-01"
-#define WIFI_SSID "ISI_WIFI_2G4"
-#define WIFI_PASSWORD "ISI_PASSWORD_WIFI"
-#define MQTT_HOST "172.16.0.84"
-#define MQTT_PORT 1883
-#define MQTT_PASSWORD "ISI_PASSWORD_MIST_01"
 // Matches the working WATERSENSE_tes.ino supplied by the team.
 #define PUMP_PIN 4
 #define BATTERY_PIN 1
