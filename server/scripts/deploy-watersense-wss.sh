@@ -16,7 +16,7 @@ backup=$(mktemp -d)
 trap 'rm -f "$backup/mosquitto.conf"; rmdir "$backup"' EXIT
 docker cp "$broker:$config" "$backup/mosquitto.conf"
 docker cp deploy/mqtt/mosquitto.conf "$broker:/tmp/watersense-mosquitto.conf"
-docker exec -u 0 "$broker" sh -se <<'SH'
+docker exec -i -u 0 "$broker" sh -se <<'SH'
 cd /mosquitto/config
 sed '/^n8n-aerosense:/d' passwd > device-passwd.new
 test -s device-passwd.new
