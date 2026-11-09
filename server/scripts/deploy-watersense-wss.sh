@@ -39,7 +39,7 @@ if ! docker restart "$broker" || ! (for _ in {1..8}; do listener_ready && exit 0
 fi
 
 docker compose up -d --no-build web
-curl --fail --retry 3 --retry-connrefused http://127.0.0.1:8082/api/health
+curl --fail --max-time 5 --retry 5 --retry-delay 1 --retry-all-errors http://127.0.0.1:8082/api/health
 
 status=$(curl --silent --http1.1 --max-time 3 --output /dev/null --write-out '%{http_code}' \
   -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
