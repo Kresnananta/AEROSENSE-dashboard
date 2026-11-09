@@ -9,6 +9,7 @@
 #include "network_setup.h"
 #include "watersense_logic.h"
 #include "espnow_control.h"
+#include "mqtt_wss.h"
 WiFiClient net;
 PubSubClient mqtt(net);
 Preferences prefs;
@@ -42,13 +43,18 @@ bool waterOk(){
 }
 void readBattery(){uint32_t sum=0;for(int i=0;i<16;i++)sum+=analogReadMilliVolts(BATTERY_PIN);batteryV=(sum/16.f)/1000.f*BATTERY_RATIO;if(batteryV<5.f||batteryV<BATTERY_STOP_V)batteryLow=true;else if(batteryV>BATTERY_RESUME_V)batteryLow=false;}
 void isoNow(char* out){time_t now=time(nullptr);tm utc;gmtime_r(&now,&utc);strftime(out,25,"%Y-%m-%dT%H:%M:%SZ",&utc);}
+bool mqttConnected(){return networkSettings.port==443?secureMqtt::connected.load():mqtt.connected();}
+void publishMqtt(const char* topic,const char* body){
+ if(networkSettings.port==443)secureMqtt::publish(topic,body);
+ else mqtt.publish(topic,body,true);
+}
 void ack(const char* id,const char* status,const char* reason,uint32_t duration=0){
  char at[25];isoNow(at);snprintf(lastAck,sizeof(lastAck),"{\"actuator_id\":\"%s\",\"command_id\":\"%s\",\"state\":\"%s\",\"reason\":\"%s\",\"duration_ms\":%lu,\"at\":\"%s\"}",networkSettings.id,id,status,reason,(unsigned long)duration,at);
  if(strcmp(status,"completed")==0||strcmp(status,"fault")==0){strlcpy(lastDoneId,id,sizeof(lastDoneId));strlcpy(lastDoneAck,lastAck,sizeof(lastDoneAck));}
- if(mqtt.connected())mqtt.publish(ackTopic,lastAck,true);
+ if(mqttConnected())publishMqtt(ackTopic,lastAck);
 }
 void publishStatus(){
- if(!mqtt.connected())return;
+ if(!mqttConnected())return;
  char at[25],body[840];isoNow(at);
  snprintf(body,sizeof(body),
           "{\"state\":\"online\",\"actuator_id\":\"%s\",\"output\":\"%s\",\"active_command_id\":\"%s\","
@@ -62,7 +68,7 @@ void publishStatus(){
           (unsigned long)mist::SESSION_PAUSE_MS,
           sessionDuration?"true":"false",sensorInbox?"true":"false",sensorFresh?"true":"false",
           localPolicy.revision,localSession?"true":"false",(unsigned long)(millis()/1000),at);
- mqtt.publish(statusTopic,body,true);lastStatus=millis();
+ publishMqtt(statusTopic,body);lastStatus=millis();
 }
 void pumpOff(){
  esp_timer_stop(offTimer);timerExpired=false;
@@ -114,7 +120,7 @@ void updateCommand(){
  if(localSession && millis()-lastSensor>=localLink::FRESH_MS){
   finishCommand("fault","sensor_link_lost");return;
  }
- if(remoteActive&&(WiFi.status()!=WL_CONNECTED||!mqtt.connected())){
+ if(remoteActive&&(WiFi.status()!=WL_CONNECTED||!mqttConnected())){
   finishCommand("fault","connection_lost");return;
  }
  const uint32_t now=millis();
@@ -158,6 +164,12 @@ void applyLocalPolicy(const char* json,size_t length){
  Serial.printf("Profil ESP-NOW %s | node %s | %s\n",next.revision,next.node,next.enabled?"aktif":"nonaktif");
 }
 void localConsole(const char* line){
+ if(!strcmp(line,"SETUP")){
+  if(activeCommand[0]){Serial.println("Hentikan pompa sebelum membuka pengaturan.");return;}
+  if(!prefs.putBool("wifi-setup",true)){Serial.println("Pengaturan tidak dapat dibuka.");return;}
+  ESP.restart();
+  return;
+ }
  if(!strncmp(line,"POLICY ",7))applyLocalPolicy(line+7,strlen(line+7));
 }
 bool previousCooldown(uint32_t uptime){
@@ -213,7 +225,7 @@ void onMessage(char* topic,byte* payload,unsigned int length){
  if(!d.accept){
   if(strcmp(d.reason,"duplicate")==0){
    if(activeCommand[0]&&strcmp(d.commandId,activeCommand)==0)ack(d.commandId,"accepted","duplicate_active",sessionDuration?sessionDuration:pulseDuration);
-   else if(strcmp(d.commandId,lastDoneId)==0&&mqtt.connected())mqtt.publish(ackTopic,lastDoneAck,true);
+   else if(strcmp(d.commandId,lastDoneId)==0&&mqttConnected())publishMqtt(ackTopic,lastDoneAck);
    return;
   }
   if(d.commandId[0]&&strcmp(d.reason,"wrong_actuator")!=0){mist::rememberId(state,d.commandId);saveState();ack(d.commandId,"rejected",d.reason);}
@@ -234,18 +246,38 @@ void onMessage(char* topic,byte* payload,unsigned int length){
  startCommand(d.commandId,d.durationMs,true,d.status,d.session);
 }
 void network(){
+ if(networkSettings.port==443){
+  static bool wasConnected=false;
+  const bool connected=mqttConnected();
+  if(connected&&!wasConnected){
+   if(lastAck[0])publishMqtt(ackTopic,lastAck);
+   publishStatus();
+  }
+  wasConnected=connected;
+  if(secureMqtt::client){
+   secureMqtt::Command command;
+   if(connected&&xQueueReceive(secureMqtt::commands,&command,0)==pdTRUE)
+    onMessage(commandTopic,command.data,command.length);
+  }else if(!activeCommand[0]&&WiFi.status()==WL_CONNECTED&&time(nullptr)>=mist::SYNCED_AFTER&&
+           millis()-lastConnect>=5000){
+   lastConnect=millis();
+   if(!secureMqtt::start(networkSettings,commandTopic,statusTopic))
+    Serial.println("Klien MQTT WSS tidak dapat dimulai.");
+  }
+  return;
+ }
  if(activeCommand[0])return;
  // begin() is called once in setup; the ESP32 core owns automatic Wi-Fi retries.
  // Repeated begin() while associating causes "sta is connecting, cannot set config".
  if(WiFi.status()!=WL_CONNECTED)return;
- if(mqtt.connected()||(lastConnect&&millis()-lastConnect<5000))return;
+ if(mqttConnected()||(lastConnect&&millis()-lastConnect<5000))return;
  lastConnect=millis();char offline[100];snprintf(offline,sizeof(offline),"{\"state\":\"offline\",\"actuator_id\":\"%s\"}",networkSettings.id);
  // Allow a slower LAN handshake only while the pump is OFF.
  mqtt.setSocketTimeout(10);
  bool connected=mqtt.connect(networkSettings.id,networkSettings.id,networkSettings.mqttPassword,statusTopic,1,true,offline,true);
  mqtt.setSocketTimeout(1);lastConnect=millis();
  if(connected){
-  mqtt.subscribe(commandTopic,1);if(lastAck[0])mqtt.publish(ackTopic,lastAck,true);publishStatus();Serial.println("WATERSENSE MQTT terhubung");
+  mqtt.subscribe(commandTopic,1);if(lastAck[0])publishMqtt(ackTopic,lastAck);publishStatus();Serial.println("WATERSENSE MQTT terhubung");
  }else Serial.printf("MQTT belum terhubung: host=%s port=%u kode=%d\n",networkSettings.broker,networkSettings.port,mqtt.state());
 }
 void wifiRecovery(){
@@ -268,7 +300,7 @@ void diagnostics(){
  if(sensorInbox)Serial.printf("ESP-NOW %s | node %s | baterai %.2f V %s\n",
   sensorFresh?"menerima data":"menunggu data",localPolicy.node,batteryV,batteryLow?"belum siap":"siap");
  if(WiFi.status()!=WL_CONNECTED){Serial.printf("Wi-Fi belum terhubung: status=%d (1=SSID tidak ditemukan, 4=gagal koneksi, 6=terputus). Periksa Wi-Fi 2.4 GHz dan password.\n",(int)WiFi.status());return;}
- Serial.printf("Wi-Fi terhubung: IP=%s RSSI=%d dBm | MQTT=%s | NTP=%s | Baterai=%.2f V %s\n",WiFi.localIP().toString().c_str(),WiFi.RSSI(),mqtt.connected()?"terhubung":"belum terhubung",time(nullptr)>=mist::SYNCED_AFTER?"siap":"menunggu",batteryV,batteryLow?"belum siap":"siap");
+ Serial.printf("Wi-Fi terhubung: IP=%s RSSI=%d dBm | MQTT=%s | NTP=%s | Baterai=%.2f V %s\n",WiFi.localIP().toString().c_str(),WiFi.RSSI(),mqttConnected()?"terhubung":"belum terhubung",time(nullptr)>=mist::SYNCED_AFTER?"siap":"menunggu",batteryV,batteryLow?"belum siap":"siap");
 }
 void localButton(){
  bool raw=digitalRead(BUTTON_PIN);
@@ -292,20 +324,36 @@ void setup(){
  wifiConfigured=loadNetwork(prefs,networkSettings);
  const uint32_t heldSince=millis();
  while(digitalRead(BUTTON_PIN)==LOW&&millis()-heldSince<2000)delay(10);
- if(digitalRead(BUTTON_PIN)==LOW)configureNetwork(prefs,networkSettings);
+ const bool paired=localLink::load(prefs,sensorPeer);
+ const bool requested=prefs.getBool("wifi-setup",false);
+ if(requested)prefs.remove("wifi-setup");
+ if(digitalRead(BUTTON_PIN)==LOW||requested||(!paired&&!wifiConfigured)){
+  configureNetwork(prefs,networkSettings);
+ }else if(!paired){
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(networkSettings.ssid,networkSettings.wifiPassword);
+  const uint32_t connectSince=millis();
+  while(WiFi.status()!=WL_CONNECTED&&millis()-connectSince<12000)delay(25);
+  if(WiFi.status()!=WL_CONNECTED){
+   WiFi.disconnect(false,false);
+   configureNetwork(prefs,networkSettings);
+  }
+ }
  if(prefs.getBytesLength("esp-policy")==sizeof(localPolicy))prefs.getBytes("esp-policy",&localPolicy,sizeof(localPolicy));
  localBlockMs=prefs.getUInt("esp-lock",0);
  localLock=localBlockMs!=0;localLockAt=millis();
  snprintf(commandTopic,sizeof(commandTopic),"aerosense/actuators/%s/command",networkSettings.id);snprintf(ackTopic,sizeof(ackTopic),"aerosense/actuators/%s/ack",networkSettings.id);snprintf(statusTopic,sizeof(statusTopic),"aerosense/actuators/%s/status",networkSettings.id);
  WiFi.mode(WIFI_STA);WiFi.setSleep(false);WiFi.setAutoReconnect(false);
- if(localLink::load(prefs,sensorPeer)&&esp_now_init()==ESP_OK&&localLink::add(sensorPeer)){
+ if(paired&&esp_now_init()==ESP_OK&&localLink::add(sensorPeer)){
   esp_wifi_set_channel(sensorPeer.channel,WIFI_SECOND_CHAN_NONE);
   sensorInbox=xQueueCreate(1,sizeof(localLink::Reading));
   if(sensorInbox)esp_now_register_recv_cb(receiveSensor);
  }
  if(wifiConfigured){
-  wifiAttempt=millis();joining=true;
-  WiFi.begin(networkSettings.ssid,networkSettings.wifiPassword);
+  if(WiFi.status()!=WL_CONNECTED){
+   wifiAttempt=millis();joining=true;
+   WiFi.begin(networkSettings.ssid,networkSettings.wifiPassword);
+  }
   configTime(0,0,"pool.ntp.org","time.google.com");
  }
  mqtt.setServer(networkSettings.broker,networkSettings.port);mqtt.setCallback(onMessage);mqtt.setBufferSize(1200);mqtt.setKeepAlive(15);mqtt.setSocketTimeout(1);
@@ -316,5 +364,5 @@ void loop(){
  updateCommand();
  localLink::console(prefs,localConsole);
  checkLocalSensor();
- localButton();wifiRecovery();network();if(mqtt.connected())mqtt.loop();if(millis()-lastStatus>=(outputOn?2000:15000))publishStatus();diagnostics();delay(5);
+ localButton();wifiRecovery();network();if(networkSettings.port!=443&&mqttConnected())mqtt.loop();if(millis()-lastStatus>=(outputOn?2000:15000))publishStatus();diagnostics();delay(5);
 }

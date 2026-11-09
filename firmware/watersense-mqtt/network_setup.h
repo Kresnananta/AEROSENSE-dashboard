@@ -28,8 +28,8 @@ inline void configureNetwork(Preferences& prefs, const NetworkSettings& saved) {
   snprintf(setupSsid, sizeof(setupSsid), "WATERSENSE-%06lX",
            (unsigned long)(ESP.getEfuseMac() & 0xffffff));
   if (!WiFi.softAP(setupSsid, password.c_str(), 1, false, 1)) {
-    Serial.println("Wi-Fi pengaturan tidak dapat dimulai. Nyalakan ulang perangkat.");
-    for (;;) delay(1000);
+    Serial.println("Wi-Fi pengaturan tidak dapat dimulai.");
+    return;
   }
   Serial.printf("Wi-Fi pengaturan: %s | Kata sandi: %s | http://%s\n",
                 setupSsid, password.c_str(), WiFi.softAPIP().toString().c_str());
@@ -47,9 +47,9 @@ inline void configureNetwork(Preferences& prefs, const NetworkSettings& saved) {
                   String(saved.id) + "'></label>"
                   "<label>Nama Wi-Fi 2,4 GHz<input name='ssid' maxlength='32' required></label>"
                   "<label>Kata sandi Wi-Fi<input name='wifi' type='password' minlength='8' maxlength='63' required></label>"
-                  "<label>Alamat broker MQTT<input name='broker' maxlength='253' required value='" +
+                  "<label>Alamat broker MQTT (contoh aerosense.me)<input name='broker' maxlength='253' required value='" +
                   String(saved.broker) + "'></label>"
-                  "<label>Port MQTT<input name='port' type='number' min='1' max='65535' value='" +
+                  "<label>Port MQTT (443 internet, 1883 LAN)<input name='port' type='number' min='1' max='65535' value='" +
                   String(saved.port ? saved.port : 1883) + "' required></label>"
                   "<label>Kata sandi MQTT perangkat<input name='mqtt' type='password' maxlength='128' required></label>"
                   "<button>Simpan dan sambungkan</button></form>";
@@ -85,10 +85,16 @@ inline void configureNetwork(Preferences& prefs, const NetworkSettings& saved) {
                         : "Pengaturan gagal disimpan. Coba lagi.");
   });
   portal.begin();
-  while (!restart) {
+  const uint32_t started=millis();
+  while (!restart && millis()-started < 300000) {
     portal.handleClient();
     delay(5);
   }
-  delay(750);
-  ESP.restart();
+  if (restart) {
+    delay(750);
+    ESP.restart();
+  }
+  portal.stop();
+  WiFi.softAPdisconnect(true);
+  Serial.println("Portal pengaturan ditutup. Kirim SETUP untuk membukanya lagi.");
 }
