@@ -26,10 +26,13 @@ mv device-passwd.new device-passwd
 cat /tmp/watersense-mosquitto.conf > mosquitto.conf
 SH
 
-started=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-if ! docker restart "$broker" || ! sleep 2 ||
-   ! docker logs --since "$started" "$broker" 2>&1 | grep -F 'Opening websockets listen socket on port 9001'; then
+listener_ready() {
+  docker exec "$broker" sh -c 'awk '\''$4 == "0A" && $2 ~ /:2329$/ { ws=1 }
+    $4 == "0A" && $2 ~ /:075B$/ { mqtt=1 } END { exit !(ws && mqtt) }'\'' /proc/net/tcp*'
+}
+if ! docker restart "$broker" || ! (for _ in {1..8}; do listener_ready && exit 0; sleep 1; done; exit 1); then
   echo "Listener WSS gagal. Memulihkan konfigurasi MQTT sebelumnya." >&2
+  docker logs --tail 15 "$broker" >&2 || true
   docker cp "$backup/mosquitto.conf" "$broker:$config"
   docker restart "$broker"
   exit 1
@@ -37,3 +40,10 @@ fi
 
 docker compose up -d --no-build web
 curl --fail --retry 3 --retry-connrefused http://127.0.0.1:8082/api/health
+
+status=$(curl --silent --http1.1 --max-time 3 --output /dev/null --write-out '%{http_code}' \
+  -H 'Connection: Upgrade' -H 'Upgrade: websocket' -H 'Sec-WebSocket-Version: 13' \
+  -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' -H 'Sec-WebSocket-Protocol: mqtt' \
+  http://127.0.0.1:8082/mqtt || true)
+printf '\nMQTT WebSocket lokal: HTTP %s\n' "$status"
+[[ "$status" == 101 ]]
