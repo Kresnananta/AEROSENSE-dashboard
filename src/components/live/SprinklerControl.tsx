@@ -29,6 +29,7 @@ type Actuator = {
     battery_v?: number;
     session_active?: boolean;
     max_session_duration_ms?: number;
+    session_burst_ms?: number | null;
     session_pause_ms?: number | null;
   };
   commands: Command[];
@@ -58,6 +59,8 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
   const durationMs = Number(minutes) * 60000;
   const durationSupported = (a.status.max_session_duration_ms ?? 0) >= durationMs;
   const durationLabel = minutes === "60" ? "1 jam" : `${minutes} menit`;
+  const burstMs = a.status.session_burst_ms;
+  const burstLabel = burstMs && (burstMs % 60000 === 0 ? `${burstMs / 60000} menit` : `${burstMs / 1000} detik`);
   const latest = a.commands[0];
   const command =
     latest && (!pending || Date.parse(latest.issued_at) >= Date.parse(pending.issued_at))
@@ -171,8 +174,8 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
             />
           </label>
           <p className="sprinkler-readonly">
-            {a.online && a.status.session_pause_ms != null
-              ? `Total sesi mencakup siklus semprot 10 detik dan jeda ${a.status.session_pause_ms / 1000} detik.`
+            {a.online && burstLabel && a.status.session_pause_ms != null
+              ? `Total sesi mencakup siklus semprot ${burstLabel} dan jeda ${a.status.session_pause_ms / 1000} detik.`
               : "Total sesi mencakup waktu semprot dan jeda perangkat."}
             {a.online && !durationSupported && " Perbarui firmware WATERSENSE untuk menjalankan sesi."}
           </p>

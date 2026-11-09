@@ -46,10 +46,12 @@ void publishStatus(){
  snprintf(body,sizeof(body),
           "{\"state\":\"online\",\"actuator_id\":\"%s\",\"output\":\"%s\",\"active_command_id\":\"%s\","
           "\"battery_v\":%.2f,\"battery_ok\":%s,\"water_ok\":%s,\"manual_off\":false,\"clock_synced\":%s,"
-          "\"max_session_duration_ms\":%lu,\"session_pause_ms\":%lu,\"session_active\":%s,\"uptime_s\":%lu,\"at\":\"%s\"}",
+          "\"max_session_duration_ms\":%lu,\"session_burst_ms\":%lu,\"session_pause_ms\":%lu,"
+          "\"session_active\":%s,\"uptime_s\":%lu,\"at\":\"%s\"}",
           networkSettings.id,outputOn?"on":"off",activeCommand,batteryV,batteryLow?"false":"true",
           waterOk()?"true":"false",time(nullptr)>=mist::SYNCED_AFTER?"true":"false",
-          (unsigned long)mist::MAX_SESSION_MS,(unsigned long)mist::SESSION_PAUSE_MS,
+          (unsigned long)mist::MAX_SESSION_MS,(unsigned long)mist::SESSION_BURST_MS,
+          (unsigned long)mist::SESSION_PAUSE_MS,
           sessionDuration?"true":"false",(unsigned long)(millis()/1000),at);
  mqtt.publish(statusTopic,body,true);lastStatus=millis();
 }
@@ -88,7 +90,7 @@ void startCommand(const char* id,uint32_t duration,bool remote,const char* reaso
  remoteActive=remote;
  sessionStart=millis();
  sessionDuration=session?duration:0;
- if(!startBurst(session?mist::MAX_PULSE_MS:duration)){
+ if(!startBurst(session?mist::sessionBurstDuration(duration):duration)){
   finishCommand("fault","timer_error");
   return;
  }
@@ -114,7 +116,7 @@ void updateCommand(){
   pauseStart=now;
   publishStatus();
  }else if(!outputOn&&now-pauseStart>=mist::SESSION_PAUSE_MS){
-  if(startBurst(remaining<mist::MAX_PULSE_MS?remaining:mist::MAX_PULSE_MS))publishStatus();
+  if(startBurst(mist::sessionBurstDuration(remaining)))publishStatus();
   else finishCommand("fault","timer_error");
  }
 }

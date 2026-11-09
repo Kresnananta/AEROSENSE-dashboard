@@ -21,6 +21,9 @@ int main(){
  input.pulseActive=false;
  assert(mist::sessionRemaining(100,1800000,1790100)==10000);
  assert(mist::sessionRemaining(100,1800000,1800100)==0);
+ assert(mist::SESSION_PAUSE_MS==3000);
+ assert(mist::sessionBurstDuration(1800000)==120000);
+ assert(mist::sessionBurstDuration(3000)==3000);
  assert(mist::sessionRemaining(UINT32_MAX-49,1800000,50)==1799900);
  for(const char* band : {"warning","danger"}){
   auto message=payload("automatic");
