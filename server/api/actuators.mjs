@@ -112,6 +112,9 @@ export function actuatorRoutes({
           water_ok: body.water_ok === true,
           manual_off: body.manual_off === true,
           max_session_duration_ms: body.max_session_duration_ms === 3600000 ? 3600000 : null,
+          session_pause_ms: Number.isInteger(body.session_pause_ms) &&
+            body.session_pause_ms >= 1000 && body.session_pause_ms <= 60000
+            ? body.session_pause_ms : null,
           session_active: body.session_active === true,
           active_command_id:
             typeof body.active_command_id === "string" ? body.active_command_id.slice(0, 96) : null,

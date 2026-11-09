@@ -130,6 +130,15 @@ test("stale retained online status cannot make a disconnected device ready", asy
   await t.run("/internal/actuators/event", "POST", { "x-aerosense-internal-key": "secret" });
   assert.equal(t.response().body.ignored, "stale_status");
   assert.equal(t.writes.length, 0);
+  t.set({
+    topic: "aerosense/actuators/mist-01/status",
+    message: {
+      actuator_id: "mist-01", state: "online", at: new Date().toISOString(),
+      max_session_duration_ms: 3600000, session_pause_ms: 3000,
+    },
+  });
+  await t.run("/internal/actuators/event", "POST", { "x-aerosense-internal-key": "secret" });
+  assert.equal(t.writes[0].b.status.session_pause_ms, 3000);
 });
 test("status rendering never infers online from an old retained heartbeat", () => {
   const now = Date.now(),

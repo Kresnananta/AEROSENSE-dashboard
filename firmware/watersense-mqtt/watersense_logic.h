@@ -10,7 +10,7 @@ namespace mist {
 
 constexpr uint32_t MIN_PULSE_MS = 1000;
 constexpr uint32_t MAX_PULSE_MS = 10000;      // hard cap, payload cannot exceed it
-constexpr uint32_t SESSION_PAUSE_MS = 50000;
+constexpr uint32_t SESSION_PAUSE_MS = 3000;
 constexpr uint32_t MAX_SESSION_MS = 3600000;
 inline bool sessionDurationAllowed(uint32_t duration) {
   return duration == 1800000 || duration == 2700000 || duration == MAX_SESSION_MS;

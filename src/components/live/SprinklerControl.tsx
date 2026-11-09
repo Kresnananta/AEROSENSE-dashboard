@@ -29,6 +29,7 @@ type Actuator = {
     battery_v?: number;
     session_active?: boolean;
     max_session_duration_ms?: number;
+    session_pause_ms?: number | null;
   };
   commands: Command[];
 };
@@ -147,8 +148,8 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
         <span>
           {!a.online
             ? "Periksa Wi-Fi dan daya WATERSENSE."
-            : a.next_run_at && Date.parse(a.next_run_at) > Date.now()
-              ? `Jeda operasi sampai ${new Date(a.next_run_at).toLocaleTimeString("id-ID")}.`
+            : !a.status.session_active && a.next_run_at && Date.parse(a.next_run_at) > Date.now()
+              ? `Kendali berikutnya tersedia pukul ${new Date(a.next_run_at).toLocaleTimeString("id-ID")}.`
               : "Durasi dibatasi dan pompa berhenti otomatis."}
         </span>
       </div>
@@ -170,7 +171,9 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
             />
           </label>
           <p className="sprinkler-readonly">
-            Total sesi mencakup semprot 10 detik dan jeda 50 detik secara bergantian.
+            {a.online && a.status.session_pause_ms != null
+              ? `Total sesi mencakup siklus semprot 10 detik dan jeda ${a.status.session_pause_ms / 1000} detik.`
+              : "Total sesi mencakup waktu semprot dan jeda perangkat."}
             {a.online && !durationSupported && " Perbarui firmware WATERSENSE untuk menjalankan sesi."}
           </p>
           <div className="sprinkler-actions">
