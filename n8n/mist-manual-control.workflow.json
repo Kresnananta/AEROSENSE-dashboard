@@ -164,6 +164,39 @@
         "height": 370,
         "width": 1080
       }
+    },
+    {
+      "id": "9c0dfccd-b10e-4d18-a984-31673ea1b1c3",
+      "name": "Pilih pembaruan profil ESP-NOW",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        550
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return $input.all().flatMap(item => item.json.policy_message ? [{json:item.json.policy_message}] : []);"
+      }
+    },
+    {
+      "id": "25d8b64e-42e8-43b3-951a-7df9249d7de9",
+      "name": "Kirim profil ESP-NOW",
+      "type": "n8n-nodes-base.mqtt",
+      "typeVersion": 1,
+      "position": [
+        800,
+        550
+      ],
+      "parameters": {
+        "topic": "={{ $json.topic }}",
+        "sendInputData": false,
+        "message": "={{ JSON.stringify($json.payload) }}",
+        "options": {
+          "qos": 1,
+          "retain": false
+        }
+      }
     }
   ],
   "connections": {
@@ -227,6 +260,28 @@
         [
           {
             "node": "Simpan status perangkat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simpan status perangkat": {
+      "main": [
+        [
+          {
+            "node": "Pilih pembaruan profil ESP-NOW",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pilih pembaruan profil ESP-NOW": {
+      "main": [
+        [
+          {
+            "node": "Kirim profil ESP-NOW",
             "type": "main",
             "index": 0
           }

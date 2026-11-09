@@ -24,6 +24,7 @@
 #define SERIAL_LOG_S 5   // readable sensor line on Serial Monitor; 0 to turn off
 #endif
 #include "screens.h"
+#include "espnow_link.h"
 
 SPIClass tftSpi(FSPI);
 Adafruit_ST7735 tft(&tftSpi, TFT_CS, TFT_DC, TFT_RST);
@@ -33,6 +34,26 @@ DHT dht(DHT_PIN, DHT_TYPE);
 HardwareSerial lora(1);
 
 Sample live;
+Preferences linkPrefs;
+localLink::Pair sprinklerPeer{};
+bool sprinklerLink = false;
+localLink::Reading sprinklerReading{};
+uint32_t lastSprinklerSend = 0;
+uint8_t sendChannel = 1;
+
+void sendToSprinkler(uint32_t now) {
+  if (!sprinklerLink || now - lastSprinklerSend < 220) return;
+  lastSprinklerSend = now;
+  // The controller follows its router channel when online.
+  if (esp_wifi_set_channel(sendChannel, WIFI_SECOND_CHAN_NONE) == ESP_OK) {
+    sprinklerReading.dust = live.dust;
+    ++sprinklerReading.sequence;
+    if (localLink::sign(sprinklerPeer, sprinklerReading))
+      esp_now_send(sprinklerPeer.mac, reinterpret_cast<const uint8_t*>(&sprinklerReading),
+                   sizeof(sprinklerReading));
+  }
+  sendChannel = sendChannel == 13 ? 1 : sendChannel + 1;
+}
 bool sgpOk = false;
 uint32_t sgpStartMs = 0;
 float dustRing[10];
@@ -205,12 +226,23 @@ void setup() {
 
   while (millis() - logoShown < 3000) { readSgp(); delay(1000); }   // logo while sensors start
   nextSendMs = millis() + 30000;   // first packet after SGP30 warm-up and a few dust samples
+  linkPrefs.begin("aero-local", false);
+  WiFi.mode(WIFI_STA);
+  WiFi.setSleep(false);
+  sprinklerLink = localLink::load(linkPrefs, sprinklerPeer) &&
+    esp_now_init() == ESP_OK && localLink::add(sprinklerPeer);
+  sprinklerReading.magic = localLink::MAGIC;
+  sprinklerReading.boot = esp_random();
+  strlcpy(sprinklerReading.node, NODE_ID, sizeof(sprinklerReading.node));
+  Serial.printf("ESP-NOW STA MAC %s | %s\n", WiFi.macAddress().c_str(), sprinklerLink ? "paired" : "unpaired");
 }
 
 void loop() {
   const uint32_t now = millis();
   if (now - lastSgp >= 1000) { lastSgp = now; readSgp(); }
   if (now - lastDust >= 1000) { lastDust = now; readDust(); }
+  localLink::console(linkPrefs);
+  sendToSprinkler(now);
   if (now - lastDht >= 2500) { lastDht = now; readDht(); }
   if (static_cast<int32_t>(now - nextSendMs) >= 0) { nextSendMs = now + SEND_INTERVAL_S * 1000UL; sendPacket(); }
   readLora();

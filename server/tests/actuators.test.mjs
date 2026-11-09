@@ -20,7 +20,7 @@ function setup() {
         return [{ ...a, name: "Utara", latitude: -7.2, longitude: 112.7 }];
       return [];
     },
-    one: async () => a,
+    one: async (table) => table === "ae_rules" ? { enabled: true, high: 40, danger_high: 80 } : a,
     rpc: async (name, args) => {
       writes.push({ name, args });
       return { id, state: "queued" };
@@ -46,6 +46,7 @@ function setup() {
     set: (p) => (payload = p),
     role: (r) => (role = r),
     enableSessions: () => (a.status.max_session_duration_ms = 3600000),
+    enableEspnow: () => Object.assign(a, { espnow_auto: true, auto_metric: "dust_ug_m3" }),
     response: () => response,
     writes,
   };
@@ -162,6 +163,23 @@ test("status rendering never infers online from an old retained heartbeat", () =
   a.status.session_active = false;
   a.status.battery_ok = false;
   assert.equal(actuatorView(a, [], now).can_run, false);
+});
+test("ESP-NOW status receives a paired-node policy only when the revision differs", async () => {
+  const t = setup();
+  t.enableEspnow();
+  const body = { actuator_id: "mist-01", state: "online", at: new Date().toISOString(), espnow_capable: true };
+  const headers = { "x-aerosense-internal-key": "secret" };
+  const topic = "aerosense/actuators/mist-01/status";
+  t.set({ topic, message: body });
+  await t.run("/internal/actuators/event", "POST", headers);
+  const message = t.response().body.policy_message;
+  assert.equal(message.topic, "aerosense/actuators/mist-01/command");
+  assert.equal(message.payload.node_id, "n1");
+  assert.equal(message.payload.enabled, true);
+  assert.deepEqual([message.payload.warning, message.payload.danger], [40, 80]);
+  t.set({ topic, message: { ...body, espnow_policy_rev: message.payload.revision } });
+  await t.run("/internal/actuators/event", "POST", headers);
+  assert.equal(t.response().body.policy_message, undefined);
 });
 test("workflow uses internal API queue, explicit QoS and non-retained commands", async () => {
   const { readFile } = await import("node:fs/promises");

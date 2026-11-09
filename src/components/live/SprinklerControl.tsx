@@ -23,6 +23,9 @@ type Actuator = {
   latitude?: number | null;
   longitude?: number | null;
   auto_metric?: string | null;
+  espnow_auto?: boolean;
+  espnow_duration_ms?: number;
+  espnow_policy?: { revision: string; enabled: boolean };
   next_run_at?: string;
   status: {
     output?: string;
@@ -31,6 +34,9 @@ type Actuator = {
     max_session_duration_ms?: number;
     session_burst_ms?: number | null;
     session_pause_ms?: number | null;
+    espnow_paired?: boolean;
+    espnow_fresh?: boolean;
+    espnow_policy_rev?: string | null;
   };
   commands: Command[];
 };
@@ -132,8 +138,14 @@ function SprinklerCard({ actuator: a, canManage, nodeId }: {
         </div>
         <div>
           <dt>Aktivasi otomatis</dt>
-          <dd>{a.auto_metric && a.enabled ? (a.auto_metric === "pm25_ug_m3" ? "PM2.5" : "Debu optik") : "Nonaktif"}</dd>
+          <dd>{a.auto_metric && a.enabled ? (a.espnow_auto ? "ESP-NOW · debu optik" : a.auto_metric === "pm25_ug_m3" ? "PM2.5" : "Debu optik") : "Nonaktif"}</dd>
         </div>
+        {a.espnow_auto && (
+          <div>
+            <dt>Link sensor lokal</dt>
+            <dd>{!a.online ? "Belum terpantau dari web" : a.status.espnow_fresh ? "Data diterima" : a.status.espnow_paired ? "Menunggu data" : "Belum dipasangkan"}</dd>
+          </div>
+        )}
         {a.latitude != null && a.longitude != null && (
           <div>
             <dt>Posisi WATERSENSE</dt>
@@ -259,9 +271,12 @@ function SprinklerSettings({ nodeId, actuators, pm25 }: {
       id: actuator?.id || form.get("id"), node_id: nodeId, name: form.get("name"),
       latitude: coordinate("latitude"), longitude: coordinate("longitude"),
       enabled: form.has("enabled"), auto_metric: form.get("auto_metric") || null,
+      espnow_auto: form.has("espnow_auto"),
+      espnow_duration_ms: Number(form.get("espnow_duration_ms")) || 1800000,
     };
     if (values.enabled && values.auto_metric &&
-        (!actuator?.enabled || values.auto_metric !== actuator.auto_metric) &&
+        (!actuator?.enabled || values.auto_metric !== actuator.auto_metric ||
+          values.espnow_auto !== Boolean(actuator.espnow_auto)) &&
         !window.confirm("Aktifkan semprotan otomatis saat ambang lokasi terpenuhi?")) return;
     setBusy(true);
     setMessage("");
@@ -313,6 +328,14 @@ function SprinklerSettings({ nodeId, actuators, pm25 }: {
               </select>
             </label>
             <label className="sprinkler-settings-switch"><input name="enabled" type="checkbox" defaultChecked={actuator.enabled} /> Izinkan kendali perangkat</label>
+            <label className="sprinkler-settings-switch"><input name="espnow_auto" type="checkbox" defaultChecked={actuator.espnow_auto} /> Otomatis lewat ESP-NOW</label>
+            <label>Durasi otomatis ESP-NOW
+              <select name="espnow_duration_ms" defaultValue={actuator.espnow_duration_ms ?? 1800000}>
+                <option value={1800000}>30 menit</option>
+                <option value={2700000}>45 menit</option>
+                <option value={3600000}>1 jam</option>
+              </select>
+            </label>
           </>
         )}
         <div className="sprinkler-actions">
@@ -320,6 +343,26 @@ function SprinklerSettings({ nodeId, actuators, pm25 }: {
           {message && <span role="status">{message}</span>}
         </div>
       </form>
+      {actuator?.espnow_policy && (
+        <div className="sprinkler-settings-picker">
+          <button type="button" className="live-button secondary" onClick={async () => {
+            try {
+              const result = await api.get<{ actuators: Actuator[] }>(`/v1/actuators?node_id=${encodeURIComponent(nodeId)}`);
+              const policy = result.actuators.find((item) => item.id === actuator.id)?.espnow_policy;
+              if (!policy) throw new Error("Profil tidak tersedia.");
+              await navigator.clipboard.writeText(`POLICY ${JSON.stringify(policy)}`);
+              setMessage("Profil disalin. Tempel di Serial Monitor WATERSENSE dengan newline.");
+            } catch {
+              setMessage("Profil belum bisa disalin. Coba lagi.");
+            }
+          }}>Salin profil ESP-NOW untuk USB</button>
+          <p className="sprinkler-readonly">
+            {actuator.online && actuator.status.espnow_policy_rev === actuator.espnow_policy.revision
+              ? "Profil terbaru tersimpan di perangkat."
+              : "Sinkronkan lewat MQTT atau masukkan profil terbaru lewat USB."}
+          </p>
+        </div>
+      )}
     </details>
   );
 }

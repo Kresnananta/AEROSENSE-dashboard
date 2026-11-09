@@ -13,6 +13,7 @@ try{
  await db.exec(await readFile(new URL('../supabase/012_manual_sprinkler.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/014_watersense_auto_and_map.sql',import.meta.url),'utf8'));
  await db.exec(await readFile(new URL('../supabase/015_watersense_sessions.sql',import.meta.url),'utf8'));
+ await db.exec(await readFile(new URL('../supabase/016_watersense_espnow.sql',import.meta.url),'utf8'));
  const owner='11111111-1111-4111-8111-111111111111',viewer='22222222-2222-4222-8222-222222222222';
  await db.query('insert into auth.users values ($1),($2)',[owner,viewer]);
  await db.exec(`insert into ae_nodes(id,location_id) values('n1','loc1'),('n2','loc2');`);
@@ -55,5 +56,19 @@ try{
  assert.equal((await db.query('select state from ae_actuator_commands where id=$1',[session.id])).rows[0].state,'stopped');
  assert.ok((await db.query("select next_run_at>now()+interval '9 minutes' as reserved from ae_actuators")).rows[0].reserved);
  await db.exec('set role authenticated');await assert.rejects(db.query('select * from ae_actuators'),/permission denied/);await assert.rejects(db.query('select ae_actuator_claim()'),/permission denied/);await db.exec('reset role');
- console.log('PASS: SQL migration, role/RLS, duration, atomic queue reservation, idempotency, stop, ACK ordering, stale heartbeat, battery gate.');
+ await db.exec(`
+  delete from ae_actuator_commands;
+  update ae_actuators set auto_metric='dust_ug_m3',next_run_at=null,
+   status=jsonb_set(status,'{session_active}','false');
+  insert into ae_rules values('n1','dust_ug_m3',true,40,80);
+  insert into ae_readings(node_id,observed_at,metrics)
+   select 'n1',now()-make_interval(secs=>delay),jsonb_build_object('dust_ug_m3',85)
+   from unnest(array[5,305,605]) delay;
+ `);
+ await db.query('select ae_actuator_schedule_auto()');
+ assert.equal((await db.query("select state from ae_actuator_commands where trigger_band='danger'")).rows[0].state,'queued');
+ await db.exec("update ae_actuators set espnow_auto=true,next_run_at=null");
+ await db.query('select ae_actuator_schedule_auto()');
+ assert.deepEqual((await db.query("select state from ae_actuator_commands where trigger_band='danger'")).rows,[{state:'cancelled'}]);
+ console.log('PASS: SQL migration, role/RLS, duration, atomic queue, stop, ACK, and ESP-NOW cloud arbitration.');
 }finally{await db.close();}

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { canManage } from "./access.mjs";
 const idPattern = /^[a-z0-9-]{1,40}$/;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -46,6 +47,24 @@ export function actuatorRoutes({
   env,
   equal,
 }) {
+  async function localPolicy(a) {
+    const local = a.espnow_auto === true;
+    const node = local && a.enabled && a.auto_metric === "dust_ug_m3"
+      ? await one("ae_nodes", "id=eq." + filter(a.node_id) + "&select=enabled")
+      : null;
+    const rule = node?.enabled === true
+      ? await one("ae_rules", "node_id=eq." + filter(a.node_id) + "&metric=eq.dust_ug_m3")
+      : null;
+    const enabled = rule?.enabled === true && Number.isFinite(rule.high) &&
+      Number.isFinite(rule.danger_high) && rule.high >= 0 && rule.danger_high > rule.high &&
+      rule.danger_high <= 1000000;
+    const data = {
+      action: "espnow_policy", actuator_id: a.id, node_id: a.node_id, local, enabled,
+      warning: enabled ? rule.high : null, danger: enabled ? rule.danger_high : null,
+      duration_ms: a.espnow_duration_ms ?? 1800000, cooldown_ms: Math.max(600000, a.cooldown_ms || 0),
+    };
+    return { ...data, revision: createHash("sha256").update(JSON.stringify(data)).digest("hex").slice(0, 16) };
+  }
   return async (req, res, url) => {
     const path = url.pathname;
     if (path.startsWith("/internal/actuators/")) {
@@ -75,7 +94,8 @@ export function actuatorRoutes({
           body.actuator_id !== match[1]
         )
           fail("Topik dan perangkat tidak cocok");
-        if (!(await one("ae_actuators", "id=eq." + filter(match[1]))))
+        const actuator = await one("ae_actuators", "id=eq." + filter(match[1]));
+        if (!actuator)
           fail("Sprinkler belum terdaftar", 404);
         if (match[2] === "ack") {
           if (!uuid.test(body.command_id)) {
@@ -119,6 +139,10 @@ export function actuatorRoutes({
             body.session_pause_ms >= 1000 && body.session_pause_ms <= 60000
             ? body.session_pause_ms : null,
           session_active: body.session_active === true,
+          espnow_paired: body.espnow_paired === true,
+          espnow_fresh: body.espnow_fresh === true,
+          espnow_running: body.espnow_running === true,
+          espnow_policy_rev: /^[a-f0-9]{16}$/.test(body.espnow_policy_rev || "") ? body.espnow_policy_rev : null,
           active_command_id:
             typeof body.active_command_id === "string" ? body.active_command_id.slice(0, 96) : null,
           battery_v: Number.isFinite(body.battery_v) ? body.battery_v : null,
@@ -127,7 +151,14 @@ export function actuatorRoutes({
           status,
           last_seen_at: new Date(now).toISOString(),
         });
-        send(res, 200, { updated: true });
+        const policy = body.state === "online" && body.espnow_capable === true
+          ? await localPolicy(actuator) : null;
+        send(res, 200, {
+          updated: true,
+          ...(policy && status.espnow_policy_rev !== policy.revision ? {
+            policy_message: { topic: "aerosense/actuators/" + actuator.id + "/command", payload: policy },
+          } : {}),
+        });
         return true;
       }
       fail("Not found", 404);
@@ -161,7 +192,10 @@ export function actuatorRoutes({
           "ae_actuator_commands",
           "actuator_id=eq." + filter(a.id) + "&order=issued_at.desc&limit=5",
         );
-        actuators.push(actuatorView(a, commands));
+        actuators.push({
+          ...actuatorView(a, commands),
+          ...(node.member_role === "admin" ? { espnow_policy: await localPolicy(a) } : {}),
+        });
       }
       send(res, 200, {
         actuators, can_manage: canManage(node.member_role), can_register: node.member_role === "admin",
@@ -192,8 +226,13 @@ export function actuatorRoutes({
       if (autoMetric === "pm25_ug_m3" && !node.pm25_validated)
         fail("PM2.5 belum divalidasi pada sensor acuan.");
       if (!creating && typeof p.enabled !== "boolean") fail("Pilih status kendali perangkat.");
+      const espnowAuto = !creating && (p.espnow_auto ?? existing.espnow_auto) === true;
+      const espnowDuration = p.espnow_duration_ms ?? existing?.espnow_duration_ms ?? 1800000;
+      if (![1800000, 2700000, 3600000].includes(espnowDuration)) fail("Durasi ESP-NOW tidak valid.");
+      if (espnowAuto && autoMetric !== "dust_ug_m3") fail("ESP-NOW memakai ambang debu optik.");
       const values = { name, latitude: p.latitude, longitude: p.longitude,
-        enabled: !creating && p.enabled, auto_metric: autoMetric };
+        enabled: !creating && p.enabled, auto_metric: autoMetric,
+        espnow_auto: espnowAuto, espnow_duration_ms: espnowDuration };
       let rows;
       try {
         rows = creating
