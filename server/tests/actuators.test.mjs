@@ -11,6 +11,13 @@ function setup() {
   const route = actuatorRoutes({
     db: async (t, q, m, b) => {
       writes.push({ t, q, m, b });
+      if (m === "POST" || m === "PATCH") return [{ ...a, ...b }];
+      if (t === "ae_members") return [{ location_id: "loc1" }];
+      if (t === "ae_nodes") return [
+        { id: "n1", location_id: "loc1" }, { id: "n2", location_id: "loc2" },
+      ];
+      if (t === "ae_actuators" && q.includes("latitude=not.is.null"))
+        return [{ ...a, name: "Utara", latitude: -7.2, longitude: 112.7 }];
       return [];
     },
     one: async () => a,
@@ -60,6 +67,30 @@ test("stop remains a separate zero-duration command", async () => {
   t.set({ actuator_id: "mist-01", request_id: id, action: "stop", duration_ms: 9000 });
   await t.run("/v1/actuators/commands");
   assert.equal(t.writes[0].args.p_duration, 0);
+});
+test("registration requires a site admin, starts disabled and shares only authorized map points", async () => {
+  const t = setup();
+  const device = { id: "mist-02", node_id: "n1", name: "Utara",
+    latitude: -7.2, longitude: 112.7, enabled: true, auto_metric: "dust_ug_m3" };
+  t.set(device);
+  await assert.rejects(t.run("/v1/actuators"), { status: 403 });
+  t.role("admin");
+  t.set({ ...device, latitude: null });
+  await assert.rejects(t.run("/v1/actuators"), { status: 400 });
+  t.set(device);
+  await t.run("/v1/actuators");
+  assert.equal(t.response().code, 201);
+  assert.equal(t.response().body.actuator.enabled, false);
+  assert.equal(t.response().body.actuator.auto_metric, null);
+  t.set({ ...device, auto_metric: "pm25_ug_m3" });
+  await assert.rejects(t.run("/v1/actuators", "PATCH"), { status: 400 });
+  t.set(device);
+  await t.run("/v1/actuators", "PATCH");
+  assert.equal(t.response().body.actuator.auto_metric, "dust_ug_m3");
+  await t.run("/v1/actuators/map", "GET");
+  assert.match(t.writes.at(-1).q, /^node_id=in\.\(n1\)&/);
+  assert.equal(t.response().body.actuators[0].latitude, -7.2);
+  assert.equal("status" in t.response().body.actuators[0], false);
 });
 test("internal dispatch and ACK reject missing secret and mismatched topic identity", async () => {
   const t = setup();

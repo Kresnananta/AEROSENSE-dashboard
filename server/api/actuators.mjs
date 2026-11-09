@@ -123,8 +123,24 @@ export function actuatorRoutes({
       }
       fail("Not found", 404);
     }
-    if (!["/v1/actuators", "/v1/actuators/commands"].includes(path)) return false;
+    if (!["/v1/actuators", "/v1/actuators/commands", "/v1/actuators/map"].includes(path))
+      return false;
     const account = await user(req);
+    if (path === "/v1/actuators/map" && req.method === "GET") {
+      const memberships = await db("ae_members", "select=location_id&user_id=eq." + filter(account.id));
+      const locations = new Set(memberships.map((m) => m.location_id));
+      const nodes = locations.size ? await db("ae_nodes", "select=id,location_id") : [];
+      const ids = nodes.filter((n) => locations.has(n.location_id)).map((n) => filter(n.id));
+      const rows = ids.length ? await db(
+        "ae_actuators",
+        "node_id=in.(" + ids.join(",") + ")&latitude=not.is.null&select=id,name,node_id,latitude,longitude,last_seen_at,status",
+      ) : [];
+      send(res, 200, { actuators: rows.map((a) => ({
+        id: a.id, name: a.name, node_id: a.node_id, latitude: a.latitude,
+        longitude: a.longitude, online: actuatorView(a).online,
+      })) });
+      return true;
+    }
     if (path === "/v1/actuators" && req.method === "GET") {
       const nodeId = url.searchParams.get("node_id");
       if (!nodeId || !/^[a-zA-Z0-9_-]{1,40}$/.test(nodeId)) fail("Pilih lokasi sensor");
@@ -138,7 +154,47 @@ export function actuatorRoutes({
         );
         actuators.push(actuatorView(a, commands));
       }
-      send(res, 200, { actuators, can_manage: canManage(node.member_role) });
+      send(res, 200, {
+        actuators, can_manage: canManage(node.member_role), can_register: node.member_role === "admin",
+        pm25_validated: node.pm25_validated === true,
+      });
+      return true;
+    }
+    if (path === "/v1/actuators" && ["POST", "PATCH"].includes(req.method)) {
+      const p = JSON.parse(await rawBody(req, 4000));
+      const name = typeof p.name === "string" ? p.name.trim() : "";
+      if (typeof p.id !== "string" || !idPattern.test(p.id) || p.id === "n8n-aerosense" || !name || name.length > 80)
+        fail("Nama atau ID WATERSENSE tidak valid.");
+      if (!Number.isFinite(p.latitude) || Math.abs(p.latitude) > 85 ||
+          !Number.isFinite(p.longitude) || Math.abs(p.longitude) > 180)
+        fail("Masukkan koordinat pemasangan yang valid.");
+      const creating = req.method === "POST";
+      const existing = creating ? null : await one("ae_actuators", "id=eq." + filter(p.id));
+      if (!creating && !existing) fail("Sprinkler tidak ditemukan", 404);
+      const nodeId = existing?.node_id ?? p.node_id;
+      if (typeof nodeId !== "string" || !/^[a-zA-Z0-9_-]{1,40}$/.test(nodeId))
+        fail("Pilih sensor acuan.");
+      const node = await member(account, nodeId, true);
+      if (node.member_role !== "admin") fail("Pendaftaran WATERSENSE memerlukan admin lokasi.", 403);
+      rate("sprinkler-config:" + account.id, 30);
+      const autoMetric = creating ? null : p.auto_metric;
+      if (autoMetric !== null && !["dust_ug_m3", "pm25_ug_m3"].includes(autoMetric))
+        fail("Pilih parameter partikulat untuk aktivasi otomatis.");
+      if (autoMetric === "pm25_ug_m3" && !node.pm25_validated)
+        fail("PM2.5 belum divalidasi pada sensor acuan.");
+      if (!creating && typeof p.enabled !== "boolean") fail("Pilih status kendali perangkat.");
+      const values = { name, latitude: p.latitude, longitude: p.longitude,
+        enabled: !creating && p.enabled, auto_metric: autoMetric };
+      let rows;
+      try {
+        rows = creating
+          ? await db("ae_actuators", "", "POST", { id: p.id, node_id: nodeId, ...values })
+          : await db("ae_actuators", "id=eq." + filter(p.id), "PATCH", values);
+      } catch (error) {
+        if (creating && error.status === 409) fail("ID WATERSENSE sudah terdaftar.", 409);
+        throw error;
+      }
+      send(res, creating ? 201 : 200, { actuator: actuatorView(rows[0]) });
       return true;
     }
     if (path === "/v1/actuators/commands" && req.method === "POST") {

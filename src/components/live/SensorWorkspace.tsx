@@ -6,6 +6,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import type { WatersensePoint } from "./LiveMap";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import {
@@ -97,6 +98,9 @@ export function SensorWorkspace({
   );
   const events = (environment.data?.events || []).filter(
     (e) => eventType === "all" || e.category === eventType,
+  );
+  const watersense = useLiveData<{ actuators: WatersensePoint[] }>(
+    user && mode === "map" ? `/v1/actuators/map?account=${encodeURIComponent(user.id)}` : null,
   );
   function changeMapParam(key: string, value: string) {
     const next = new URLSearchParams(mapParams);
@@ -360,6 +364,12 @@ export function SensorWorkspace({
                                 <MapSymbol kind="sensor" />
                                 Node AEROSENSE
                               </span>
+                              {!!watersense.data?.actuators.length && (
+                                <span className="legend-watersense">
+                                  <MapSymbol kind="watersense" />
+                                  WATERSENSE
+                                </span>
+                              )}
                               <span className="legend-fire">
                                 <MapSymbol kind="fire" />
                                 Titik panas satelit
@@ -408,6 +418,8 @@ export function SensorWorkspace({
                       onSelect={setSelected}
                       showNodes={mode !== "map" || mapLayer !== "events"}
                       events={mode === "map" && mapLayer !== "sensors" ? events : []}
+                      watersense={user ? watersense.data?.actuators : undefined}
+                      focusedWatersense={mapParams.get("watersense")}
                     />
                   </Suspense>
                 </>

@@ -8,6 +8,7 @@ const colors: Record<string, string> = {
   pending: "#697c90",
   fire: "#bd4b12",
   earthquake: "#6847bb",
+  watersense: "#087c98",
 };
 const icons = new Map<string, ReturnType<typeof divIcon>>();
 export function mapIcon(kind: keyof typeof mapDrawings, tone: string = kind, active = false) {

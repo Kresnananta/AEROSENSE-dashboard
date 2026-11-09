@@ -310,6 +310,9 @@
   color: #fff;
   background: linear-gradient(145deg, #40997b, #218160);
 }
+.map-event-legend .legend-watersense svg {
+  color: #087c98;
+}
 .map-event-legend .legend-fire svg {
   color: #fff;
   background: linear-gradient(145deg, #d46c33, #bd4b12);

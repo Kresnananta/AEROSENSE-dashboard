@@ -20,6 +20,23 @@ import {
 import { dateLabel, type EnvironmentEvent, type LiveNode } from "@/types/live.types";
 import "leaflet/dist/leaflet.css";
 import "@/styles/event-map.css";
+export type WatersensePoint = GeoPoint & {
+  id: string;
+  name: string;
+  node_id: string;
+  online: boolean;
+};
+
+function WatersenseFocus({ point }: { point?: WatersensePoint }) {
+  const map = useMap();
+  const id = point?.id;
+  const latitude = point?.latitude;
+  const longitude = point?.longitude;
+  useEffect(() => {
+    if (id && latitude != null && longitude != null) map.setView([latitude, longitude], 16);
+  }, [map, id, latitude, longitude]);
+  return null;
+}
 function EventFocus({ nodes, events }: { nodes: LiveNode[]; events: EnvironmentEvent[] }) {
   const map = useMap();
   const signature = JSON.stringify([...nodes, ...events].map((p) => [p.latitude, p.longitude]));
@@ -87,6 +104,8 @@ export function LiveMap({
   showNodes = true,
   locateUser = false,
   autoLocate = false,
+  watersense = [],
+  focusedWatersense,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -99,6 +118,8 @@ export function LiveMap({
   showNodes?: boolean;
   locateUser?: boolean;
   autoLocate?: boolean;
+  watersense?: WatersensePoint[];
+  focusedWatersense?: string | null;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
   const locationPoint = userLocation || devicePoint;
@@ -142,6 +163,7 @@ export function LiveMap({
           <Focus node={active} nodes={valid} />
         )}
         {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
+        {showNodes && <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />}
         {locateUser && (
           <DeviceLocation point={devicePoint} onPoint={setDevicePoint} autoLocate={autoLocate} />
         )}
@@ -221,6 +243,19 @@ export function LiveMap({
               </Popup>
             </Marker>
           ))}
+        {showNodes && watersense.map((point) => (
+          <Marker key={"watersense-" + point.id} position={[point.latitude, point.longitude]}
+            title={point.name} alt={`WATERSENSE ${point.name}`}
+            icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
+            zIndexOffset={point.id === focusedWatersense ? 1500 : 500}>
+            <Tooltip direction="top" offset={[0, -18]}>{point.name}</Tooltip>
+            <Popup className="node-reading-popup">
+              <strong className="node-popup-title">{point.name}</strong>
+              <p>WATERSENSE · {point.online ? "Terhubung" : "Offline"}</p>
+              <p>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</p>
+            </Popup>
+          </Marker>
+        ))}
         {eventPoints.map((e) => (
           <Marker
             key={e.id}
