@@ -1,0 +1,13 @@
+[Unit]
+Description=AEROSENSE LoRa telemetry receiver
+After=network-online.target
+
+[Service]
+EnvironmentFile=%h/aerosense-gateway/gateway.env
+ExecStart=/usr/bin/python3 %h/aerosense-gateway/lora_receiver.py --port ${AEROSENSE_SERIAL_PORT} --gateway-id ${AEROSENSE_GATEWAY_ID} --radio-node ${AEROSENSE_RADIO_NODE} --node-id ${AEROSENSE_NODE_ID}
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
