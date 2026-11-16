@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-/** Run decorative motion only while its illustration is visible in the active tab. */
 export function useIllustrationMotion<T extends HTMLElement>(enabled = true) {
   const ref = useRef<T>(null);
   const [playing, setPlaying] = useState(false);

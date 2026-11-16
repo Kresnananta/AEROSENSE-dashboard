@@ -1,5 +1,3 @@
-// Run inside the API container (or pipe this file to node --input-type=module).
-// Prints provider diagnostics only. Never prints keys, recordings, or audio base64.
 const env = process.env;
 if (!env.GEMINI_API_KEY) throw Error("GEMINI_API_KEY belum dikonfigurasi.");
 const redact = value => String(value || "").split(env.GEMINI_API_KEY).join("[redacted]").slice(0, 650);

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { moodFor, awakeHour, startRobotMood, MOOD_EVERY_MS } from "../api/robot-mood.mjs";
 
-const now = Date.parse("2026-11-12T03:00:00Z"); // 10.00 WIB
+const now = Date.parse("2026-11-12T03:00:00Z");
 const latest = (pm25, extra = {}) => ({
   observed_at: new Date(now - 60000).toISOString(),
   metrics: { pm25_ug_m3: pm25, temperature_c: 33.4 },
@@ -41,7 +41,7 @@ test("unvalidated nodes speak about dust, not PM2.5", () => {
 });
 
 test("quiet hours and offline robots are skipped; one command per robot per slot", async () => {
-  assert.equal(awakeHour(Date.parse("2026-11-12T15:00:00Z")), false); // 22.00 WIB
+  assert.equal(awakeHour(Date.parse("2026-11-12T15:00:00Z")), false);
   assert.equal(awakeHour(now), true);
   const spoken = [];
   const db = async (table, q) =>

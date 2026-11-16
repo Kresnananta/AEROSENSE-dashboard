@@ -189,13 +189,13 @@ export async function demoRequest(
         typeof body.unit !== "string"
       )
         throw new Error("Periksa urutan ambang dan jeda notifikasi.");
-      // Preview changes are local to this browser session, never sent to production.
+
       if (typeof window !== "undefined") {
         try {
           for (const [key, value] of JSON.parse(window.sessionStorage.getItem(rulesKey) || "[]"))
             ruleChanges.set(key, value);
         } catch {
-          /* Start from the default preview rules. */
+
         }
       }
       const rule: DemoRule = { ...body, id: `demo-rule-${index}-${body.metric}`, active: false };
@@ -207,7 +207,7 @@ export async function demoRequest(
     if (post) throw new Error("Tindakan ini tidak tersedia pada data simulasi.");
     if (p === "/v1/history") {
       const readings = demoHistory(index);
-      // Same rule as the API: guests and warga get corrected readings only.
+
       if (manages) return { readings, detail: "model" };
       return {
         detail: "simple",
@@ -308,7 +308,6 @@ export async function demoRequest(
   throw new Error("Tindakan ini tidak tersedia pada data simulasi.");
 }
 
-// Synthetic smooth field for the map heatmap (simulation, not model data).
 function demoHeatmap(q: URLSearchParams) {
   const n = (k: string) => Number(q.get(k));
   const step = Math.max(
@@ -364,7 +363,6 @@ function demoHeatmap(q: URLSearchParams) {
   };
 }
 
-// Simulated outlook in the shape of /v1/weather (not real forecast data).
 function demoWeather() {
   const now = new Date(Date.now() + 7 * 3600000);
   const base = now.toISOString().slice(0, 13);

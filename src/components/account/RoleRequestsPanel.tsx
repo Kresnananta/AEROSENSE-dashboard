@@ -17,7 +17,6 @@ const ROLES = [
   ["admin", "Admin lokasi"],
 ] as const;
 
-// AEROSENSE team only (the API returns 403 to everyone else, and the panel then hides).
 export function RoleRequestsPanel() {
   const queue = useLiveData<Queue>("/v1/role-requests", 60000);
   const [busy, setBusy] = useState("");

@@ -1,4 +1,3 @@
-// Pure interaction planner. Dispatch, persistent dedup and device ACK belong to the caller.
 function planRobot(input, now = Date.now()) {
   const states = ["sleep", "awake", "listening", "thinking", "speaking"];
   const events = [
@@ -100,7 +99,7 @@ function planRobot(input, now = Date.now()) {
     if (typeof input.text !== "string" || !input.text.trim() || input.text.length > 2000)
       return hold("invalid_answer");
     if (input.audio_ready !== true) return hold("audio_not_ready");
-    // Tone comes from the validated answer metadata, never a claim that an IR object is human.
+
     const expression = ["neutral", "happy", "concerned"].includes(input.answer_expression)
       ? input.answer_expression
       : "neutral";

@@ -1,5 +1,3 @@
-// Wibowo TTS (open-source, Indonesian) running in the aerosense-tts container. Returns WAV bytes.
-// Used when TTS_PROVIDER=wibowo; otherwise the API keeps using Gemini TTS.
 export const useWibowo = (env) => env.TTS_PROVIDER === "wibowo";
 
 export async function wibowoSpeech(env, text, timeoutMs = 90000) {

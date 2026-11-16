@@ -1,4 +1,3 @@
-/* Shared runtime surfaces follow the dashboard's blue, white and rounded controls. */
 .demo-banner {
   position: fixed;
   top: 0;
@@ -819,7 +818,7 @@ select,
   background: #fff;
   white-space: normal;
 }
-/* Hands-free voice mode: large targets and clear state for users with motor or visual disabilities. */
+
 .handsfree-card {
   display: grid;
   gap: 10px;
@@ -1019,7 +1018,6 @@ select,
   }
 }
 
-/* Concise monitoring context and voice controls. */
 .monitoring-scope > details > summary {
   display: flex;
   align-items: center;
@@ -1096,7 +1094,7 @@ select,
 .chat-voice-privacy p {
   max-width: 70ch;
 }
-/* Simple history summary for guests and warga */
+
 .history-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1156,7 +1154,6 @@ select,
   font-weight: 600;
 }
 
-/* AERO-BOT chat: friendly welcome, guest note, rounded composer. */
 .app-shell .live-chat {
   border: 1px solid #dce8f5;
   border-radius: 24px;

@@ -143,7 +143,6 @@ def serve():
         def log_message(self, *_args):
             pass
 
-    # Mini PC: localhost only. Server container: AEROBOT_TTS_HOST=0.0.0.0 on the internal Docker network.
     host = os.environ.get("AEROBOT_TTS_HOST", "127.0.0.1")
     with HTTPServer((host, 4220), Handler) as server:
         print(f"Wibowo ready at http://{host}:4220/speak", flush=True)

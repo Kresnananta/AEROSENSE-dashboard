@@ -12,7 +12,7 @@ function planRequests(input, settings, now = Date.now()) {
   );
   const cache = input.cache || [];
   const planned = [];
-  // The hourly trigger can run seconds before the previous fetch's TTL ends.
+
   const due = (provider, n) =>
     !cache.some(
       (c) =>

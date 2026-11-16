@@ -29,7 +29,7 @@ export function useRobotSlot(userId?: string) {
       try {
         localStorage.setItem("aerosense.robot-slot." + userId, value);
       } catch {
-        /* session only */
+
       }
       setSlot(value);
       window.dispatchEvent(new Event(eventName));

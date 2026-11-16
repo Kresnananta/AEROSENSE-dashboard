@@ -49,8 +49,7 @@ export function actuatorRoutes({
 }) {
   async function localPolicy(a) {
     const local = a.espnow_auto === true;
-    // The node sends its Sharp reading over ESP-NOW; WATERSENSE compares it with the thresholds of the metric
-    // chosen for automatic activation. Both particulate metrics are the same Sharp conversion on this gateway.
+
     const metric = ["dust_ug_m3", "pm25_ug_m3"].includes(a.auto_metric) ? a.auto_metric : null;
     const node = local && a.enabled && metric
       ? await one("ae_nodes", "id=eq." + filter(a.node_id) + "&select=enabled")

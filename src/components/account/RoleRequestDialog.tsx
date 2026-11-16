@@ -9,7 +9,6 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "Admin lokasi",
 };
 
-// Tells a new account where its role request stands. Shown once per request status.
 export function RoleRequestDialog() {
   const { user } = useAuth();
   const me = useLiveData<Me>(user ? "/v1/me" : null, 300000);
@@ -33,7 +32,7 @@ export function RoleRequestDialog() {
     try {
       localStorage.setItem(key, "1");
     } catch {
-      /* private mode: show again next time */
+
     }
     ref.current?.close();
     setSeen(true);

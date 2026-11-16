@@ -8,7 +8,6 @@ import {
 import { visibleSensorResponse } from "../../src/lib/sensor-display.ts";
 import { summarizeEnvironment } from "../api/environment-insights.mjs";
 
-// Existing cases cover the full rule set (TEMP_STATUS_PM25_ONLY = false); the temporary mode has its own test.
 const sensorSummary = (node, rules, pm25Only = false) => sensorSummaryDefault(node, rules, pm25Only);
 const now = Date.now();
 const fact = (changes = {}) => ({
@@ -231,7 +230,7 @@ test("temporary PM2.5-only status: judged on PM2.5 estimasi, a missing dust_ug_m
     pm25_validated: false,
     latest: { reading_id: "r1", stale: false, metrics: { pm25_ug_m3: value, temperature_c: 28 } },
   });
-  // Production shape on 2026-11-11: dust rule enabled, no dust_ug_m3 in the reading.
+
   assert.equal(sensorSummary(node(41.8), [dust, pm25]).label, "Data belum cukup");
   assert.equal(sensorSummary(node(41.8), [dust, pm25], true).label, "Terpantau baik");
   assert.equal(sensorSummary(node(60), [dust, pm25], true).label, "Waspada");

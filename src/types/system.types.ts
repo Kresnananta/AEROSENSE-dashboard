@@ -8,7 +8,7 @@ export interface SystemUser {
 }
 
 export interface ThresholdConfig {
-  parameter: string; // e.g., 'PM2.5'
+  parameter: string;
   warningLevel: number;
   criticalLevel: number;
   unit: string;

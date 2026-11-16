@@ -108,7 +108,7 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
             metrics.push({ value, unit: "M", label: "Magnitudo" });
         }
       } else {
-        // Conservative headline matching: ambiguous or foreign news is not shown.
+
         if (!type || !domestic.test(title) || foreign.test(title)) return [];
         location = title.match(domestic)?.[0] || "Indonesia";
         const damage = title.match(/rumah rusak.*?(\d+)\s+unit/i);

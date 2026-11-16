@@ -1,4 +1,3 @@
-// Fixed public providers only. No Supabase credentials, user data, or private APIs.
 import { readFile } from "node:fs/promises";
 import { disasterNews } from "../server/api/disaster-news.mjs";
 import { readEventLayers } from "../server/api/environment-events.mjs";

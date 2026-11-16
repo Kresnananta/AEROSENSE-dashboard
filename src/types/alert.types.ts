@@ -6,11 +6,11 @@ export interface Alert {
   timestamp: string;
   nodeId: string;
   nodeName: string;
-  sensor: string; // e.g., 'PM2.5', 'TVOC', 'System'
+  sensor: string;
   severity: AlertSeverity;
   description: string;
   status: AlertStatus;
   value?: number;
   threshold?: number;
-  aiExplanation?: string; // Explanation if AI detected anomaly
+  aiExplanation?: string;
 }

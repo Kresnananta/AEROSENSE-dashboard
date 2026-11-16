@@ -1,4 +1,3 @@
-// Transform an operator-exported workflow without committing its credentials.
 import fs from "node:fs";
 const [input, output] = process.argv.slice(2);
 if (!input || !output)

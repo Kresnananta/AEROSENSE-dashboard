@@ -30,7 +30,7 @@ export function cleanText(text) {
     .trim();
 }
 export function abusive(text) {
-  // Preliminary screen only. Contextual hate, SARA and scope require the Gemini gate too.
+
   return /\b(anjing|bangsat|bajingan|kontol|memek|fuck|shit|nigger)\b/i.test(
     text.normalize("NFKC"),
   );
@@ -199,7 +199,7 @@ export function waPayload(job, contact, env, now = Date.now()) {
   };
   if (now - Date.parse(contact.last_inbound_at) < 23.9 * 3600000)
     return { ...base, type: "text", text: { body: job.text.slice(0, 3500) } };
-  if (!job.alert_id) return null; // Never reopen an expired conversation with a free-form reply.
+  if (!job.alert_id) return null;
   if (!env.WHATSAPP_ALERT_TEMPLATE) throw new Error("Approved alert template not configured");
   return {
     ...base,

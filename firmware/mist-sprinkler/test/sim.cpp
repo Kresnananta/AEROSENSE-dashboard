@@ -61,7 +61,7 @@ int main() {
   CHECK(relayOn(), "pulse after cooldown");
   g_broker = false; run(20);
   CHECK(!relayOn(), "broker loss switches output off");
-  // Reboot: state persisted in NVS, output off, no pulse replayed, cooldown kept.
+
   g_broker = true; g_millis += 1000;
   memset(&state, 0, sizeof(state)); outputOn = false; lastMqttAttempt = 0; lastWifiAttempt = 0; mqtt.conn = false;
   setup(); run(100);

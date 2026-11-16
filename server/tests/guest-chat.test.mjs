@@ -31,7 +31,7 @@ test("guest asks about a public node and reads the answer with its token", async
   assert.equal(jobs[0].owner_id, null);
   assert.deepEqual(jobs[0].body.node_ids, ["n1"]);
   assert.equal(jobs[0].body.voice, false);
-  assert.notEqual(jobs[0].body.guest_token, token); // only the hash is stored
+  assert.notEqual(jobs[0].body.guest_token, token);
   jobs[0].status = "done";
   jobs[0].result = { text: "Baik" };
   await call("GET", `/v1/guest/jobs?id=${id}&token=${token}`);

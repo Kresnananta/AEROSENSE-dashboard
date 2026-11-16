@@ -1,4 +1,3 @@
-// Run with the API container's environment. Never print credentials or account JIDs.
 const e = process.env;
 try {
   if (!e.GOWA_BASIC_AUTH || !/^[A-Za-z0-9_-]{1,64}$/.test(e.GOWA_DEVICE_ID || ""))
@@ -17,8 +16,7 @@ try {
     if (data.code !== "SUCCESS") throw new Error("GOWA device request rejected");
     return data.results;
   }
-  // v9.6.0 returns HTTP 500 for GET /devices/:id when a slot is missing.
-  // An empty registry is serialized as null. Do not interpret arbitrary errors as absence.
+
   const result = await request("GET");
   const devices = result === null ? [] : result;
   if (!Array.isArray(devices)) throw new Error("Invalid GOWA device list");
@@ -29,7 +27,7 @@ try {
   }
   console.log("GOWA device slot ready: " + e.GOWA_DEVICE_ID + (exists ? " (existing)" : " (created)"));
 } catch (error) {
-  // Upstream response bodies can contain private data; report only bounded error categories.
+
   console.error(error instanceof SyntaxError ? "Invalid JSON from GOWA" : error.message);
   process.exitCode = 1;
 }

@@ -1,5 +1,3 @@
-// Map heatmap: a grid of model values (Open-Meteo) over the visible map area. Public, no account needed.
-// The grid is snapped to its step so nearby views share one cached request.
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 
 export const LAYERS = {
@@ -8,14 +6,14 @@ export const LAYERS = {
     field: "temperature_2m",
     unit: "°C",
     source: "Open-Meteo (model cuaca)",
-    minStep: 0.1, // ICON/GFS around 0.1°
+    minStep: 0.1,
   },
   pm25: {
     url: "https://air-quality-api.open-meteo.com/v1/air-quality",
     field: "pm2_5",
     unit: "µg/m³",
     source: "Open-Meteo / CAMS (model kualitas udara)",
-    minStep: 0.2, // CAMS is coarser; a finer grid only repeats values
+    minStep: 0.2,
   },
   aqi: {
     url: "https://air-quality-api.open-meteo.com/v1/air-quality",
@@ -24,7 +22,7 @@ export const LAYERS = {
     source: "Open-Meteo / CAMS (model kualitas udara)",
     minStep: 0.2,
   },
-  // Rain now (mm in the last hour), cloud cover, and thunderstorm energy (CAPE) as the lightning potential.
+
   rain: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "precipitation",
@@ -46,7 +44,7 @@ export const LAYERS = {
     source: "Open-Meteo (model cuaca, energi badai CAPE)",
     minStep: 0.1,
   },
-  // Wind speed colours the field; direction (where the wind comes from, degrees) drives the particles.
+
   wind: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "wind_speed_10m",
@@ -57,11 +55,10 @@ export const LAYERS = {
   },
 };
 
-const TARGET_POINTS = 256; // about this many locations per request, whatever the area
-const MAX_AXIS = 32; // at most this many points along one side
-const MAX_SPAN = 60; // degrees; enough for the whole of Indonesia (about 47 x 18)
+const TARGET_POINTS = 256;
+const MAX_AXIS = 32;
+const MAX_SPAN = 60;
 
-// Snap the view to a grid. Returns the grid origin, step and size, or throws on a bad view.
 export function heatGrid(south, west, north, east, minStep = 0.1) {
   if (![south, west, north, east].every(Number.isFinite)) throw fail("Area peta tidak valid.");
   if (south >= north || west >= east || Math.abs(south) > 85 || Math.abs(north) > 85)
@@ -69,7 +66,7 @@ export function heatGrid(south, west, north, east, minStep = 0.1) {
   const latSpan = north - south,
     lngSpan = east - west;
   if (Math.max(latSpan, lngSpan) > MAX_SPAN) throw fail("Perbesar peta untuk melihat heatmap.");
-  // Square cells sized so the area holds about TARGET_POINTS, rounded up to 0.05 degree.
+
   const area = Math.sqrt((latSpan * lngSpan) / TARGET_POINTS);
   const longest = Math.max(latSpan, lngSpan) / (MAX_AXIS - 2);
   const step = Math.max(minStep, Math.ceil(Math.max(area, longest) * 20) / 20);

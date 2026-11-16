@@ -2,22 +2,18 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {
-  /** Title text */
+
   title: string;
-  /** Description text */
+
   description?: string;
-  /** Icon or illustration to display */
+
   icon?: ReactNode;
-  /** Action button or link */
+
   action?: ReactNode;
-  /** Additional CSS classes */
+
   className?: string;
 }
 
-/**
- * Empty state placeholder component.
- * Use when a page, table, or list has no data to display.
- */
 export function EmptyState({ title, description, icon, action, className }: EmptyStateProps) {
   return (
     <div

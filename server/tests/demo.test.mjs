@@ -37,7 +37,7 @@ test("film demo keeps 16 irregular Surabaya points and preserves sensor semantic
     nodes = demoNodes("viewer", now);
   assert.equal(nodes.filter((n) => n.latest.stale).length, 1);
   assert(nodes.every((n) => !n.pm25_validated && !("pm25_ug_m3" in n.latest.metrics)));
-  const labels = new Set(nodes.map((n) => sensorSummary(n).label));
+  const labels = new Set(nodes.map((n) => sensorSummary(n, n.rules, false).label));
   assert.deepEqual(labels, new Set(["Terpantau baik", "Waspada", "Bahaya", "Data belum cukup"]));
   assert.equal(demoHistory(15, now)[0].observed_at, nodes[15].latest.observed_at);
   for (let i = 0; i < 16; i++) {

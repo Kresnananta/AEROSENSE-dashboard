@@ -1,4 +1,3 @@
-// Lays out the structured ambient-monitoring report as an A4 PDF for ESG audit files.
 import { PdfDocument, PdfPage, wrapText, type FontName, type Rgb } from "./pdf-writer.ts";
 import {
   formatNumber,
@@ -285,7 +284,7 @@ class Layout {
         color: WARN,
       });
     }
-    // Break the line across data gaps so missing periods are not drawn as data.
+
     const gapMs = Math.max(15, (this.report.coverage.median_interval_minutes ?? 5) * 3) * 60000;
     let run: [number, number][] = [];
     points.forEach((p, i) => {

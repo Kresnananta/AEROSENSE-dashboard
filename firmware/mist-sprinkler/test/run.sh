@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Host-side safety test of the sprinkler firmware (no ESP32 needed). Requires g++ and git.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 work="$(mktemp -d)"

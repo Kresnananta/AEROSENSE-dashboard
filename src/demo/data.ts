@@ -8,7 +8,7 @@ import type {
 
 export const DEMO_NOTICE =
   "Data simulasi. Bukan hasil pengukuran lapangan; informasi wilayah dari API ditampilkan terpisah.";
-// Fixed synthetic deployment points across urban Surabaya, with irregular spacing.
+
 const demoCoordinates = [
   [-7.2309, 112.7227],
   [-7.2518, 112.7083],

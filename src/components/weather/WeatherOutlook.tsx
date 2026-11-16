@@ -22,7 +22,6 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from "@/types/weather.types";
 import "@/styles/weather.css";
 
-// The same 3D weather illustrations as the rest of the site.
 const SCENE: Record<string, string> = {
   clear: "sunny",
   partly: "partly-cloudy",
@@ -88,7 +87,6 @@ const dayName = (date: string, i: number) =>
 const uvLabel = (uv: number | null) =>
   uv == null ? "" : uv >= 11 ? "ekstrem" : uv >= 8 ? "sangat tinggi" : uv >= 6 ? "tinggi" : uv >= 3 ? "sedang" : "rendah";
 
-// One short piece of advice for the day; the warnings below carry the details.
 function todayTip(d: { rain_chance: number | null; uv: number | null; max: number | null }) {
   if ((d.rain_chance ?? 0) >= 50) return "Siapkan payung atau jas hujan.";
   if ((d.uv ?? 0) >= 8) return "Pakai topi dan tabir surya saat siang.";
@@ -96,10 +94,6 @@ function todayTip(d: { rain_chance: number | null; uv: number | null; max: numbe
   return "";
 }
 
-/**
- * Forecast only: today, the coming hours, 7 days, warnings, cyclones and earthquakes.
- * Conditions "now" stay in the Hub card above, so the page shows one set of current numbers.
- */
 export function WeatherOutlook({
   point,
   place,
@@ -119,7 +113,7 @@ export function WeatherOutlook({
   if (!point) return null;
   const o = wx.data;
   const today = o?.daily[0];
-  // Start at the next full hour; the current hour belongs to the "now" card.
+
   const allHours = (o?.day_hours ?? o?.hourly ?? []).slice(1);
   const hours = allHours.slice(0, compact ? 12 : 24);
   const selectedTime = selection?.path === path ? selection.time : null;

@@ -22,11 +22,11 @@ interface NodeMarkerProps {
 }
 
 export function NodeMarker({ node, activeLayer }: NodeMarkerProps) {
-  // Determine color based on status or activeLayer value
-  let color = "#22c55e"; // green
-  if (node.status === "warning") color = "#eab308"; // yellow
-  if (node.status === "critical") color = "#ef4444"; // red
-  if (node.status === "offline") color = "#94a3b8"; // slate
+
+  let color = "#22c55e";
+  if (node.status === "warning") color = "#eab308";
+  if (node.status === "critical") color = "#ef4444";
+  if (node.status === "offline") color = "#94a3b8";
 
   let displayValue = node.readings.aqi;
   let unit = "AQI";

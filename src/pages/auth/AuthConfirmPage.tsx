@@ -12,7 +12,6 @@ const ROLE_LABEL: Record<string, string> = {
   admin: "Admin lokasi",
 };
 
-// Landing page of the confirmation link. Supabase puts the session (or an error) in the URL.
 export function AuthConfirmPage() {
   const [state, setState] = useState<"checking" | "ok" | "error">("checking");
   const [message, setMessage] = useState("");
@@ -39,7 +38,7 @@ export function AuthConfirmPage() {
       if (!data.session) throw new Error("Email sudah dikonfirmasi. Silakan masuk dengan email dan kata sandi Anda.");
       window.history.replaceState(null, "", "/auth/confirm");
       setState("ok");
-      // First signed-in visit stores the sign-up profile and any role request.
+
       setMe(await apiRequest<Me>("/v1/me").catch(() => null));
     })().catch((e) => {
       setMessage(e instanceof Error ? e.message : "Konfirmasi belum berhasil.");

@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Checks node logic and renders the TFT screens to PNG on a computer (real Adafruit GFX code).
-# Requires g++, git and python3 with Pillow. Output: firmware/sensor-node/test/out/*.png
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT

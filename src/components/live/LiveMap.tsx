@@ -25,7 +25,7 @@ import {
 import { dateLabel, type EnvironmentEvent, type LiveNode } from "@/types/live.types";
 import "leaflet/dist/leaflet.css";
 import "@/styles/event-map.css";
-// Active tropical cyclones (GDACS) and recent M5+ earthquakes (BMKG) around Indonesia.
+
 function HazardMarkers() {
   const { data } = useLiveData<Hazards>("/v1/hazards", 600000, false);
   return (
@@ -131,7 +131,7 @@ function LocationFocus({ point, radiusKm }: { point: GeoPoint; radiusKm: number 
   }, [map, point.latitude, point.longitude, radiusKm]);
   return null;
 }
-// The map shows Indonesia: it cannot pan far beyond it, and zooming out stops when the whole country fits.
+
 const INDONESIA: [[number, number], [number, number]] = [
   [-11.2, 94.8],
   [6.2, 141.2],
@@ -257,7 +257,7 @@ export function LiveMap({
           />
         ) : (
           <>
-            {/* Clean base with coastlines and borders; colour field above; place names on top. */}
+            {}
             <TileLayer
               key="heat-base"
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"

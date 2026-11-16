@@ -1,14 +1,9 @@
-// Minimal dependency-free PDF writer: A4 pages, the built-in Helvetica and Courier
-// fonts (WinAnsi encoding), text, rectangles, lines and polylines. Coordinates are in
-// points with the origin at the top-left corner of the page.
-
 export type Rgb = [number, number, number];
 export type FontName = "regular" | "bold" | "mono";
 
 const PAGE_W = 595.28;
 const PAGE_H = 841.89;
 
-// Advance widths (1/1000 em) for ASCII 32..126 from the standard Helvetica metrics.
 const HELVETICA = [
   278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556,
   556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667,
@@ -49,7 +44,6 @@ const REPLACE: Record<string, string> = {
   " ": " ",
 };
 
-// Converts text to WinAnsi bytes held in a JS string (one char per byte).
 export function winAnsi(text: string): string {
   let out = "";
   for (const ch of text.normalize("NFC")) {

@@ -1,9 +1,6 @@
 import type { GruResult } from "../types/live.types.ts";
 import { gruEstimates } from "./gru.ts";
 
-// Structured ambient-monitoring report used by both the JSON and the PDF export,
-// so an auditor can match the two files line by line. Pure functions: no DOM.
-
 export interface ReportRule {
   metric: string;
   high: number;
@@ -144,7 +141,7 @@ export function coverageOf(readings: ReportReading[], limit = 288) {
     .filter((s) => s > 0);
   const sortedSteps = [...steps].sort((a, b) => a - b);
   const median = sortedSteps.length ? sortedSteps[sortedSteps.length >> 1] : null;
-  // A gap is a pause longer than three typical intervals (and at least 15 minutes).
+
   const gapLimit = median === null ? null : Math.max(15, median * 3);
   const gaps = gapLimit === null ? [] : steps.filter((s) => s > gapLimit);
   const clock: Record<string, number> = {};
@@ -260,7 +257,6 @@ export function buildReport(input: {
   };
 }
 
-// Stable text that both the JSON file and the PDF fingerprint refer to.
 export function readingsFingerprintSource(readings: ReportReading[]) {
   return JSON.stringify(
     readings.map((r) => [r.id, r.observed_at, r.metrics, r.gru, r.raw_sha256 ?? null]),

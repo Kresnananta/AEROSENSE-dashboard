@@ -1,4 +1,3 @@
-/** User object returned from API */
 export interface User {
   id: string;
   email: string;
@@ -9,16 +8,13 @@ export interface User {
   updatedAt: string;
 }
 
-/** Available user roles */
 export type UserRole = "admin" | "operator" | "viewer";
 
-/** Login request payload */
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-/** Registration request payload */
 export interface RegisterPayload {
   name: string;
   email: string;
@@ -26,14 +22,12 @@ export interface RegisterPayload {
   confirmPassword: string;
 }
 
-/** Auth response from API */
 export interface AuthResponse {
   user: User;
   accessToken: string;
   refreshToken: string;
 }
 
-/** Auth state in store */
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

@@ -1,4 +1,3 @@
-// Self-contained so the exact parser can also run inside the n8n Code node.
 export function normalizeHazardEvents(
   provider,
   data,

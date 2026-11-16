@@ -181,7 +181,7 @@ export function useChatVoice(userId: string | undefined, onTranscript: (text: st
           "blob",
         );
       setPreparingSpeech(true);
-      // Ask for the first two parts at once; each later part is requested while the one before plays.
+
       const pending = new Map<number, Promise<Blob>>();
       const request = (part: number) => {
         if (part < parts.length && !pending.has(part)) {

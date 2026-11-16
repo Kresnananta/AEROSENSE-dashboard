@@ -1,11 +1,9 @@
-/** Application metadata */
 export const APP_CONFIG = {
   name: "AEROSENSE",
   description: "Air Quality Monitoring Dashboard",
   version: "0.1.0",
 } as const;
 
-/** Route path constants for type-safe navigation */
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",
@@ -31,7 +29,6 @@ export interface NavItemConfig {
   badgeType?: "count" | "pill";
 }
 
-/** Navigation items for citizen-centric sidebar */
 export const NAV_ITEMS: readonly NavItemConfig[] = [
   {
     label: "Beranda",
@@ -72,7 +69,6 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
   },
 ] as const;
 
-/** API configuration */
 export const API_CONFIG = {
   baseUrl: import.meta.env.VITE_API_BASE_URL || "/api",
   timeout: 10000,

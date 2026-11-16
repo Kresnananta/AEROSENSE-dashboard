@@ -46,7 +46,7 @@ export const HEAT_LAYERS = {
     label: "Hujan",
     unit: "mm/jam",
     format: (v: number) => (v < 0.1 ? "0" : String(Math.round(v * 10) / 10).replace(".", ",")),
-    // White multiplies to nothing on the base map, so dry areas stay clear.
+
     quiet: 0.1,
     stops: [
       [0, "#ffffff"],

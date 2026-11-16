@@ -4,7 +4,14 @@ import { distanceKm, nearbyNodes } from "../../src/lib/nearby-nodes.ts";
 import { demoNodes } from "../../src/demo/data.ts";
 
 test("nearby monitoring uses the user's coordinates and radius, independent of selected node", () => {
-  const nodes = demoNodes(),
+  const nodes = demoNodes().map((n) => ({
+      ...n,
+      pm25_validated: true,
+      rules: (n.rules || []).map((r) => (r.metric === "dust_ug_m3" ? { ...r, metric: "pm25_ug_m3" } : r)),
+      latest: n.latest
+        ? { ...n.latest, metrics: { ...n.latest.metrics, pm25_ug_m3: n.latest.metrics?.dust_ug_m3 } }
+        : n.latest,
+    })),
     center = { latitude: -7.299, longitude: 112.759 };
   assert.deepEqual(nearbyNodes(nodes, null, 5), []);
   assert.deepEqual(nearbyNodes(nodes, { latitude: -6.2, longitude: 106.8 }, 5), []);

@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# Installs the authenticated Mosquitto broker for AEROSENSE actuators.
-# Usage: bash server/scripts/setup-mqtt.sh [--rotate] mist-01 [mist-02 ...]
-# --rotate replaces every password (n8n and devices must be updated afterwards).
-# Creates (or keeps) passwords for n8n and each actuator, prints only with MQTT_PRINT_CREDENTIALS=1,
-# and stores them in ~/aerosense-mqtt/credentials.env (mode 600).
 set -euo pipefail
 umask 077
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -29,14 +24,12 @@ for user in n8n-aerosense "$@"; do
     new_users+=("$user")
   fi
 done
-# Rebuild the password file from credentials.env inside the broker image (hashing + ownership).
 args=()
 while IFS='=' read -r key value; do
   [[ "$key" == MQTT_PASSWORD_* ]] || continue
   user="$(echo "${key#MQTT_PASSWORD_}" | tr 'A-Z_' 'a-z-')"
   args+=("$user" "$value")
 done < "$creds"
-# All writes to config/ happen inside the container: after the first run the folder belongs to the mosquitto user.
 docker run --rm -i -v "$mqtt_home/config:/mosquitto/config" -v "$repo/deploy/mqtt:/src:ro" -v "$mqtt_home/data:/mosquitto/data" "$image" sh -s "${args[@]}" <<'SH'
 set -e
 cp /src/mosquitto.conf /src/acl /mosquitto/config/

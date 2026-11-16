@@ -1,4 +1,3 @@
-// Gemini transcribes speech while voice mode is active; only a fresh wake phrase authorizes a chat question.
 import {
   answerChunks,
   concatFrames,
@@ -208,7 +207,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
   }
 
   async function handleSegment(frames: Float32Array[], rate: number, duration: number) {
-    if (duration < 200) return; // clicks and short noises
+    if (duration < 200) return;
     const token = run;
     if (transcription || (state.phase === "waiting" && now() - lastWakeAttempt < 2500)) {
       queuedSpeech = { frames, rate, duration };
@@ -313,7 +312,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     clearTimeout(listenTimer);
     set({ phase: "thinking", heard: question, error: "", notice: "" });
     earcon("sent");
-    // Confirm receipt with an earcon; a second narrator would change the bot's voice.
+
     clearInterval(thinkingTimer);
     thinkingTimer = setInterval(() => {
       if (token !== run || state.phase !== "thinking") {
@@ -493,8 +492,6 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     });
   }
 
-  // Plays the answer part by part: part 0 is short, so speech starts after one short
-  // TTS call while later parts are generated in the background.
   async function speakAnswer(jobId: string, text: string, emotion?: string) {
     if (state.phase === "off" || state.phase === "starting") return;
     const token = run;
@@ -536,7 +533,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       playerUrl = null;
       callbacks.onPlayback?.(null, "");
     }
-    // stop() may have run while audio was playing; the run token covers that case.
+
     if (token === run) enterWaiting("Ucapkan Halo AERO-BOT untuk pertanyaan berikutnya.");
   }
 
@@ -567,7 +564,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       try {
         node.disconnect();
       } catch {
-        /* ignore */
+
       }
     });
     nodes = [];

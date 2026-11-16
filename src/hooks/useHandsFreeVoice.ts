@@ -25,7 +25,7 @@ function writePreference(on: boolean) {
     localStorage.setItem(PREFERENCE_KEY, on ? "on" : "off");
     if (on) localStorage.setItem(PROVIDER_KEY, "gemini");
   } catch {
-    /* private mode */
+
   }
 }
 
@@ -102,7 +102,6 @@ export function useHandsFreeVoice(options: {
     });
   }
 
-  // Stop listening when the account changes or voice becomes unavailable.
   useEffect(() => {
     const current = engine.current;
     if (!current || !userId || !available || !supported) return;
@@ -110,7 +109,6 @@ export function useHandsFreeVoice(options: {
     return () => current.stop();
   }, [userId, available, supported]);
 
-  // Browsers keep audio suspended until the first interaction after a reload.
   useEffect(() => {
     if (state.phase !== "blocked") return;
     const wake = () => void engine.current?.resume();

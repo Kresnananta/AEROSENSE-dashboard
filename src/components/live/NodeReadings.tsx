@@ -1,8 +1,6 @@
 import { dateLabel, metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/node-readings.css";
 
-// PM2.5 estimasi (debu optik if not validated), temperature and humidity, the same as the home cards.
-// An old reading still shows its last values, dimmed and labelled; an invalid one shows none.
 export function NodeReadings({ node }: { node: LiveNode }) {
   const latest = node.latest;
   const usable = !!latest?.reading_id && latest.quality?.invalid !== true;

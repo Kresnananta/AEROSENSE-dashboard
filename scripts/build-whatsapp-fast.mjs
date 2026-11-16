@@ -1,4 +1,3 @@
-// Apply the reviewed low-latency settings to an operator-exported workflow.
 import fs from "node:fs";
 const [input, output] = process.argv.slice(2);
 if (!input || !output)

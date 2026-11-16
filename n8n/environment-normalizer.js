@@ -1,5 +1,3 @@
-// Ringkasan singkat dari fakta yang masih berlaku. Tidak memakai Gemini.
-/* oxlint-disable no-control-regex */
 function normalizeHazardEvents(
   provider,
   data,

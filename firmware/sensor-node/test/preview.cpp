@@ -1,4 +1,3 @@
-// Renders node screens with the real Adafruit_GFX code and checks the pure node logic.
 #include "Arduino.h"
 #include "../screens.h"
 #include <cassert>
@@ -17,7 +16,7 @@ class Frame : public Adafruit_GFX {
 };
 int main(int, char** argv) {
   std::string dir = argv[1];
-  // Logic checks
+
   assert(sharpDust(0.6f, 0.6f) == 0.0f);
   assert(fabs(sharpDust(0.7f, 0.6f) - 20.0f) < 0.01f);
   assert(sharpDust(0.3f, 0.6f) == 0.0f);
@@ -36,7 +35,7 @@ int main(int, char** argv) {
   link.timedOut(3); assert(link.state == Link::Weak);
   link.timedOut(3); link.timedOut(3); assert(link.state == Link::Lost);
   link.acked(-112, true, -105); assert(link.state == Link::Weak && link.misses == 0);
-  // Screens
+
   Frame f;
   screen::logo(f); f.save(dir + "/logo.ppm");
   LinkState good; good.acked(-87, true, -105);

@@ -1,4 +1,3 @@
-// Optional SQL integration check: set PGLITE_MODULE to an installed @electric-sql/pglite/dist/index.js.
 import {pathToFileURL} from 'node:url';
 import {readFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -28,7 +27,7 @@ try{
  await assert.rejects(enqueue(owner,'pulse',3000),/jeda operasi/);
  const claimed=(await db.query('select ae_actuator_claim() as commands')).rows[0].commands;assert.equal(claimed.length,1);assert.equal(claimed[0].payload.status,'manual');assert.equal(claimed[0].payload.command_id,first.id);
  await db.query('select ae_actuator_ack($1,$2,$3,$4)',['mist-01',first.id,'accepted','manual']);
- // ACK can arrive before the publish callback; the callback must never regress accepted -> published.
+
  const published=(await db.query('select ae_actuator_published($1,$2) as changed',[first.id,claimed[0].token])).rows[0].changed;assert.equal(published,false);
  const stop=await enqueue(owner,'stop',0);await db.query('select ae_actuator_ack($1,$2,$3,$4)',['mist-01',stop.id,'completed','remote_stop']);
  assert.equal((await db.query('select state from ae_actuator_commands where id=$1',[first.id])).rows[0].state,'stopped');

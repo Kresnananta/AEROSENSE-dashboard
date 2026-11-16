@@ -1,10 +1,7 @@
-// Indonesian cities for map labels when zoomed out: name, latitude, longitude, rank.
-// Rank 1: all 38 provincial capitals and large metros; 2: other large cities; 3: regency towns.
-// Covers every province so the whole country has labels when zoomed out.
 export type City = [name: string, lat: number, lng: number, rank: 1 | 2 | 3];
 
 export const ID_CITIES: City[] = [
-  // Jawa Timur
+
   ["Surabaya", -7.2575, 112.7521, 1],
   ["Malang", -7.9839, 112.6214, 1],
   ["Sidoarjo", -7.4478, 112.7183, 2],
@@ -35,7 +32,7 @@ export const ID_CITIES: City[] = [
   ["Sumenep", -7.0167, 113.8667, 3],
   ["Bangil", -7.5995, 112.782, 3],
   ["Kraksaan", -7.7604, 113.4128, 3],
-  // Jawa Tengah dan DIY
+
   ["Semarang", -6.9667, 110.4167, 1],
   ["Yogyakarta", -7.7956, 110.3695, 1],
   ["Surakarta", -7.5755, 110.8243, 2],
@@ -47,7 +44,7 @@ export const ID_CITIES: City[] = [
   ["Kudus", -6.8048, 110.8405, 3],
   ["Rembang", -6.7085, 111.3424, 3],
   ["Salatiga", -7.3305, 110.5084, 3],
-  // Jakarta, Banten, Jawa Barat
+
   ["Jakarta", -6.2088, 106.8456, 1],
   ["Serang", -6.12, 106.1503, 1],
   ["Bandung", -6.9175, 107.6191, 1],
@@ -60,12 +57,12 @@ export const ID_CITIES: City[] = [
   ["Sukabumi", -6.9277, 106.93, 3],
   ["Karawang", -6.3227, 107.3376, 3],
   ["Garut", -7.2279, 107.9087, 3],
-  // Bali dan Nusa Tenggara
+
   ["Denpasar", -8.6705, 115.2126, 1],
   ["Mataram", -8.5833, 116.1167, 1],
   ["Kupang", -10.1772, 123.607, 1],
   ["Singaraja", -8.112, 115.0882, 3],
-  // Sumatra
+
   ["Banda Aceh", 5.5483, 95.3238, 1],
   ["Medan", 3.5952, 98.6722, 1],
   ["Padang", -0.9471, 100.4172, 1],
@@ -77,7 +74,7 @@ export const ID_CITIES: City[] = [
   ["Pangkal Pinang", -2.1316, 106.1169, 1],
   ["Tanjung Pinang", 0.9188, 104.4554, 1],
   ["Batam", 1.0456, 104.0305, 2],
-  // Kalimantan
+
   ["Pontianak", -0.0263, 109.3425, 1],
   ["Palangka Raya", -2.2161, 113.9135, 1],
   ["Banjarbaru", -3.4425, 114.833, 1],
@@ -85,14 +82,14 @@ export const ID_CITIES: City[] = [
   ["Samarinda", -0.5022, 117.1536, 1],
   ["Tanjung Selor", 2.8375, 117.3653, 1],
   ["Balikpapan", -1.2379, 116.8529, 2],
-  // Sulawesi
+
   ["Makassar", -5.1477, 119.4327, 1],
   ["Manado", 1.4748, 124.8421, 1],
   ["Palu", -0.8917, 119.8707, 1],
   ["Kendari", -3.9985, 122.513, 1],
   ["Gorontalo", 0.5435, 123.0568, 1],
   ["Mamuju", -2.6748, 118.8885, 1],
-  // Maluku dan Papua
+
   ["Ambon", -3.6954, 128.1814, 1],
   ["Sofifi", 0.7373, 127.5588, 1],
   ["Jayapura", -2.5337, 140.7181, 1],
@@ -119,7 +116,7 @@ export const ID_CITIES: City[] = [
   ["Tobelo", 1.7333, 128.0167, 3],
   ["Labuha", -0.6333, 127.4833, 3],
   ["Sanana", -2.05, 125.9833, 3],
-  // Sumatra (lanjutan)
+
   ["Lhokseumawe", 5.1801, 97.1507, 2],
   ["Meulaboh", 4.1363, 96.1285, 3],
   ["Langsa", 4.4683, 97.9683, 3],
@@ -144,7 +141,7 @@ export const ID_CITIES: City[] = [
   ["Metro", -5.1131, 105.3067, 2],
   ["Kotabumi", -4.8333, 104.9, 3],
   ["Tanjung Pandan", -2.7414, 107.637, 2],
-  // Kalimantan (lanjutan)
+
   ["Singkawang", 0.9065, 108.9864, 2],
   ["Ketapang", -1.8524, 109.979, 2],
   ["Sintang", 0.0736, 111.4939, 2],
@@ -162,7 +159,7 @@ export const ID_CITIES: City[] = [
   ["Tarakan", 3.3, 117.6333, 2],
   ["Nunukan", 4.1333, 117.6667, 3],
   ["Malinau", 3.5833, 116.6333, 3],
-  // Sulawesi (lanjutan)
+
   ["Bitung", 1.4404, 125.1217, 2],
   ["Kotamobagu", 0.7333, 124.3167, 3],
   ["Tahuna", 3.6119, 125.5, 3],
@@ -181,7 +178,7 @@ export const ID_CITIES: City[] = [
   ["Baubau", -5.4667, 122.6333, 2],
   ["Kolaka", -4.05, 121.6, 3],
   ["Raha", -4.8333, 122.7333, 3],
-  // Bali dan Nusa Tenggara (lanjutan)
+
   ["Negara", -8.354, 114.6142, 3],
   ["Amlapura", -8.45, 115.6167, 3],
   ["Bima", -8.46, 118.727, 2],
@@ -196,7 +193,7 @@ export const ID_CITIES: City[] = [
   ["Atambua", -9.1061, 124.8925, 3],
   ["Kalabahi", -8.2167, 124.5167, 3],
   ["Waikabubak", -9.633, 119.415, 3],
-  // Jawa (lanjutan)
+
   ["Indramayu", -6.3275, 108.3248, 3],
   ["Sumedang", -6.8586, 107.9195, 3],
   ["Purwakarta", -6.5569, 107.4431, 3],

@@ -1,4 +1,3 @@
-// Minimal Arduino shim so Adafruit_GFX can render into a framebuffer on a computer.
 #pragma once
 #include <stdint.h>
 #include <stdlib.h>
@@ -6,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
-#include <unistd.h>  // like the ESP32 core: catches names such as link() that clash with POSIX
+#include <unistd.h>
 typedef bool boolean;
 typedef uint8_t byte;
 #define PROGMEM

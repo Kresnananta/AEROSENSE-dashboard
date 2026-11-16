@@ -1,5 +1,3 @@
-// Command validation for the AEROSENSE mist sprinkler. Pure C++ (no Arduino calls)
-// so the rules can be unit tested on a computer. See docs/MIST-SPRINKLER.md.
 #pragma once
 #include <ArduinoJson.h>
 #include <stdint.h>
@@ -9,7 +7,7 @@
 namespace mist {
 
 constexpr uint32_t MIN_PULSE_MS = 1000;
-constexpr uint32_t MAX_PULSE_MS = 10000;      // hard cap, payload cannot exceed it
+constexpr uint32_t MAX_PULSE_MS = 10000;
 constexpr uint32_t SESSION_BURST_MS = 120000;
 constexpr uint32_t SESSION_PAUSE_MS = 3000;
 constexpr uint32_t MAX_SESSION_MS = 3600000;
@@ -23,11 +21,11 @@ inline uint32_t sessionRemaining(uint32_t start, uint32_t duration, uint32_t now
   const uint32_t elapsed = now - start;
   return elapsed < duration ? duration - elapsed : 0;
 }
-constexpr int64_t MIN_COOLDOWN_S = 600;        // local minimum, payload can only lengthen it
+constexpr int64_t MIN_COOLDOWN_S = 600;
 constexpr int64_t MAX_COOLDOWN_S = 86400;
-constexpr int64_t MAX_LIFETIME_S = 60;         // expires_at - issued_at
+constexpr int64_t MAX_LIFETIME_S = 60;
 constexpr int64_t CLOCK_SKEW_S = 5;
-constexpr int64_t SYNCED_AFTER = 1735689600;   // 2025-01-01: earlier clock means NTP not synced
+constexpr int64_t SYNCED_AFTER = 1735689600;
 constexpr size_t RECENT_IDS = 8;
 constexpr size_t ID_LEN = 96;
 
@@ -41,12 +39,12 @@ struct State {
 
 struct Inputs {
   const char* actuatorId;
-  int64_t now;          // Unix seconds from NTP
+  int64_t now;
   bool pulseActive;
-  bool manualOff;       // physical OFF switch engaged
-  bool waterOk;         // water/float interlock
+  bool manualOff;
+  bool waterOk;
   bool batteryOk = true;
-  bool testNoCooldown = false; // Explicit commissioning mode; never bypass other checks.
+  bool testNoCooldown = false;
 };
 
 struct Decision {
@@ -70,7 +68,6 @@ inline int64_t daysFromCivil(int64_t y, unsigned m, unsigned d) {
   return era * 146097 + static_cast<int64_t>(doe) - 719468;
 }
 
-// Parses "YYYY-MM-DDTHH:MM:SS[.fff]Z" (the format n8n sends) to Unix seconds.
 inline bool parseIsoUtc(const char* s, int64_t& out) {
   if (!s) return false;
   int y, mo, d, h, mi, se;
@@ -111,7 +108,6 @@ inline Decision evaluate(const char* payload, size_t length, const Inputs& in, c
   if (!d.session && strcmp(action,"pulse")!=0 && strcmp(action,"stop")!=0) return reject(d,"unsupported_action");
   if (seen(st, id)) return reject(d, "duplicate");
 
-  // An authenticated stop always forces OFF, including during cooldown, low battery or unsynced clock.
   if (strcmp(action,"stop")==0) { d.accept=true; d.stop=true; d.stopEpoch=in.now; int64_t issuedStop=0; if(parseIsoUtc(doc["issued_at"].as<const char*>(),issuedStop)&&issuedStop>d.stopEpoch)d.stopEpoch=issuedStop; d.reason="remote_stop"; return d; }
   if (!in.batteryOk) return reject(d,"battery_low");
   if (in.manualOff) return reject(d, "manual_off");
@@ -152,7 +148,6 @@ inline Decision evaluate(const char* payload, size_t length, const Inputs& in, c
   return d;
 }
 
-// Remember every evaluated command id (accepted or not) so redelivery cannot start a pulse.
 inline void rememberId(State& st, const char* id) {
   if (!id || !*id || seen(st, id)) return;
   strncpy(st.recent[st.next], id, ID_LEN - 1);
@@ -165,4 +160,4 @@ inline void rememberPulse(State& st, const Decision& d, int64_t now) {
   st.cooldownS = d.cooldownS;
 }
 
-}  // namespace mist
+}

@@ -1,4 +1,3 @@
-// Local fixture server for browser checks. It never connects to a real database or n8n.
 import http from "node:http";
 const userId = "00000000-0000-4000-8000-000000000001";
 const viewerId = "00000000-0000-4000-8000-000000000002";
@@ -88,7 +87,7 @@ facts.unshift({
   valid_at: new Date(Date.now() - 86400000).toISOString(),
   fresh_until: new Date(Date.now() - 1000).toISOString(),
 });
-// Opt in to real public headlines while sensor/weather fixtures stay synthetic.
+
 let publicNewsRows = null;
 if (process.env.PREVIEW_LIVE_NEWS === "true") {
   publicNewsRows = [];

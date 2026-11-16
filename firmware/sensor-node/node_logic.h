@@ -1,5 +1,3 @@
-// Pure logic for the AEROSENSE sensor node: dust conversion, alert level, LoRa CSV and
-// gateway ACK handling. No Arduino calls, so it is unit tested on a computer.
 #pragma once
 #include <math.h>
 #include <stdint.h>
@@ -11,15 +9,12 @@ enum class Level { Unknown, Good, Warning, Danger };
 enum class Link { Waiting, Sent, Good, Weak, Lost };
 
 struct Sample {
-  float dust = NAN;          // optical dust, µg/m³ (Sharp GP2Y1010AU0F)
+  float dust = NAN;
   float eco2 = NAN, tvoc = NAN;
   float temperature = NAN, humidity = NAN;
-  bool sgpWarming = false;   // SGP30 returns fixed values for the first 15 s
+  bool sgpWarming = false;
 };
 
-// Sharp GP2Y1010AU0F: typical sensitivity 0.5 V per 0.1 mg/m³ (= 200 µg/m³ per volt) above the
-// clean-air output voltage. zeroVolts is that clean-air voltage, measured on site (typ. ~0.6 V).
-// sensorVolts is the sensor Vo, i.e. after undoing any voltage divider in front of the ADC.
 inline float sharpDust(float sensorVolts, float zeroVolts, float ugPerVolt = 200.0f) {
   if (isnan(sensorVolts)) return NAN;
   float ug = (sensorVolts - zeroVolts) * ugPerVolt;
@@ -33,7 +28,6 @@ inline Level levelFor(float value, float high, float danger) {
   return Level::Good;
 }
 
-// One CSV line in the gateway format: node_id,counter,suhu,eco2_raw,tvoc_raw,pm25_raw,kelembapan
 inline int csvLine(char* out, size_t size, const char* nodeId, uint32_t counter, const Sample& s) {
   auto put = [](char* b, size_t n, float v, int d) { if (isnan(v)) snprintf(b, n, "nan"); else snprintf(b, n, "%.*f", d, v); };
   char t[16], e[16], v[16], d[16], h[16];
@@ -42,7 +36,6 @@ inline int csvLine(char* out, size_t size, const char* nodeId, uint32_t counter,
   return snprintf(out, size, "%s,%lu,%s,%s,%s,%s,%s\n", nodeId, static_cast<unsigned long>(counter), t, e, v, d, h);
 }
 
-// Gateway reply: "ACK,<node_id>,<counter>[,<rssi_dbm>]". Returns true when it matches this node and counter.
 inline bool parseAck(const char* line, const char* nodeId, uint32_t counter, int& rssi, bool& hasRssi) {
   if (strncmp(line, "ACK,", 4) != 0) return false;
   const char* p = line + 4;
@@ -61,7 +54,6 @@ inline bool parseAck(const char* line, const char* nodeId, uint32_t counter, int
   return true;
 }
 
-// Tracks LoRa link quality from gateway ACKs. Without ACK mode it can only report "sent".
 struct LinkState {
   Link state = Link::Waiting;
   int rssi = 0;
@@ -78,6 +70,6 @@ struct LinkState {
   void timedOut(uint8_t lostAfter) {
     if (misses < 255) misses++;
     if (misses >= lostAfter) state = Link::Lost;
-    else if (state == Link::Good) state = Link::Weak;  // one missed ACK: degraded, not lost yet
+    else if (state == Link::Good) state = Link::Weak;
   }
 };

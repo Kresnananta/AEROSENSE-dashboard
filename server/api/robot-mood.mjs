@@ -1,5 +1,3 @@
-// Robot mood: every 30 minutes (06.00–21.00 WIB) each online robot tells how the air near its node feels,
-// with a face matching the condition, what the number means, and what to do. Pure text logic is in moodFor().
 export const MOOD_EVERY_MS = 30 * 60000;
 
 const HOOKS = {
@@ -34,7 +32,7 @@ const ACTION = {
   calm: "Waktu yang pas untuk buka jendela supaya udara segar masuk. Tetap jaga ya, jangan bakar sampah.",
 };
 const FACE = { danger: "danger", warning: "warning", calm: "happy" };
-// ISPU PM2.5 (Permen LHK 14/2020) categories, used for wording and when a node has no rule.
+
 const ispu = (v) =>
   v <= 15.5
     ? ["baik", "calm"]
@@ -47,8 +45,6 @@ const ispu = (v) =>
           : ["berbahaya", "danger"];
 const num = (v, d = 0) => String(Math.round(v * 10 ** d) / 10 ** d).replace(".", ",");
 
-// latest: ae_latest row; rules: ae_rules rows for the node; slot: index used to vary the opening line.
-// Returns null when there is nothing trustworthy to say (no recent valid reading).
 export function moodFor({ latest, rules = [], pm25Validated, slot = 0, now = Date.now() }) {
   if (!latest?.observed_at || now - Date.parse(latest.observed_at) > 600000) return null;
   if (latest.quality?.invalid === true) return null;
@@ -78,7 +74,6 @@ export function moodFor({ latest, rules = [], pm25Validated, slot = 0, now = Dat
   return { band, face: FACE[band], severity: band === "calm" ? null : band, text: parts.join(" ") };
 }
 
-// Hours in WIB when the robot may speak on its own.
 export const awakeHour = (now = Date.now()) => {
   const h = new Date(now + 7 * 3600000).getUTCHours();
   return h >= 6 && h < 21;
@@ -91,7 +86,7 @@ export function startRobotMood({ db, filter, speak, now = Date.now }) {
     const slot = Math.floor(t / MOOD_EVERY_MS);
     const robots = await db("ae_robots", "enabled=eq.true&quiet=eq.false&select=id,node_id,last_seen_at");
     for (const robot of robots || []) {
-      // Skip robots that are not polling: audio for an offline robot would only expire unused.
+
       if (!robot.last_seen_at || t - Date.parse(robot.last_seen_at) > 600000) continue;
       const [latest] = await db("ae_latest", "node_id=eq." + filter(robot.node_id) + "&limit=1");
       const [node] = await db("ae_nodes", "id=eq." + filter(robot.node_id) + "&select=pm25_validated&limit=1");

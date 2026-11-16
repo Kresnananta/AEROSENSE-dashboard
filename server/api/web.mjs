@@ -9,7 +9,7 @@ const reportScope = {
   max_readings_per_node: 288,
   excludes: ["esg_rating", "regulatory_compliance", "corporate_emissions_inventory"],
 };
-// Browser routes share the ae_ tables and the existing authorization checks.
+
 export function webRoutes({ db, one, user, member, reader = member, send, filter, env }) {
   return async (req, res, url) => {
     const path = url.pathname;
@@ -71,7 +71,7 @@ export function webRoutes({ db, one, user, member, reader = member, send, filter
       );
       nodes.push(...found.map((n) => ({ ...n, role: m.role })));
     }
-    // Transparency: every signed-in account also sees published nodes, as a viewer with public fields.
+
     if (path !== "/v1/esg/report") {
       const own = new Set(nodes.map((n) => n.id));
       for (const n of await db("ae_nodes", "public_read=eq.true&enabled=eq.true"))
@@ -113,7 +113,7 @@ export function webRoutes({ db, one, user, member, reader = member, send, filter
           rules: allRules.filter((r) => r.node_id === n.id),
           latest: await (async () => {
             const latest = (await one("ae_sensor_context", "node_id=eq." + filter(n.id))) ?? null;
-            // Model output is shown to operators, admins and auditors only.
+
             return latest && !canViewModel(n.role) ? { ...latest, gru: null } : latest;
           })(),
         })),
@@ -161,7 +161,6 @@ export function webRoutes({ db, one, user, member, reader = member, send, filter
   };
 }
 
-// Public environmental context follows the authorized robot node point.
 export async function readEnvironment({ db, one, node }, now = Date.now()) {
   if (!node?.enabled || !Number.isFinite(node.latitude) || !Number.isFinite(node.longitude))
     throw Object.assign(new Error("Titik node belum memiliki koordinat valid"), { status: 503 });

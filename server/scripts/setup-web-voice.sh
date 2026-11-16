@@ -10,7 +10,6 @@ credential_path="/tmp/aerosense-voice-credentials-$$.json"
 staging="$(mktemp /tmp/aerosense-voice.XXXXXXXX)"
 cleanup() { docker exec "$n8n_container" rm -f "$credential_path" >/dev/null 2>&1 || true; rm -f "$staging"; }
 trap cleanup EXIT
-# Export only inside the user's server. Never echo credentials or commit them.
 docker exec "$n8n_container" sh -c 'umask 077; n8n export:credentials --all --decrypted --output="$1"' sh "$credential_path" >/dev/null
 docker exec "$n8n_container" cat "$credential_path" > "$staging"
 python3 - "$target/.env" "$staging" <<'PY'

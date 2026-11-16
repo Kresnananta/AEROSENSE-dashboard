@@ -1,6 +1,3 @@
-// Pure helpers for the hands-free AERO-BOT voice mode. No DOM access here so the
-// logic can be unit tested with Node.
-
 const WAKE_TARGET = "aerobot";
 const WAKE_GREETINGS = new Set(["halo", "hallo", "helo", "hello"]);
 const GREETINGS = new Set([
@@ -17,7 +14,7 @@ const GREETINGS = new Set([
   "ok",
   "okay",
 ]);
-// Frequent Indonesian speech-to-text spellings that are too far from "aerobot" by edit distance.
+
 const ALIASES = new Set(["errorbot", "eurobot", "airbot", "aerobat", "aerobott", "erobott"]);
 const FILLERS = new Set([
   "ya",
@@ -73,8 +70,6 @@ export interface WakeMatch {
   remainder: string;
 }
 
-// Accepts common speech-to-text spellings: "Halo AERO-BOT", "halo aero bot", "hello airobot",
-// "halo robot". Without a greeting the name must be closer (distance <= 1) to avoid false wakes.
 export function detectWakePhrase(text: string, requireGreeting = false): WakeMatch {
   const list = tokens(text);
   let nameStart = 1;
@@ -121,7 +116,6 @@ export interface VadOptions {
   maxSpeechMs?: number;
 }
 
-// Energy based voice activity detection with an adaptive noise floor.
 export function createVad(options: VadOptions = {}): Vad {
   const minThreshold = options.minThreshold ?? 0.012;
   const startMs = options.startMs ?? 160;
@@ -188,7 +182,6 @@ export function concatFrames(frames: Float32Array[]): Float32Array {
   return out;
 }
 
-// Box-filter decimation. Good enough for speech sent to a transcription model.
 export function downsample(input: Float32Array, fromRate: number, toRate: number): Float32Array {
   if (toRate >= fromRate) return input;
   const ratio = fromRate / toRate;
@@ -236,7 +229,6 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-// Splits long answers so browser speech synthesis does not cut off after ~15 seconds.
 export function speechChunks(text: string, max = 180): string[] {
   const sentences =
     text
@@ -256,10 +248,6 @@ export function speechChunks(text: string, max = 180): string[] {
   return chunks;
 }
 
-// Splits an answer into parts for Gemini TTS. The first part is short so playback can
-// start quickly while the next parts are generated. Keep identical to server/api/browser-voice.mjs.
-// Spoken version of an answer: keeps the reply and each data value, drops the
-// "· source · time" details that are useful to read but tiring to hear.
 export function speechText(text: string): string {
   return text
     .split("\n")

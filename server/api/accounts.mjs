@@ -1,5 +1,3 @@
-// Accounts: profile, role requests and their review by the AEROSENSE team, plus address search for sign-up.
-// A new account is always a warga. Asking for a role never grants it; only ae_review_role_request does.
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const REQUESTABLE_ROLES = ["operator", "auditor", "admin"];
@@ -14,7 +12,6 @@ const text = (v, max) =>
         .slice(0, max) || null
     : null;
 
-// Indonesian numbers are stored as 62…; a leading 0 becomes 62.
 export function normalizePhone(v) {
   if (v === undefined || v === null || v === "") return null;
   const digits = String(v).replace(/[\s().-]/g, "").replace(/^\+/, "");
@@ -71,7 +68,6 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
   const isStaff = async (id) => !!(await one("ae_staff", "user_id=eq." + filter(id)));
   const body = async (req, max = 4000) => JSON.parse((await rawBody(req, max)).toString() || "{}");
 
-  // First signed-in visit: turn the sign-up form (stored in user_metadata) into a profile and request.
   async function ensureProfile(u) {
     let profile = await one("ae_profiles", "user_id=eq." + filter(u.id));
     if (profile) return profile;
@@ -104,7 +100,6 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
   return async (req, res, url) => {
     const path = url.pathname;
 
-    // Address search for the sign-up map. No account needed; results are coarse public places.
     if (path === "/v1/geocode" && req.method === "GET") {
       const q = text(url.searchParams.get("q"), 160);
       if (!q || q.length < 3) throw fail("Ketik minimal 3 huruf alamat.");
@@ -185,7 +180,6 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
       return true;
     }
 
-    // Review queue: AEROSENSE team only. Contact details never reach location admins of other partners.
     if (!(await isStaff(u.id))) throw fail("Verifikasi peran hanya untuk tim AEROSENSE.", 403);
 
     if (path === "/v1/role-requests" && req.method === "GET") {

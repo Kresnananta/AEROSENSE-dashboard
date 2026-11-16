@@ -6,7 +6,7 @@ export interface ChatJob {
   error?: string;
   token?: string;
 }
-// Visitors without an account read their answer back with the token the server gave for that question.
+
 const guestTokens = new Map<string, string>();
 export const chatService = {
   send(text: string, key: string, nodeId?: string, robotId?: string, voice = false) {

@@ -1,4 +1,3 @@
-// Runs inside aerosense-api, uses its existing environment; never prints secrets.
 const e = process.env;
 const headers = { Authorization: "Basic " + Buffer.from(e.GOWA_BASIC_AUTH || "").toString("base64") };
 async function get(path) {
@@ -15,7 +14,7 @@ try {
   const linked = status?.is_connected === true && status?.is_logged_in === true && /^\d{8,15}@s\.whatsapp\.net$/.test(jid || "");
   if (process.argv.includes("--jid")) {
     if (!linked) throw new Error("Scan the QR for the aerosense device and wait until connected");
-    // This output is consumed by setup-gowa.sh, not included in status reports.
+
     process.stdout.write(jid);
   } else {
     const r = await fetch(e.SUPABASE_URL + "/rest/v1/ae_wa_receipts?select=message_id&limit=0", {

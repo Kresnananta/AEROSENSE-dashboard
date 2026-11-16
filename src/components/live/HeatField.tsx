@@ -5,9 +5,6 @@ import { apiRequest } from "@/services/api";
 import { ID_CITIES } from "@/lib/id-cities";
 import { HEAT_LAYERS, type HeatLayerKey, type Stop } from "./heat-layers";
 
-// Continuous heatmap of model values (Open-Meteo) for the visible map area, like a weather map.
-// /v1/heatmap returns a small grid; the browser smooths it with bicubic (Catmull-Rom) interpolation,
-// blends it with the map (multiply, so streets and names stay readable) and labels a few grid points.
 type Grid = {
   south: number;
   west: number;
@@ -15,7 +12,7 @@ type Grid = {
   rows: number;
   cols: number;
   values: (number | null)[][];
-  /** Wind only: direction the wind comes from, degrees. */
+
   direction?: (number | null)[][];
   source: string;
   valid_at: string | null;
@@ -38,7 +35,6 @@ function colorAt(stops: readonly Stop[], v: number) {
   return hex(stops[stops.length - 1][1]);
 }
 
-// Missing grid points take the mean of the grid so the surface has no holes.
 function filled(g: Grid) {
   const known = g.values.flat().filter((v): v is number => typeof v === "number");
   const mean = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
@@ -47,7 +43,6 @@ function filled(g: Grid) {
 const cr = (p0: number, p1: number, p2: number, p3: number, t: number) =>
   p1 + 0.5 * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)));
 
-// Bicubic interpolation of the grid onto a canvas. Row 0 of the grid is the south edge.
 function render(g: Grid, v: number[][], stops: readonly Stop[]) {
   const S = 32;
   const W = (g.cols - 1) * S + 1,
@@ -76,7 +71,7 @@ function render(g: Grid, v: number[][], stops: readonly Stop[]) {
       img.data[o] = r;
       img.data[o + 1] = gr;
       img.data[o + 2] = b;
-      // Feather the outer edge so the field fades into the map instead of ending in a hard box.
+
       const edge = Math.min(x, y, W - 1 - x, H - 1 - y) / (Math.min(W, H) * 0.12);
       img.data[o + 3] = Math.round(255 * Math.min(1, edge));
     }
@@ -85,7 +80,6 @@ function render(g: Grid, v: number[][], stops: readonly Stop[]) {
   return canvas.toDataURL();
 }
 
-// Value of the smooth surface at a coordinate; null outside the grid.
 function sample(g: Grid, v: number[][], lat: number, lng: number) {
   const gy = (lat - g.south) / g.step,
     gx = (lng - g.west) / g.step;
@@ -104,11 +98,10 @@ type Field = {
   v: number[][];
   zoom: number;
   covers: [[number, number], [number, number]];
-  /** Wind only: flow components in km/h, u towards east, v towards north. */
+
   uv?: { u: number[][]; v: number[][] };
 };
 
-// Speed and "from" direction to the components of the flow (towards), used by labels and particles.
 function windComponents(g: Grid, speed: number[][]) {
   const u: number[][] = [],
     v: number[][] = [];
@@ -129,8 +122,6 @@ const ARROWS = ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"];
 const arrow = (u: number, v: number) =>
   ARROWS[((Math.round(Math.atan2(v, u) / (Math.PI / 4)) % 8) + 8) % 8];
 
-// Particles drawn on a canvas over the map, carried by the wind field like a weather map.
-// Paused while the map moves; off when the viewer asks for reduced motion.
 function WindParticles({ field }: { field: Field }) {
   const map = useMap();
   useEffect(() => {
@@ -141,7 +132,7 @@ function WindParticles({ field }: { field: Field }) {
     map.getContainer().appendChild(canvas);
     const ctx = canvas.getContext("2d")!;
     const CELL = 8,
-      SPEED = 0.12, // pixels per frame for each km/h
+      SPEED = 0.12,
       LIFE = 90;
     let raf = 0,
       W = 0,
@@ -152,7 +143,7 @@ function WindParticles({ field }: { field: Field }) {
       px = new Float32Array(0),
       py = new Float32Array(0),
       age = new Uint16Array(0);
-    // Flow sampled on a coarse screen grid once per view, so each frame is a cheap lookup.
+
     const build = () => {
       const size = map.getSize();
       W = size.x;
@@ -187,7 +178,7 @@ function WindParticles({ field }: { field: Field }) {
       age[i] = Math.floor(Math.random() * LIFE);
     };
     const frame = () => {
-      // Fade the previous frame to leave short trails.
+
       ctx.globalCompositeOperation = "destination-in";
       ctx.fillStyle = "rgba(0,0,0,0.9)";
       ctx.fillRect(0, 0, W, H);
@@ -246,13 +237,13 @@ type Label = {
   position: [number, number];
   text: string;
   city: boolean;
-  /** Background from the colour scale at this value, and a readable text colour on it. */
+
   bg: string;
   fg: string;
 };
-// At this zoom and below, labels follow cities instead of a coordinate lattice.
+
 const CITY_ZOOM = 10;
-// The heatmap covers Indonesia and its seas; views beyond it are clipped to this box.
+
 const REGION = { south: -13, west: 92, north: 8, east: 143 };
 const clip = (b: {
   getSouth(): number;
@@ -267,7 +258,6 @@ const clip = (b: {
   return s < n && w < e ? { s, w, n, e } : null;
 };
 
-// Label spacing in degrees: a round step giving about three rows of labels in the view.
 const STEPS = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5];
 const labelStep = (latSpan: number) => STEPS.find((s) => s >= latSpan / 3) ?? 5;
 
@@ -293,19 +283,17 @@ export function HeatField({
     setWind(null);
     setLayers([]);
     setLabels([]);
-    // Labels sit on fixed coordinates (multiples of a round step), so they move with the map;
-    // their values are read from the current surface.
+
     const relabel = () => {
       const f = field.current;
       if (!f) return setLabels([]);
       const view = map.getBounds();
       const size = map.getSize();
       const zoom = map.getZoom();
-      // Zoomed out: one label per city, under its name; bigger cities first as the view widens.
-      // Zoomed in: labels on fixed coordinates that move with the map.
+
       const points: { lat: number; lng: number; city: boolean }[] = [];
       if (zoom <= CITY_ZOOM) {
-        // Whole country: provincial capitals; a few islands: large cities too; a province: all towns.
+
         const maxRank = zoom <= 5 ? 1 : zoom <= 7 ? 2 : 3;
         for (const [, lat, lng, rank] of [...ID_CITIES].sort((x, y) => x[3] - y[3]))
           if (rank <= maxRank && view.contains([lat, lng])) points.push({ lat, lng, city: true });
@@ -327,13 +315,13 @@ export function HeatField({
       const placed: { x: number; y: number }[] = [];
       for (const { lat, lng, city } of points) {
         const p = map.latLngToContainerPoint([lat, lng]);
-        // Keep clear of the edges, of the legend in the bottom-left corner, and of other labels.
+
         if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
         if (p.x < 260 && p.y > size.y - 200) continue;
         if (placed.some((q) => Math.abs(q.x - p.x) < 64 && Math.abs(q.y - p.y) < 34)) continue;
         const value = sample(f.g, f.v, lat, lng);
         if (value == null) continue;
-        // Rain and lightning labels only where there is something to report.
+
         const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
         if (quiet !== undefined && value < quiet) continue;
         let text = HEAT_LAYERS[layer].format(value);
@@ -342,7 +330,7 @@ export function HeatField({
             v = sample(f.g, f.uv.v, lat, lng) ?? 0;
           if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
         }
-        // Like a weather map: the label takes the colour of its value, with text readable on it.
+
         const stops = HEAT_LAYERS[layer].stops;
         const [r, gr, bl] = colorAt(
           stops,
@@ -362,7 +350,7 @@ export function HeatField({
       }
       setLabels(out);
     };
-    // Fetch only when the view leaves the area already loaded or the zoom changed a lot.
+
     const needsData = () => {
       const f = field.current;
       if (!f) return true;
@@ -410,7 +398,7 @@ export function HeatField({
             ...(g.direction ? { uv: windComponents(g, v) } : {}),
           };
           setWind(field.current.uv ? field.current : null);
-          // New image fades in over the old one; the old one is removed once it is covered.
+
           setLayers((old) => [
             ...old.slice(-1),
             { id, url: render(g, v, HEAT_LAYERS[layer].stops), bounds },

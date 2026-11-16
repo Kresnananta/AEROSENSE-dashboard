@@ -1,5 +1,3 @@
-// WATERSENSE Wi-Fi/MQTT. ESP32-S3, GPIO4 MOSFET active HIGH, battery GPIO1, local button GPIO21.
-// Automatic 15-second cycling from the hardware test is intentionally removed.
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <Preferences.h>
@@ -269,12 +267,11 @@ void network(){
   return;
  }
  if(activeCommand[0])return;
- // begin() is called once in setup; the ESP32 core owns automatic Wi-Fi retries.
- // Repeated begin() while associating causes "sta is connecting, cannot set config".
+
  if(WiFi.status()!=WL_CONNECTED)return;
  if(mqttConnected()||(lastConnect&&millis()-lastConnect<5000))return;
  lastConnect=millis();char offline[100];snprintf(offline,sizeof(offline),"{\"state\":\"offline\",\"actuator_id\":\"%s\"}",networkSettings.id);
- // Allow a slower LAN handshake only while the pump is OFF.
+
  mqtt.setSocketTimeout(10);
  bool connected=mqtt.connect(networkSettings.id,networkSettings.id,networkSettings.mqttPassword,statusTopic,1,true,offline,true);
  mqtt.setSocketTimeout(1);lastConnect=millis();

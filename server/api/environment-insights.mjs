@@ -1,4 +1,3 @@
-// Shared by the API and the n8n Code node. No network calls or model tokens.
 export function summarizeEnvironment(facts, now = Date.now()) {
   const time = (f) => Date.parse(f.valid_at || f.fetched_at || "") || 0;
   const day = (t) => new Date(t + 7 * 3600000).toISOString().slice(0, 10);

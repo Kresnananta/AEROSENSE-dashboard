@@ -183,7 +183,7 @@ export function NearbyAlerts() {
             {raised.length ? (
               <TriangleAlert size={28} aria-hidden="true" />
             ) : !nodes.length || pending.length === nodes.length ? (
-              // No readings is not "all clear": no check mark.
+
               <Clock3 size={28} aria-hidden="true" />
             ) : (
               <CheckCircle2 size={28} aria-hidden="true" />

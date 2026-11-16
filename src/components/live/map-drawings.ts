@@ -1,4 +1,3 @@
-// Lucide RadioTower, Flame and Activity paths (ISC). Shared by markers and legend.
 export const mapDrawings = {
   watersense: '<path d="M12 2.7C9 7.1 5.5 10.3 5.5 14a6.5 6.5 0 0 0 13 0c0-3.7-3.5-6.9-6.5-11.3Z"/><path d="M9 14.7a3 3 0 0 0 2.5 2.8"/>',
   sensor:

@@ -231,7 +231,7 @@ async function answer(j) {
   return stage(j, { answer: text });
 }
 async function speech(text) {
-  // Same text the web player speaks: no "Sumber:" lines.
+
   if (useWibowo(e)) return wibowoSpeech(e, speechText(text));
   if (!e.GEMINI_TTS_MODEL) throw new Error("TTS model not configured");
   const response = await gemini(
@@ -263,14 +263,14 @@ async function speech(text) {
   );
   return wavAudio(response);
 }
-// Speak command for a robot: cloud TTS audio in storage plus the text and face. Used by chat replies and robot mood.
+
 async function robotSpeak(robot, key, { text, face, severity = null, nativeAudio, priority = 10, ttlMs = 180000 }) {
   let path = null;
-  // ROBOT_TTS=local: no cloud audio; the robot mini PC speaks the text with Wibowo (open-source, no tokens).
+
   const localTts = e.ROBOT_TTS === "local";
   if (!robot.quiet && !localTts) {
     try {
-      // Wibowo: always speak on the server. Gemini: reuse the audio n8n already made, if any.
+
       const wav =
         useWibowo(e) || !nativeAudio || !Object.keys(nativeAudio).length
           ? await speech(text)
@@ -341,7 +341,7 @@ function rate(key, max, period = 60000) {
       status: 429,
     });
   buckets.set(key, b);
-  // ponytail: process-local limits. Put a shared limiter at the reverse proxy for multiple API replicas.
+
   if (buckets.size > 10000) for (const [k, v] of buckets) if (v.until < now) buckets.delete(k);
 }
 async function user(req) {
@@ -357,7 +357,7 @@ async function user(req) {
 async function member(u, nodeId, write = false) {
   return nodeAccess({ one, filter }, u.id, nodeId, { write });
 }
-// Read access: members, plus any signed-in account on a published (public_read) node.
+
 async function reader(u, nodeId) {
   return nodeAccess({ one, filter }, u.id, nodeId, { allowPublic: true });
 }
@@ -454,7 +454,7 @@ async function acceptWhatsapp(payload) {
           Math.abs(Date.now() - Number(m.timestamp) * 1000) > 86400000
         )
           continue;
-        // Deduplicate the full inbound event before executing STOP or single-use pairing codes.
+
         await enqueue("wa_inbox", "inbound:" + m.id, {
           phone: m.from,
           message: m,
@@ -673,12 +673,12 @@ async function nativeRefresh(j, p) {
     quality: r.quality ?? {},
   }));
   await stage(j, { context: rows, snapshot_at: new Date().toISOString() });
-  // Forecast, warnings, cyclones and nearby earthquakes for every question; a failure leaves them out.
+
   let outlook_facts = [];
   const spot = rows.find((r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude));
   if (spot)
     try {
-      // The answer check only accepts facts tagged with the node's hub area.
+
       const hub = await one(
         "ae_environment_areas",
         "source_node_id=eq." + filter(spot.node_id) + "&enabled=eq.true&select=id",
@@ -690,7 +690,7 @@ async function nativeRefresh(j, p) {
       ]);
       if (hub?.id) outlook_facts = weatherFacts(wx, hz, area);
     } catch {
-      /* Weather is supplementary. */
+
     }
   let disaster_news = [];
   if (/berita|kabar|bencana|karhutla|indonesia/i.test(j.stage.text || "")) {
@@ -716,7 +716,7 @@ async function nativeRefresh(j, p) {
           role: "supplementary",
         }));
     } catch {
-      /* Missing news cache must not stop sensor questions. */
+
     }
   }
   return {
@@ -725,7 +725,7 @@ async function nativeRefresh(j, p) {
     text: j.stage.text,
     node_ids: j.body.node_ids || [],
     context: rows,
-    // Outlook first: the Hub node keeps a fixed number of extra facts after the area facts.
+
     disaster_news: [...outlook_facts, ...disaster_news],
   };
 }
@@ -771,7 +771,7 @@ async function nativeAnswer(j, p) {
       ? "concerned"
       : "neutral";
   await stage(j, { answer: text, denied, emotion });
-  // Prepare the first spoken part of every web answer, so "Dengarkan" starts at once.
+
   if (j.kind === "web_chat" && j.owner_id && !denied) voiceRoutes.prefetch(j.owner_id, text);
   const robot =
     j.kind === "robot_chat" ? await one("ae_robots", "id=eq." + filter(j.body.robot_id)) : null;
@@ -1129,7 +1129,7 @@ const server = http.createServer(async (req, res) => {
               "location_id=eq." + filter(m.location_id) + "&enabled=eq.true",
             )),
           );
-        // Published nodes are listed for every account, with public fields only.
+
         const own = new Set(nodes.map((n) => n.id));
         for (const n of await db("ae_nodes", "public_read=eq.true&enabled=eq.true"))
           if (!own.has(n.id) && n.public_read === true)
@@ -1163,8 +1163,7 @@ const server = http.createServer(async (req, res) => {
           "ae_readings",
           "node_id=eq." + filter(nodeId) + "&order=observed_at.desc&limit=288",
         );
-        // Viewers (warga) get the corrected readings only; raw inputs and model output
-        // are for operators, admins and auditors who can interpret them.
+
         return send(res, 200, {
           readings: canViewModel(n.member_role) ? rows : rows.map(simpleReading),
           detail: canViewModel(n.member_role) ? "model" : "simple",
@@ -1176,7 +1175,7 @@ const server = http.createServer(async (req, res) => {
           "ae_alerts",
           "node_id=eq." + filter(nodeId) + "&order=created_at.desc&limit=100",
         );
-        // Non-members of a published node get the alert itself, not who reviewed it.
+
         return send(res, 200, {
           alerts: n.public_access
             ? alerts.map(({ acknowledged_by, reading_id, rule_id, ...a }) => a)
@@ -1387,7 +1386,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 server.requestTimeout = 20000;
-// One refresh per backend process; visitors read the persisted Supabase cache.
+
 let newsTimer;
 if (e.DISASTER_NEWS_ENABLED !== "false") {
   const refreshNews = () =>
@@ -1400,7 +1399,7 @@ if (e.DISASTER_NEWS_ENABLED !== "false") {
   newsTimer = setInterval(refreshNews, 15 * 60000);
   newsTimer.unref();
 }
-// Robot mood every 30 minutes. Disable with ROBOT_MOOD_ENABLED=false.
+
 const moodTimer =
   e.ROBOT_MOOD_ENABLED === "false"
     ? null

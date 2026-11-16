@@ -84,7 +84,7 @@ function prepareHubContext(base, cacheResult, now = Date.now()) {
             Number(String(b.label).includes(tomorrow)) - Number(String(a.label).includes(tomorrow)),
         );
       }
-      // Keywords prioritize facts, but never hide other categories from the model.
+
       selected.sort(
         (a, b) => Number(wanted.includes(b.category)) - Number(wanted.includes(a.category)),
       );
@@ -94,7 +94,7 @@ function prepareHubContext(base, cacheResult, now = Date.now()) {
           available.push(f);
         }
     }
-  // Round-robin categories so a large weather feed cannot crowd out air or earthquake facts.
+
   const groups = Map.groupBy(available, (f) => f.category),
     balanced = [];
   for (let i = 0; balanced.length < 21 && i < 8; i++)

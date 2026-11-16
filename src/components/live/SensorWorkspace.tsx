@@ -96,7 +96,7 @@ export function SensorWorkspace({
       : null,
   );
   const readings = history.data?.readings || [];
-  // The API decides: "model" for operators, admins and auditors; "simple" for guests and warga.
+
   const modelView = history.data?.detail === "model";
   const environment = useLiveData<EnvironmentResponse>(
     node && mode === "map" && eventType !== "none"
@@ -722,7 +722,6 @@ export function SensorWorkspace({
   );
 }
 
-// Plain-language summary for guests and warga: average, highest and lowest of the shown readings.
 function HistorySummary({ readings, metric }: { readings: Reading[]; metric: string }) {
   const points = readings
     .filter((r) => r.quality?.invalid !== true && typeof r.metrics[metric] === "number")

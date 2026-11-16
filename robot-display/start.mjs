@@ -235,7 +235,7 @@ const server = http.createServer(async (req, res) => {
         Connection: "keep-alive",
       });
       clients.add(res);
-      // Never replay in-progress speech when a window reconnects.
+
       res.write(
         `data: ${JSON.stringify(state.action === "speak" ? { action: "listening" } : state)}\n\n`,
       );

@@ -1,7 +1,3 @@
-// AEROSENSE sensor node: ESP32-S3 + SGP30 + Sharp GP2Y1010AU0F + AM2301 + EBYTE E220 + 1.8" ST7735.
-// Shows the AEROSENSE logo at start, then live readings straight from the sensors, the LoRa link
-// state and BAIK / WASPADA / BAHAYA. Sends one CSV line to the gateway every SEND_INTERVAL_S.
-// Libraries: Adafruit ST7735 and ST7789, Adafruit GFX, Adafruit SGP30, DHT sensor library (Adafruit).
 #include <Wire.h>
 #include <SPI.h>
 #include <Adafruit_ST7735.h>
@@ -9,10 +5,10 @@
 #include <DHT.h>
 #include "config.h"
 #ifndef TFT_ROTATION
-#define TFT_ROTATION 0   // portrait; older config.h files do not define it
+#define TFT_ROTATION 0
 #endif
 #ifndef DHT_TYPE
-#define DHT_TYPE DHT21   // AM2301
+#define DHT_TYPE DHT21
 #endif
 #ifndef BATTERY_PIN
 #define BATTERY_PIN -1
@@ -21,14 +17,14 @@
 #define BATTERY_DIVIDER 2.0
 #endif
 #ifndef SERIAL_LOG_S
-#define SERIAL_LOG_S 5   // readable sensor line on Serial Monitor; 0 to turn off
+#define SERIAL_LOG_S 5
 #endif
 #include "screens.h"
 #include "espnow_link.h"
 
 SPIClass tftSpi(FSPI);
 Adafruit_ST7735 tft(&tftSpi, TFT_CS, TFT_DC, TFT_RST);
-GFXcanvas16 canvas(128, 160);   // draw off-screen, then push in one go: no flicker
+GFXcanvas16 canvas(128, 160);
 Adafruit_SGP30 sgp;
 DHT dht(DHT_PIN, DHT_TYPE);
 HardwareSerial lora(1);
@@ -44,7 +40,7 @@ uint8_t sendChannel = 1;
 void sendToSprinkler(uint32_t now) {
   if (!sprinklerLink || now - lastSprinklerSend < 220) return;
   lastSprinklerSend = now;
-  // The controller follows its router channel when online.
+
   if (esp_wifi_set_channel(sendChannel, WIFI_SECOND_CHAN_NONE) == ESP_OK) {
     sprinklerReading.dust = live.dust;
     ++sprinklerReading.sequence;
@@ -58,7 +54,7 @@ bool sgpOk = false;
 uint32_t sgpStartMs = 0;
 float dustRing[10];
 uint8_t dustRingCount = 0, dustRingNext = 0;
-double dustSum = 0;              // since the last packet
+double dustSum = 0;
 uint32_t dustSamples = 0;
 uint32_t counter = 0;
 LinkState loraLink;
@@ -70,7 +66,7 @@ uint32_t lastSgp = 0, lastDht = 0, lastDust = 0, lastDraw = 0, lastLog = 0, next
 float lastSharpVolts = NAN;
 
 float readSharpVolts() {
-  // Datasheet timing: LED on, sample at 0.28 ms, LED off after 0.32 ms, 10 ms cycle.
+
   uint32_t total = 0;
   for (int i = 0; i < 10; i++) {
     digitalWrite(SHARP_LED_PIN, SHARP_LED_ACTIVE_LOW ? LOW : HIGH);
@@ -91,7 +87,7 @@ void readDust() {
   if (dustRingCount < 10) dustRingCount++;
   float sum = 0;
   for (uint8_t i = 0; i < dustRingCount; i++) sum += dustRing[i];
-  live.dust = sum / dustRingCount;   // ~10 s moving average for the screen
+  live.dust = sum / dustRingCount;
   dustSum += ug;
   dustSamples++;
 }
@@ -101,7 +97,7 @@ void readDht() {
   live.temperature = t;
   live.humidity = h;
   if (sgpOk && !isnan(t) && !isnan(h)) {
-    // Absolute humidity (mg/m³) for SGP30 humidity compensation (Sensirion formula).
+
     float ah = 216.7f * ((h / 100.0f) * 6.112f * expf((17.62f * t) / (243.12f + t)) / (273.15f + t));
     sgp.setHumidity(static_cast<uint32_t>(ah * 1000.0f));
   }
@@ -109,7 +105,7 @@ void readDht() {
 
 void readSgp() {
   if (!sgpOk) { live.eco2 = live.tvoc = NAN; return; }
-  // SGP30 must be measured every second to keep its baseline algorithm running.
+
   if (!sgp.IAQmeasure()) { live.eco2 = live.tvoc = NAN; return; }
   live.sgpWarming = millis() - sgpStartMs < 15000;
   live.eco2 = sgp.eCO2;
@@ -126,7 +122,6 @@ float readBatteryVolts() {
 #endif
 }
 
-// One plain line per SERIAL_LOG_S for bench testing. The screen is not affected.
 void logReadings() {
   Serial.printf("Baca | debu %.1f ug/m3 (Vo %.2f V) | eCO2 %.0f ppm | TVOC %.0f ppb%s | suhu %.1f C | RH %.1f %%",
     live.dust, lastSharpVolts, live.eco2, live.tvoc, live.sgpWarming ? " (pemanasan)" : "",
@@ -144,7 +139,7 @@ void logReadings() {
 
 void sendPacket() {
   Sample packet = live;
-  if (dustSamples) packet.dust = static_cast<float>(dustSum / dustSamples);  // mean over the interval
+  if (dustSamples) packet.dust = static_cast<float>(dustSum / dustSamples);
   if (packet.sgpWarming) packet.eco2 = packet.tvoc = NAN;
   dustSum = 0;
   dustSamples = 0;
@@ -153,7 +148,7 @@ void sendPacket() {
   csvLine(line, sizeof(line), NODE_ID, counter, packet);
 #if LORA_AUX >= 0
   uint32_t waitStart = millis();
-  while (digitalRead(LORA_AUX) == LOW && millis() - waitStart < 200) delay(1);  // module busy
+  while (digitalRead(LORA_AUX) == LOW && millis() - waitStart < 200) delay(1);
 #endif
   lora.print(line);
   Serial.print("LoRa TX ");
@@ -224,8 +219,8 @@ void setup() {
   Serial.printf("AEROSENSE %s | DHT GPIO %d | Sharp LED %d Vo %d | LoRa RX %d TX %d AUX %d | SGP30 %s\n",
     NODE_ID, DHT_PIN, SHARP_LED_PIN, SHARP_VO_PIN, LORA_RX, LORA_TX, LORA_AUX, sgpOk ? "OK" : "GAGAL");
 
-  while (millis() - logoShown < 3000) { readSgp(); delay(1000); }   // logo while sensors start
-  nextSendMs = millis() + 30000;   // first packet after SGP30 warm-up and a few dust samples
+  while (millis() - logoShown < 3000) { readSgp(); delay(1000); }
+  nextSendMs = millis() + 30000;
   linkPrefs.begin("aero-local", false);
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);

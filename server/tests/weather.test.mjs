@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parseForecast, parseCyclones, parseQuakes, weatherFacts, weatherService, weatherLabel } from "../api/weather.mjs";
 
-const now = Date.parse("2026-11-13T03:20:00Z"); // 10.20 WIB
+const now = Date.parse("2026-11-13T03:20:00Z");
 const hours = Array.from({ length: 48 }, (_, i) => {
   const d = new Date(Date.parse("2026-11-13T00:00:00Z") + i * 3600000);
   return d.toISOString().slice(0, 13) + ":00";

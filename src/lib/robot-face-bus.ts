@@ -41,7 +41,7 @@ export function publishRobotFace(
       });
     }
   } catch {
-    /* An unavailable companion window must never interrupt chat or speech. */
+
   }
   if (cloudOwner !== userId || !remote) return;
   const robot = cloudRobot;

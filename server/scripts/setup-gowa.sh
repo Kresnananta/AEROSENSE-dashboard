@@ -20,7 +20,6 @@ if [[ "$mode" == install ]]; then
     printf 'GOWA_BASIC_AUTH=aerosense:%s\nGOWA_WEBHOOK_SECRET=%s\n' "$(openssl rand -hex 24)" "$(openssl rand -hex 32)" > .env.gowa
   fi
   chmod 600 .env .env.gowa
-  # Only generated hexadecimal credentials are copied; never source the main .env.
   auth="$(sed -n 's/^GOWA_BASIC_AUTH=//p' .env.gowa)"
   secret="$(sed -n 's/^GOWA_WEBHOOK_SECRET=//p' .env.gowa)"
   [[ "$auth" =~ ^aerosense:[a-f0-9]{48}$ && "$secret" =~ ^[a-f0-9]{64}$ ]] || { echo 'Invalid generated GOWA credentials' >&2; exit 1; }
@@ -41,7 +40,6 @@ if [[ "$mode" == install || "$mode" == resume ]]; then
     sleep 2
   done
   [[ "$ready" == true ]] || { echo 'GOWA is starting; check docker logs before retrying' >&2; exit 1; }
-  # Read the host script through stdin so recovery does not require rebuilding the image.
   docker compose exec -T aerosense-api node --input-type=module < scripts/ensure-gowa-device.mjs
   printf '\nGOWA ready on Ubuntu loopback port 3001. Credentials are in ~/aerosense-api/.env.gowa.\n'
   printf 'Open through SSH port forwarding, select device aerosense and scan its QR. Then run: bash scripts/setup-gowa.sh bind\n'

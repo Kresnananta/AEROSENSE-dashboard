@@ -1,8 +1,5 @@
-// Weather outlook and regional hazards for the Hub, the Beranda, the map and AERO-BOT. Public, no account.
-// Forecast: Open-Meteo. Tropical cyclones: GDACS. Earthquakes M5+: BMKG. All cached in memory.
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 
-// WMO weather codes → Indonesian label and icon name used by the web.
 const WMO = [
   [[0], "Cerah", "clear"],
   [[1], "Cerah berawan", "partly"],
@@ -24,7 +21,6 @@ export function weatherLabel(code) {
 const round = (v, d = 0) => (Number.isFinite(v) ? Math.round(v * 10 ** d) / 10 ** d : null);
 const hourLabel = (t) => String(t).slice(11, 16).replace(":", ".") + " WIB";
 
-// Warnings for the next 24 hours, in plain language with what to do.
 export function weatherAlerts(hourly, daily) {
   const alerts = [];
   const span = (list) =>
@@ -77,13 +73,12 @@ export function weatherAlerts(hourly, daily) {
   return alerts;
 }
 
-// Open-Meteo response → compact outlook. `now` picks the first hour shown.
 export function parseForecast(data, now = Date.now()) {
   const c = data?.current,
     h = data?.hourly,
     d = data?.daily;
   if (!c || !Array.isArray(h?.time) || !Array.isArray(d?.time)) throw fail("Format prakiraan berubah.", 502);
-  // Times are local (Asia/Jakarta, UTC+7) without an offset.
+
   const local = new Date(now + 7 * 3600000).toISOString().slice(0, 13);
   const start = h.time.findIndex((t) => t.slice(0, 13) >= local);
   const dayHours = start === -1 ? [] : h.time.slice(start).map((time, k) => {
@@ -137,7 +132,6 @@ export function parseForecast(data, now = Date.now()) {
   };
 }
 
-// The Indonesian region (with its seas) where a cyclone or earthquake matters to users.
 const REGION = { south: -20, north: 15, west: 85, east: 150 };
 const inRegion = (lat, lng) =>
   lat >= REGION.south && lat <= REGION.north && lng >= REGION.west && lng <= REGION.east;
@@ -150,7 +144,7 @@ export function parseCyclones(geo, now = Date.now()) {
     const [lng, lat] = f?.geometry?.coordinates || [];
     if (p.eventtype !== "TC" || !Number.isFinite(lat) || !Number.isFinite(lng) || !inRegion(lat, lng)) continue;
     const to = Date.parse(p.todate);
-    // Only storms still active (updated within two days).
+
     if (String(p.iscurrent) !== "true" && !(to > now - 2 * 86400000)) continue;
     out.push({
       id: "tc-" + p.eventid,
@@ -203,7 +197,6 @@ const distanceKm = (a, b) => {
   return 6371 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
 };
 
-// Three short facts for AERO-BOT, in the same shape as the other external facts it reads.
 export function weatherFacts(outlook, hazards, area, now = Date.now()) {
   const facts = [];
   const fact = (id, label, value, category = "weather") => ({
@@ -231,7 +224,7 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
       fact(
         "24h",
         "Prakiraan 24 jam ke depan",
-        // Forecast only: "now" comes from the hub area facts, so the two never disagree.
+
         (wet.length
             ? `Hujan berpeluang turun mulai ${hourLabel(wet[0].time)} (${wet[0].label.toLowerCase()}, peluang hingga ${maxChance}%). `
             : `Peluang hujan kecil (maksimal ${maxChance}%). `) +
@@ -287,7 +280,7 @@ export function weatherService({ request, now = Date.now }) {
     return value;
   }
   const outlook = (latitude, longitude) => {
-    // Snap to about 1 km: close to the node itself, still shared by nearby users.
+
     const lat = Math.round(latitude * 100) / 100,
       lng = Math.round(longitude * 100) / 100;
     return cached(`wx:${lat}:${lng}`, 900000, async () =>

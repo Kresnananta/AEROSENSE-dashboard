@@ -1,5 +1,3 @@
-// AERO-BOT chat for visitors without an account. Only published (public_read) nodes, no voice, no robot.
-// The job has no owner; the visitor reads its answer back with a one-time token whose hash sits in the job.
 import { randomBytes, randomUUID } from "node:crypto";
 import { cleanText, sha, equal } from "./core.mjs";
 

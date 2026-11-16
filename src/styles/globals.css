@@ -3,17 +3,10 @@
 @import "./live.css";
 @import "./disclosure.css";
 
-/*
- * ============================================
- * AEROSENSE Dashboard — Design Tokens
- * Ported to match new citizen-centric identity
- * ============================================
- */
-
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* ---------- Brand / Primary (Blue) ---------- */
+
   --color-brand: #086cfb;
   --color-brand-dark: #0758d3;
   --color-brand-light: #47b9ff;
@@ -27,36 +20,31 @@
   --color-primary-600: #0569ed;
   --color-primary-700: #0758d3;
 
-  /* ---------- Neutral / Surface ---------- */
-  --color-bg-app: #f3f8ff; /* soft pastel blue */
+  --color-bg-app: #f3f8ff;
   --color-bg-card: #ffffff;
   --color-bg-sidebar: #ffffff;
   --color-border: #e5eef8;
   --color-line: #e5eef8;
   --color-border-soft: #f0f6fc;
 
-  /* ---------- Text ---------- */
-  --color-text-primary: #11223d; /* headings, values */
-  --color-text-secondary: #687b95; /* labels, subtext */
-  --color-text-muted: #74849d; /* timestamps, placeholders */
+  --color-text-primary: #11223d;
+  --color-text-secondary: #687b95;
+  --color-text-muted: #74849d;
   --color-text-on-primary: #ffffff;
 
-  /* ---------- Status Levels ---------- */
-  --color-status-good: #19a679; /* Baik */
-  --color-status-moderate: #bb8823; /* Sedang / Perhatian */
-  --color-status-warning: #ef7454; /* Perlu Perhatian */
-  --color-status-critical: #e34c26; /* Kritis */
+  --color-status-good: #19a679;
+  --color-status-moderate: #bb8823;
+  --color-status-warning: #ef7454;
+  --color-status-critical: #e34c26;
 
   --color-status-good-bg: #e6faef;
   --color-status-moderate-bg: #fff2dc;
   --color-status-warning-bg: #fff0e9;
   --color-status-critical-bg: #ffebe5;
 
-  /* ---------- Shadows ---------- */
   --shadow-soft: 0 12px 40px rgba(29, 81, 148, 0.055);
   --shadow-card: 0 10px 27px rgba(21, 115, 187, 0.06);
 
-  /* ---------- Radius ---------- */
   --radius-card: 20px;
   --radius-input: 12px;
   --radius-pill: 999px;
@@ -65,51 +53,40 @@
 :root {
   --radius: 0.75rem;
 
-  /* Base colors */
   --background: #f3f8ff;
   --foreground: #11223d;
 
-  /* Card surfaces */
   --card: #ffffff;
   --card-foreground: #11223d;
 
-  /* Popover surfaces */
   --popover: #ffffff;
   --popover-foreground: #11223d;
 
-  /* Primary brand color */
   --primary: #086cfb;
   --primary-foreground: #ffffff;
 
-  /* Secondary color */
   --secondary: #eaf4ff;
   --secondary-foreground: #086cfb;
 
-  /* Muted elements */
   --muted: #eaf4ff;
   --muted-foreground: #74849d;
 
-  /* Accent color */
   --accent: #e7f2ff;
   --accent-foreground: #0569ed;
 
-  /* Destructive/error states */
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  /* Borders & inputs */
   --border: #e5eef8;
   --input: #dfe9f4;
   --ring: #76bcff;
 
-  /* Charts */
   --chart-1: #0875ff;
   --chart-2: #33c6a2;
   --chart-3: #f2b352;
   --chart-4: #f27854;
   --chart-5: #756be9;
 
-  /* Sidebar */
   --sidebar: #ffffff;
   --sidebar-foreground: #687b95;
   --sidebar-primary: #0569ed;
@@ -176,7 +153,6 @@
   }
 }
 
-/* Map tiles styling (simulate CartoDB Positron / Grayscale clean) */
 .map-tiles {
   filter: grayscale(100%) opacity(0.6) contrast(0.9) brightness(1.1);
 }

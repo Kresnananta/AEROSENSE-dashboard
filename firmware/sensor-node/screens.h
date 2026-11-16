@@ -1,5 +1,3 @@
-// Screens for the 1.8" 128x160 ST7735 (portrait) on the sensor node. Only Adafruit_GFX calls,
-// so the same code draws on the TFT, into a GFXcanvas16, and in the computer preview test.
 #pragma once
 #include <Adafruit_GFX.h>
 #include <Fonts/FreeSansBold18pt7b.h>
@@ -67,21 +65,18 @@ inline void cell(Adafruit_GFX& g, int16_t x, int16_t y, const char* label, const
   text(g, x + textWidth(g, value, &FreeSansBold9pt7b) + 4, y + 16, unit, MUTED);
 }
 
-// Portrait 128x160. nextSendS: seconds until the next LoRa packet, so field staff see the node is alive.
 inline void reading(Adafruit_GFX& g, const char* nodeId, const Sample& s, Level level, const LinkState& link,
                     uint32_t counter, uint32_t nextSendS) {
-  (void)counter;  // the packet counter goes to Serial and the CSV
+  (void)counter;
   const int16_t W = g.width();
   g.fillScreen(PAPER);
 
-  // Header: node id
   g.fillRect(0, 0, W, 15, BRAND);
   char id[24];
   snprintf(id, sizeof(id), "%s", nodeId);
   for (size_t n = strlen(id); n > 1 && textWidth(g, id) > W - 8; n--) { id[n - 1] = '\0'; id[n - 2] = '.'; }
   text(g, 4, 4, id, WHITE);
 
-  // Link state and countdown
   char label[16], status[16]; uint16_t color;
   linkLabel(link, label, sizeof(label), color);
   int16_t pw = textWidth(g, label) + 8;
@@ -90,19 +85,16 @@ inline void reading(Adafruit_GFX& g, const char* nodeId, const Sample& s, Level 
   snprintf(status, sizeof(status), "%lu:%02lu", static_cast<unsigned long>(nextSendS / 60), static_cast<unsigned long>(nextSendS % 60));
   text(g, W - 4 - textWidth(g, status), 20, status, MUTED);
 
-  // Main value: optical dust
   text(g, 4, 35, "Debu ug/m3", MUTED);
   char value[12];
   number(value, sizeof(value), s.dust, 1);
   text(g, (W - textWidth(g, value, &FreeSansBold18pt7b)) / 2, 71, value, INK, &FreeSansBold18pt7b);
 
-  // Level bar across the width, easy to read from a distance
   const char* word = level == Level::Danger ? "BAHAYA" : level == Level::Warning ? "WASPADA" : level == Level::Good ? "BAIK" : "BELUM ADA DATA";
   uint16_t barColor = level == Level::Danger ? DANGER : level == Level::Warning ? WARN : level == Level::Good ? GOOD : MUTED;
   g.fillRoundRect(4, 78, W - 8, 17, 4, barColor);
   text(g, (W - textWidth(g, word)) / 2, 83, word, WHITE);
 
-  // 2x2 grid
   g.drawFastHLine(4, 99, W - 8, LINE);
   char v[12];
   const int16_t col = W / 2 + 2;
@@ -116,4 +108,4 @@ inline void reading(Adafruit_GFX& g, const char* nodeId, const Sample& s, Level 
   number(v, sizeof(v), s.humidity, 0);    cell(g, col, 132, "RH %", v, "");
 }
 
-}  // namespace screen
+}

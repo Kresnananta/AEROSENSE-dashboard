@@ -3,7 +3,6 @@ import { gruEstimates } from "./gru.ts";
 
 type Cell = string | number | boolean | null | undefined;
 
-// Quoting alone does not stop spreadsheet formulas from executing in string cells.
 export function csvCell(value: Cell): string {
   if (value == null || (typeof value === "number" && !Number.isFinite(value))) return '""';
   let text = String(value);

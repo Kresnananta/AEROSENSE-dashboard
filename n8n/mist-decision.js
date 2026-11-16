@@ -1,4 +1,3 @@
-// Imported as a Code node. The ESP32 must independently enforce TTL, dedup and cooldown.
 function decideMist(config, snapshot, previous = {}, now = Date.now()) {
   const stop = (reason) => ({
     publish: false,

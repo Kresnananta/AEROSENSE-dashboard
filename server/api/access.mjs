@@ -1,8 +1,3 @@
-// Who may see what. Shared by the browser API routes and the public routes.
-//   tamu (no account) and viewer (warga): simple history, no model data, no exports
-//   operator: model details, history export, alert review and threshold settings
-//   auditor: model details and the ESG report, read only
-//   admin: everything, including the ESG report
 export const ROLE_RANK = { viewer: 1, auditor: 2, operator: 3, admin: 4 };
 
 export const canViewModel = (role) => ["operator", "admin", "auditor"].includes(role);
@@ -16,7 +11,6 @@ export function highestRole(memberships = []) {
   );
 }
 
-// Corrected readings only: no raw sensor input, model output or processing details.
 export const simpleReading = (r) => ({
   id: r.id,
   node_id: r.node_id,
@@ -27,9 +21,6 @@ export const simpleReading = (r) => ({
 
 const denied = () => Object.assign(new Error("Akses lokasi tidak diizinkan"), { status: 403 });
 
-// Access to one node. An assigned member gets the role of that location. With allowPublic, any signed-in
-// account may READ a node its admin published (public_read) as a viewer: no assignment needed.
-// Writes always need an operator or admin membership.
 export async function nodeAccess(
   { one, filter },
   userId,
@@ -46,5 +37,4 @@ export async function nodeAccess(
   throw denied();
 }
 
-// What a non-member may see of a published node: no gateway, location or internal fields.
 export const PUBLIC_NODE_FIELDS = ["id", "name", "latitude", "longitude", "pm25_validated"];

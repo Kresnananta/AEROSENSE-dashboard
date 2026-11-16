@@ -47,7 +47,7 @@ test("ESG report summarizes readings and renders a valid PDF", async (t) => {
     digest,
   });
   const dust = r.metrics.find((m) => m.key === "dust_ug_m3");
-  assert.equal(dust.count, 4); // the invalid reading is excluded
+  assert.equal(dust.count, 4);
   assert.equal(dust.max, 110);
   assert.equal(dust.above_threshold, 2);
   assert.equal(r.coverage.invalid_count, 1);

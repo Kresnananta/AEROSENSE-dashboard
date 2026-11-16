@@ -133,7 +133,7 @@ try {
   if (p.decision === "allow") {
     if (!p.answer.trim() || p.answer.length > 1000 || /https?:|www\./i.test(p.answer))
       throw new Error("Isi jawaban tidak valid");
-    // Only list where the information came from and when. No values, labels or links.
+
     const sources = new Map();
     const seen = new Set();
     const when = (v) => {

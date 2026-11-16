@@ -77,7 +77,7 @@ export function ChatPanel() {
   useEffect(() => {
     if (onChat) setRobotId(params.get("robot_id") || undefined);
   }, [onChat, params]);
-  // Visitors without an account chat about published nodes only; robots and voice need an account.
+
   const robotId = user ? robotParam : undefined;
   const viewer = userId ?? "guest";
   const nodes = useLiveData<{ nodes: LiveNode[] }>(
@@ -273,7 +273,7 @@ export function ChatPanel() {
             "Jawaban masih diproses. Tekan Cek jawaban untuk melanjutkan tanpa mengirim pertanyaan baru.",
           );
         }
-        // Check often: an answer ready on the server should appear at once, typed or spoken.
+
         timer = setTimeout(poll, 700);
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -298,7 +298,7 @@ export function ChatPanel() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handsFreeControls]);
   async function send(text = input, fromVoice = false): Promise<string | null> {
-    // A guest question needs a published node; without a location, use the first one.
+
     const targetNode = robotId
       ? undefined
       : (contextNode?.id ?? (user ? undefined : availableNodes[0]?.id));

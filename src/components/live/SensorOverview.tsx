@@ -66,10 +66,9 @@ export function SensorOverview() {
             : summary.title;
   const titleParts = heroTitle.trim().split(/\s+/);
   const titleAccent = titleParts.pop();
-  // Hero focuses on dust, temperature and humidity. Validated PM2.5 is shown only when the node is validated AND
-  // actually reports it; otherwise the optical dust value is shown, labelled as an estimate from an uncalibrated sensor.
+
   const pm25 = reading?.metrics.pm25_ug_m3;
-  // TEMP_STATUS_PM25_ONLY: always show PM2.5 estimasi while the gateway does not send dust_ug_m3.
+
   const showPm25 = TEMP_STATUS_PM25_ONLY ||
     (node?.pm25_validated === true && typeof pm25 === "number" && Number.isFinite(pm25));
   const keys = [showPm25 ? "pm25_ug_m3" : "dust_ug_m3", "temperature_c", "humidity_pct"];

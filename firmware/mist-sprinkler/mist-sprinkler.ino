@@ -1,9 +1,3 @@
-// AEROSENSE mist sprinkler for ESP32 (Arduino core 3.x).
-// Libraries: PubSubClient 2.8 (Nick O'Leary), ArduinoJson 7.
-// Contract: docs/MIST-SPRINKLER.md. Topics:
-//   aerosense/actuators/<ACTUATOR_ID>/command  (subscribe, QoS 1)
-//   aerosense/actuators/<ACTUATOR_ID>/ack      (publish: accepted, rejected, completed, fault)
-//   aerosense/actuators/<ACTUATOR_ID>/status   (publish retained, offline via Last Will)
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <Preferences.h>
@@ -24,7 +18,6 @@ uint32_t pulseStartedMs = 0, pulseDurationMs = 0;
 char activeCommand[mist::ID_LEN] = "";
 uint32_t lastMqttAttempt = 0, lastWifiAttempt = 0, lastStatus = 0;
 
-// Output first: called before anything else at boot and on every safety stop.
 void setOutput(bool on) {
   outputOn = on;
   digitalWrite(RELAY_PIN, (on ^ RELAY_ACTIVE_LOW) ? HIGH : LOW);
@@ -105,7 +98,7 @@ void onMessage(char* topic, byte* payload, unsigned int length) {
     publishAck(d.commandId[0] ? d.commandId : "unknown", "rejected", d.reason);
     return;
   }
-  // Persist before switching on, so a reboot during the pulse can neither repeat it nor skip the cooldown.
+
   mist::rememberId(state, d.commandId);
   mist::rememberPulse(state, d, in.now);
   saveState();
@@ -144,7 +137,7 @@ void setup() {
 #if STATUS_LED_PIN >= 0
   pinMode(STATUS_LED_PIN, OUTPUT);
 #endif
-  setOutput(false);  // before networking, every boot
+  setOutput(false);
 #if MANUAL_OFF_PIN >= 0
   pinMode(MANUAL_OFF_PIN, INPUT_PULLUP);
 #endif
@@ -168,7 +161,7 @@ void setup() {
 }
 
 void loop() {
-  // Safety first, every pass: the timer ends the pulse locally, without waiting for n8n.
+
   if (outputOn) {
     if (millis() - pulseStartedMs >= pulseDurationMs || millis() - pulseStartedMs >= mist::MAX_PULSE_MS) stopPulse("completed", "timer");
     else if (manualOff()) stopPulse("fault", "manual_off");

@@ -1,4 +1,3 @@
-/* Laporan lingkungan: summary preview of the ESG audit export. */
 .esg-report {
   display: grid;
   gap: var(--section-gap, 22px);
@@ -63,7 +62,6 @@
 .esg-report-tiles [data-tone="warn"] strong {
   color: #a62d42;
 }
-
 
 .esg-report-table td,
 .esg-report-table th {

@@ -46,7 +46,7 @@ test("GOWA recovery creates an absent device from null registry and preserves an
       res.end('{"code":"SUCCESS","results":{}}');
       return;
     }
-    // Reproduce v9.6.0's generic 500 for the missing-slot detail route.
+
     if (req.url !== "/devices") {
       res.writeHead(500);
       res.end("{}");
@@ -95,7 +95,7 @@ test("GOWA recovery creates an absent device from null registry and preserves an
     assert.equal(malformed.code, 1);
     assert.match(malformed.stderr, /Invalid GOWA device list/);
     assert.equal(creates, 1);
-    // Exercise the actual recovery entrypoint. It must not run compose up/rebuild or regenerate secrets.
+
     mode = "ok";
     const target = path.join(temp, "aerosense-api");
     await fs.mkdir(path.join(target, "scripts"), { recursive: true });

@@ -28,7 +28,6 @@ const context = (row) =>
     : null;
 const allowed = new Set(["dashboard", "nodes", "history", "rules", "alerts", "environment"]);
 
-// Only nodes explicitly published by their operator are visible without an account.
 export async function publicMonitoring({ db, one, send, filter, readEnvironment }, req, res, url) {
   const resource = url.pathname.slice("/v1/public/".length);
   if (!url.pathname.startsWith("/v1/public/")) return false;
@@ -107,7 +106,7 @@ export async function publicMonitoring({ db, one, send, filter, readEnvironment 
   send(res, 200, {
     ...(resource === "history" ? { detail: "simple" } : {}),
     [resource === "history" ? "readings" : resource]: rows.map((row) => ({
-      // Guests see corrected readings only; raw inputs and model output need an operator account.
+
       ...pick(row, fields),
       ...(resource === "history"
         ? { metrics: metrics(row.metrics), quality: { invalid: row.quality?.invalid === true } }

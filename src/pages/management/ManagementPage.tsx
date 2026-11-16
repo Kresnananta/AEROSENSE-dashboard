@@ -20,7 +20,6 @@ import { metricLabels, type LiveNode } from "@/types/live.types";
 import "@/styles/management.css";
 import { RoleRequestsPanel } from "@/components/account/RoleRequestsPanel";
 
-// What each threshold is based on, shown under its heading.
 const ruleNote: Record<string, string> = {
   dust_ug_m3: "Dari sensor debu optik di node. Ambang ini juga dipakai WATERSENSE untuk menyiram otomatis.",
   pm25_ug_m3: "Estimasi PM2.5 dari tegangan sensor Sharp memakai rumus konversi dari studi literatur. Belum dipakai WATERSENSE.",
@@ -294,7 +293,7 @@ export function ManagementPage() {
                 <>
                   <div className="management-parameters" aria-label="Pilih parameter ambang">
                     {Object.entries(metricLabels)
-                      // TVOC alerts are not managed here any more; disable an existing TVOC rule before hiding it.
+
                       .filter(([key]) => key !== "tvoc_ppb" && (key !== "pm25_ug_m3" || node.pm25_validated))
                       .map(([key]) => (
                         <button

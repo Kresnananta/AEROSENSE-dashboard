@@ -1,38 +1,32 @@
-/** Node operational status */
 export type NodeStatus = "online" | "offline" | "warning" | "critical";
 
-/** Air quality index levels based on PRD Sec. 5 */
 export type AirQualityLevel = "good" | "moderate" | "unhealthy" | "hazardous";
 
-/** AI Soft-Sensing estimation data */
 export interface AIEstimation {
   rawValue?: number;
   estimatedValue: number;
   correction: number;
-  confidence: number; // 0-100 percentage
+  confidence: number;
 }
 
-/** Complete reading for a node at a specific timestamp */
 export interface NodeReading {
   id: string;
   nodeId: string;
-  pm25: number; // µg/m³
-  tvoc: number; // ppb
-  eco2: number; // ppm
-  temperature: number; // °C
-  humidity: number; // %
+  pm25: number;
+  tvoc: number;
+  eco2: number;
+  temperature: number;
+  humidity: number;
   aqi: number;
   quality: AirQualityLevel;
   timestamp: string;
 
-  // AI Estimation metrics for parameters that might be estimated
   estimations?: {
     eco2?: AIEstimation;
     tvoc?: AIEstimation;
   };
 }
 
-/** Node device information */
 export interface Node {
   id: string;
   name: string;
@@ -43,14 +37,13 @@ export interface Node {
   };
   status: NodeStatus;
   lastReading?: NodeReading;
-  batteryLevel?: number; // 0-100
-  uptime: number; // percentage
-  latency: number; // ms
+  batteryLevel?: number;
+  uptime: number;
+  latency: number;
   createdAt: string;
   updatedAt: string;
 }
 
-/** Data query parameters */
 export interface NodeQueryParams {
   page?: number;
   limit?: number;
@@ -60,7 +53,6 @@ export interface NodeQueryParams {
   sortOrder?: "asc" | "desc";
 }
 
-/** Helper to get citizen-friendly category, label, and colors from AQI value */
 export function getAqiCategory(aqi: number): {
   level: "good" | "moderate" | "warning" | "critical";
   label: string;

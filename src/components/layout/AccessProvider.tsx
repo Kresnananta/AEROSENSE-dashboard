@@ -10,7 +10,6 @@ interface AccessResponse {
   can_manage?: boolean;
 }
 
-// The API decides access; this only shapes the menu and pages. Every endpoint checks again.
 export function AccessProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const access = useLiveData<AccessResponse>(

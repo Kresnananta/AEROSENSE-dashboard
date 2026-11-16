@@ -41,7 +41,6 @@ function installFaceBridge(allowed) {
   };
 }
 
-// The browser debugging transport is an inherited pipe, never an exposed TCP port.
 export function launchLiveBrowser(
   browser,
   profile,

@@ -116,7 +116,7 @@ test("/v1/access and the ESG report follow the roles; model output is hidden fro
   assert.deepEqual(
     report.body.nodes.map((n) => n.id),
     ["n1"],
-  ); // only the location they audit
+  );
   assert.equal((await auditor("/v1/esg/report?node_id=n2")).status, 403);
   assert.equal((await auditor("/v1/esg/report?node_id=n1")).status, 200);
   const dash = (await auditor("/v1/dashboard")).body.nodes;

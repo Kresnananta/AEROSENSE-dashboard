@@ -9,7 +9,7 @@ export interface SignUpProfile {
   requested_role?: "operator" | "auditor" | "admin";
   note?: string;
 }
-// Supabase answers in English; users read Indonesian.
+
 export function authMessage(message: string) {
   if (/email not confirmed/i.test(message)) return "Email belum dikonfirmasi. Buka tautan konfirmasi di email Anda.";
   if (/invalid login credentials/i.test(message)) return "Email atau kata sandi salah.";
@@ -27,7 +27,7 @@ export const authService = {
     const { error } = await (await getSupabase()).auth.signInWithPassword({ email, password });
     if (error) throw new Error(authMessage(error.message));
   },
-  // The profile rides in user_metadata until the first signed-in visit, when the API stores it (GET /v1/me).
+
   async register(name: string, email: string, password: string, profile: SignUpProfile = {}) {
     if (DEMO_MODE) throw new Error("Gunakan akun warga atau admin demo yang disediakan.");
     const { data, error } = await (await getSupabase()).auth.signUp({

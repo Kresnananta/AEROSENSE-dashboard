@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-// simple: corrected reading only (guests and warga). Otherwise raw input and GRU are drawn too.
+
 export default function ReadingChart({
   data,
   simple = false,

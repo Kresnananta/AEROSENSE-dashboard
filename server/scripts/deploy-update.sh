@@ -29,7 +29,6 @@ cp "$source_dir/Dockerfile" "$source_dir/.dockerignore" "$source_dir/package.jso
 if [[ -f "$source_dir/compose.gowa.yaml" ]]; then cp "$source_dir/compose.gowa.yaml" "$target/"; fi
 printf '{"commit":"%s"}\n' "$revision" > "$target/api/deployment-revision.json"
 cd "$target"
-# Keep the existing Compose network, ports, credentials and volumes.
 docker compose up -d --build aerosense-api
 bash scripts/wait-api.sh
 docker compose exec -T aerosense-api node scripts/check-db.mjs
