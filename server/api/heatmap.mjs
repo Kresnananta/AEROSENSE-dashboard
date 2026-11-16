@@ -25,9 +25,8 @@ export const LAYERS = {
   rain: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "precipitation",
-    extra: ["cape", "weather_code"],
     unit: "mm/jam",
-    source: "Open-Meteo (radar hujan & energi badai CAPE)",
+    source: "Open-Meteo (model cuaca, curah hujan)",
     minStep: 0.1,
   },
   cloud: {
@@ -99,7 +98,7 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
         lats.push((g.south + i * g.step).toFixed(3));
         lons.push((g.west + j * g.step).toFixed(3));
       }
-    const fields = [layer.field, layer.windSpeed, layer.direction, ...(layer.extra || [])].filter(Boolean);
+    const fields = [layer.field, layer.windSpeed, layer.direction].filter(Boolean);
     const data = await request(
       `${layer.url}?latitude=${lats.join(",")}&longitude=${lons.join(",")}&current=${fields.join(",")}&timezone=UTC`,
       { timeout: 15000 },
@@ -122,8 +121,6 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
       values,
       ...(layer.windSpeed ? { wind_speed: gridOf(layer.windSpeed, 10) } : {}),
       ...(layer.direction ? { direction: gridOf(layer.direction, 1) } : {}),
-      ...(layer.extra?.includes("cape") ? { cape: gridOf("cape", 1) } : {}),
-      ...(layer.extra?.includes("weather_code") ? { weather_code: gridOf("weather_code", 1) } : {}),
       unit: layer.unit,
       source: layer.source,
       valid_at: list[0]?.current?.time ? list[0].current.time + "Z" : null,

@@ -368,11 +368,6 @@
   transform: translate(-50%, 9px);
 }
 
-.heat-label-storm span {
-  border-color: #ffd54f;
-  box-shadow: 0 0 0 3px rgb(255 213 79 / 0.28), 0 4px 12px rgb(10 25 50 / 0.35);
-}
-
 .map-reference {
   min-height: 44px;
   display: flex;

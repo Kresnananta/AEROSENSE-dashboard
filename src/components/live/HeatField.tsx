@@ -14,8 +14,6 @@ type Grid = {
   values: (number | null)[][];
   wind_speed?: (number | null)[][];
   direction?: (number | null)[][];
-  cape?: (number | null)[][];
-  weather_code?: (number | null)[][];
   source: string;
   valid_at: string | null;
 };
@@ -66,7 +64,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
     hi = stops[stops.length - 1][0];
   const floor = cfg.alphaFloor;
   const ceil = cfg.alphaCeiling;
-  const maxAlpha = key === "cloud" ? 215 : key === "rain" ? 235 : 255;
+  const maxAlpha = key === "cloud" ? 225 : key === "rain" ? 245 : 255;
 
   for (let y = 0; y < H; y++) {
     const gy = ((H - 1 - y) / (H - 1)) * (g.rows - 1);
@@ -81,7 +79,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
       let alphaRatio = 1;
       if (floor !== undefined && ceil !== undefined) {
         if (value <= floor) alphaRatio = 0;
-        else if (value < ceil) alphaRatio = (value - floor) / (ceil - floor);
+        else if (value < ceil) alphaRatio = 0.45 + 0.55 * ((value - floor) / (ceil - floor));
       }
       const o = (y * W + x) * 4;
       if (alphaRatio <= 0.01) {
@@ -125,7 +123,6 @@ type Layer = { id: number; url: string; bounds: [[number, number], [number, numb
 type Field = {
   g: Grid;
   v: number[][];
-  cape?: number[][];
   zoom: number;
   covers: [[number, number], [number, number]];
   uv?: { u: number[][]; v: number[][] };
@@ -276,11 +273,21 @@ function RainParticles({ field }: { field: Field }) {
       W = 0,
       H = 0,
       cw = 0,
-      ch = 0,
-      tick = 0;
+      ch = 0;
     let rainGrid = new Float32Array(0);
-    let stormSpots: { x: number; y: number }[] = [];
-    let drops: { x: number; y: number; len: number; vy: number }[] = [];
+    let wetCells: { x: number; y: number }[] = [];
+    let drops: { x: number; y: number; len: number; vy: number; life: number }[] = [];
+
+    const spawnDrop = () => {
+      const cell = wetCells[Math.floor(Math.random() * wetCells.length)];
+      return {
+        x: cell.x + Math.random() * CELL,
+        y: cell.y + Math.random() * CELL,
+        len: 6 + Math.random() * 6,
+        vy: 3.5 + Math.random() * 2.5,
+        life: 14 + Math.floor(Math.random() * 18),
+      };
+    };
 
     const build = () => {
       const size = map.getSize();
@@ -295,60 +302,45 @@ function RainParticles({ field }: { field: Field }) {
       cw = Math.ceil(W / CELL) + 1;
       ch = Math.ceil(H / CELL) + 1;
       rainGrid = new Float32Array(cw * ch);
-      stormSpots = [];
+      wetCells = [];
       for (let y = 0; y < ch; y++) {
         for (let x = 0; x < cw; x++) {
-          const ll = map.containerPointToLatLng([x * CELL, y * CELL]);
-          const r = sample(field.g, field.v, ll.lat, ll.lng) ?? 0;
+          const px = x * CELL;
+          const py = y * CELL;
+          const ll = map.containerPointToLatLng([px, py]);
+          const rRaw = sample(field.g, field.v, ll.lat, ll.lng) ?? 0;
+          const rNear = nearestGrid(field.g, field.v, ll.lat, ll.lng) ?? 0;
+          const r = rNear < 0.05 && rRaw < 0.25 ? 0 : Math.max(0, rRaw);
           rainGrid[y * cw + x] = r;
-          if (x % 4 === 0 && y % 4 === 0) {
-            const c = field.cape ? sample(field.g, field.cape, ll.lat, ll.lng) ?? 0 : 0;
-            const wmo = nearestGrid(field.g, field.g.weather_code, ll.lat, ll.lng);
-            if (c >= 1000 || (wmo != null && wmo >= 95)) stormSpots.push({ x: x * CELL, y: y * CELL });
-          }
+          if (r >= 0.15) wetCells.push({ x: px, y: py });
         }
       }
-      const n = Math.min(700, Math.round((W * H) / 1400));
-      drops = Array.from({ length: n }, () => ({
-        x: Math.random() * W,
-        y: Math.random() * H,
-        len: 8 + Math.random() * 10,
-        vy: 6 + Math.random() * 6,
-      }));
+      if (!wetCells.length) {
+        drops = [];
+        return;
+      }
+      const n = Math.min(480, Math.max(24, wetCells.length * 2));
+      drops = Array.from({ length: n }, () => spawnDrop());
     };
 
     const frame = () => {
-      tick++;
+      if (!wetCells.length) return;
       ctx.clearRect(0, 0, W, H);
-      for (let i = 0; i < stormSpots.length; i++) {
-        const phase = (tick + i * 29) % 110;
-        if (phase < 10) {
-          const s = stormSpots[i];
-          const alpha = phase < 5 ? 0.42 : 0.16;
-          const grad = ctx.createRadialGradient(s.x, s.y, 2, s.x, s.y, 44);
-          grad.addColorStop(0, `rgba(255, 224, 102, ${alpha})`);
-          grad.addColorStop(1, "rgba(255, 224, 102, 0)");
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, 44, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      ctx.lineWidth = 1.15;
-      for (const d of drops) {
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < drops.length; i++) {
+        const d = drops[i];
         d.x -= d.vy * 0.22;
         d.y += d.vy;
-        if (d.y > H) {
-          d.y = -12;
-          d.x = Math.random() * (W + 40);
-        }
-        if (d.x < 0) d.x += W;
+        d.life--;
         const cx = Math.min(cw - 1, Math.max(0, Math.floor(d.x / CELL)));
         const cy = Math.min(ch - 1, Math.max(0, Math.floor(d.y / CELL)));
         const mm = rainGrid[cy * cw + cx];
-        if (mm < 0.08) continue;
-        const intensity = Math.min(1, 0.35 + mm / 10);
-        ctx.strokeStyle = `rgba(210, 240, 255, ${intensity.toFixed(2)})`;
+        if (d.life <= 0 || mm < 0.12 || d.y > H || d.x < 0) {
+          drops[i] = spawnDrop();
+          continue;
+        }
+        const intensity = Math.min(0.95, 0.55 + mm / 8);
+        ctx.strokeStyle = `rgba(12, 54, 128, ${intensity.toFixed(2)})`;
         ctx.beginPath();
         ctx.moveTo(d.x, d.y);
         ctx.lineTo(d.x - d.len * 0.22, d.y + d.len);
@@ -363,7 +355,7 @@ function RainParticles({ field }: { field: Field }) {
     const start = () => {
       stop();
       build();
-      raf = requestAnimationFrame(frame);
+      if (wetCells.length) raf = requestAnimationFrame(frame);
     };
     start();
     map.on("movestart zoomstart", stop);
@@ -383,7 +375,6 @@ type Label = {
   position: [number, number];
   text: string;
   city: boolean;
-  storm?: boolean;
   bg: string;
   fg: string;
 };
@@ -479,11 +470,9 @@ export function HeatField({
         text: string,
         city: boolean,
         windSpd?: number,
-        force?: boolean,
       ) => {
         if (city) return placed.some((q) => Math.abs(q.x - x) < 72 && Math.abs(q.y - y) < 34);
         if (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 145)) return true;
-        if (force) return false;
         const minDelta = diffFloor[layer];
         return placed.some((q) => {
           const near = Math.hypot(q.x - x, q.y - y) < 340;
@@ -510,37 +499,7 @@ export function HeatField({
               ? rawValue
               : Math.max(0, rawValue);
 
-        const wmo = nearestGrid(f.g, f.g.weather_code, lat, lng);
-        const capeVal = f.cape ? Math.max(0, sample(f.g, f.cape, lat, lng) ?? 0) : null;
-        const isThunder = (wmo != null && wmo >= 95) || (capeVal != null && capeVal >= 1000);
         const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
-
-        if (layer === "rain") {
-          const wet = value >= (quiet ?? 0.1);
-          if (!wet && !isThunder) continue;
-          const text = isThunder
-            ? wet
-              ? `⚡ ${HEAT_LAYERS.rain.format(value)}`
-              : `⚡ ${Math.round((capeVal || 1000) / 100) * 100}`
-            : HEAT_LAYERS.rain.format(value);
-          if (sameNearby(p.x, p.y, value, text, city, undefined, isThunder)) continue;
-          const stops = HEAT_LAYERS.rain.stops;
-          const [r, gr, bl] = isThunder
-            ? [18, 36, 66]
-            : colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)));
-          placed.push({ x: p.x, y: p.y, val: value, text });
-          out.push({
-            key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
-            position: [lat, lng],
-            text,
-            city,
-            storm: isThunder,
-            bg: `rgb(${r} ${gr} ${bl})`,
-            fg: isThunder ? "#ffd54f" : "#fff",
-          });
-          if (out.length >= maxLabels) break;
-          continue;
-        }
 
         if (layer === "cloud") {
           const u = f.uv ? sample(f.g, f.uv.u, lat, lng) ?? 0 : 0;
@@ -628,7 +587,6 @@ export function HeatField({
           if (g.rows < 2 || g.cols < 2 || id !== seq) return;
           const v = filledGrid(g.values);
           const windGrid = g.wind_speed ? filledGrid(g.wind_speed) : v;
-          const capeGrid = g.cape ? filledGrid(g.cape) : undefined;
           const bounds: Layer["bounds"] = [
             [g.south, g.west],
             [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
@@ -636,7 +594,6 @@ export function HeatField({
           field.current = {
             g,
             v,
-            ...(capeGrid ? { cape: capeGrid } : {}),
             zoom: map.getZoom(),
             covers: bounds,
             ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
@@ -675,7 +632,7 @@ export function HeatField({
         labels.map((l) => [
           l.key,
           divIcon({
-            className: `heat-label${l.city ? " heat-label-city" : ""}${l.storm ? " heat-label-storm" : ""}`,
+            className: `heat-label${l.city ? " heat-label-city" : ""}`,
             html: `<span style="background:${l.bg};color:${l.fg}">${l.text}</span>`,
             iconSize: [0, 0],
           }),
@@ -704,7 +661,7 @@ export function HeatField({
           icon={icons.get(l.key)!}
           interactive={false}
           keyboard={false}
-          zIndexOffset={l.storm ? -400 : -1000}
+          zIndexOffset={-1000}
         />
       ))}
     </>
