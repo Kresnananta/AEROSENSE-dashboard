@@ -9,29 +9,6 @@
 .live-map-tiles {
   filter: saturate(0.76);
 }
-.live-map .leaflet-control-zoom {
-  overflow: hidden;
-  border: 1px solid #d8e5f2;
-  border-radius: 12px;
-  box-shadow: 0 3px 7px -4px #14395855;
-}
-.live-map .leaflet-control-zoom a {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  color: #0967e9;
-  border-bottom-color: #d8e5f2;
-}
-.live-map .leaflet-control-zoom a:not(.leaflet-disabled):hover {
-  background: #edf5ff;
-}
-.live-map .leaflet-control-zoom a.leaflet-disabled {
-  color: #61788f;
-}
-.live-map .leaflet-control-zoom a:focus-visible {
-  outline-offset: -3px;
-}
 .live-map .leaflet-control-attribution {
   padding: 2px 8px;
   border-radius: 8px 0 0;
@@ -178,62 +155,21 @@
 }
 .map-controls-main {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) auto minmax(150px, 0.8fr);
-  align-items: center;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-.map-controls[data-public="false"] .map-controls-main {
-  grid-template-columns: minmax(160px, 220px) 1fr;
-}
-.map-node-picker {
-  display: flex;
-  align-items: center;
-  gap: 9px;
+.map-filter {
+  display: grid;
   min-width: 0;
-  color: #526a80;
-}
-.map-node-picker > svg {
-  flex: none;
+  gap: 6px;
+  color: var(--aero-muted);
+  font-size: .8125rem;
+  font-weight: 650;
 }
 .map-controls .monitoring-select {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
-  font-size: 12px;
-}
-.map-kind-picker {
-  min-width: 0;
-}
-.map-layer-picker {
-  display: flex;
-  gap: 3px;
-  padding: 3px;
-  border: 1px solid #d8e5f2;
-  border-radius: 12px;
-  background: #fff;
-}
-.map-controls[data-public="false"] .map-layer-picker {
-  justify-self: end;
-}
-.map-layer-picker button {
-  flex: 1;
-  min-height: 42px;
-  border: 0;
-  border-radius: 9px;
-  padding: 8px 16px;
-  color: #486880;
-  background: transparent;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.map-layer-picker button:hover {
-  background: #edf5ff;
-  color: #075bca;
-}
-.map-layer-picker button[aria-pressed="true"] {
-  background: #0967e9;
-  color: #fff;
+  min-height: 44px;
 }
 .map-controls-meta {
   display: flex;
@@ -327,81 +263,19 @@
   line-height: 1.7;
   margin: 12px 0;
 }
-@media (max-width: 720px) {
-  .map-controls-main,
-  .map-controls[data-public="false"] .map-controls-main {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+@media (max-width: 620px) {
+  .map-controls-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
   }
-  .map-node-picker {
-    grid-column: 1;
-    grid-row: 1;
-    gap: 6px;
-  }
-  .map-kind-picker {
-    grid-column: 2;
-    grid-row: 1;
-  }
-  .map-layer-picker,
-  .map-controls[data-public="false"] .map-layer-picker {
-    grid-column: 1/-1;
-    grid-row: 2;
-    justify-self: stretch;
-  }
-  .map-controls[data-public="false"] .map-node-picker {
-    grid-column: 1/-1;
-  }
-  .map-controls .monitoring-select {
-    min-height: 46px;
-    font-size: 11px;
-    padding-inline: 10px;
-  }
-  .map-layer-picker button {
-    padding: 8px 10px;
-    font-size: 11px;
-  }
-  .map-controls-meta {
-    margin-top: 2px;
-    font-size: 10px;
-  }
+  .map-filter:first-child { grid-column: 1 / -1; }
+  .map-controls .monitoring-select { padding-inline: 10px; }
 }
-
 .live-map {
   position: relative;
-}
-.heat-controls {
+}.heat-legend {
   position: absolute;
-  bottom: 12px;
-  left: 10px;
-  z-index: 500;
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.95);
-  box-shadow: 0 2px 8px rgb(15 40 80 / 0.14);
-}
-.heat-controls button {
-  padding: 5px 11px;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: #4b5e74;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.heat-controls button.is-on {
-  background: #0b6fe5;
-  color: #fff;
-}
-.heat-controls button:focus-visible {
-  outline: 2px solid #0b6fe5;
-  outline-offset: 2px;
-}
-.heat-legend {
-  position: absolute;
-  bottom: 52px;
+  bottom: 28px;
   left: 10px;
   z-index: 500;
   width: min(230px, calc(100% - 20px));
@@ -493,4 +367,15 @@
 /* City labels sit just under the city name drawn by the map. */
 .heat-label-city span {
   transform: translate(-50%, 9px);
+}
+
+.map-reference {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding-inline: 12px;
+  border-radius: var(--aero-control-radius);
+  background: #edf6ff;
+  color: var(--aero-ink);
+  overflow-wrap: anywhere;
 }

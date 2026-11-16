@@ -434,7 +434,7 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
         })}
       </ul>
       <div className="wx-foot">
-        <Link className="insight-text-link" to="/sensor-map">
+        <Link className="insight-text-link" to="/sensor-map?overlay=rain&event_type=all">
           <MapIcon size={15} aria-hidden="true" /> Buka peta cuaca{" "}
           <ArrowUpRight size={15} />
         </Link>

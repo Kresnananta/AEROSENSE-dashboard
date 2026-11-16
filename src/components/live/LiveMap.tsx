@@ -2,7 +2,8 @@ import { sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
-import { HeatField, HeatLegend, HEAT_LAYERS, type HeatLayerKey } from "./HeatField";
+import { HeatField, HeatLegend } from "./HeatField";
+import type { HeatLayerKey } from "./heat-layers";
 import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
@@ -170,12 +171,12 @@ export function LiveMap({
   radiusKm = 5,
   locationLabel = "Lokasi Anda",
   events = [],
-  showNodes = true,
   locateUser = false,
   autoLocate = false,
   watersense = [],
   focusedWatersense,
-  heatmap = false,
+  heat = "off",
+  showHazards = false,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -190,11 +191,10 @@ export function LiveMap({
   autoLocate?: boolean;
   watersense?: WatersensePoint[];
   focusedWatersense?: string | null;
-  /** Model heatmap controls; only the full sensor map has room for them. */
-  heatmap?: boolean;
+  heat?: HeatLayerKey | "off";
+  showHazards?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
-  const [heat, setHeat] = useState<HeatLayerKey | "off">(heatmap ? "temperature" : "off");
   const [heatInfo, setHeatInfo] = useState<{
     source: string;
     valid_at: string | null;
@@ -221,21 +221,6 @@ export function LiveMap({
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
     <div className={"live-map" + (heat !== "off" ? " heat-on" : "")}>
-      {heatmap && (
-        <div className="heat-controls" role="group" aria-label="Lapisan heatmap">
-          {(["off", ...Object.keys(HEAT_LAYERS)] as (HeatLayerKey | "off")[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              aria-pressed={heat === k}
-              className={heat === k ? "is-on" : ""}
-              onClick={() => setHeat(k)}
-            >
-              {k === "off" ? "Mati" : HEAT_LAYERS[k].label}
-            </button>
-          ))}
-        </div>
-      )}
       {heat !== "off" && <HeatLegend layer={heat} info={heatInfo} />}
       <MapContainer
         center={
@@ -244,6 +229,7 @@ export function LiveMap({
             : [active!.latitude, active!.longitude]
         }
         zoom={13}
+        zoomControl={false}
         minZoom={4}
         maxBounds={INDONESIA_VIEW}
         maxBoundsViscosity={1}
@@ -252,15 +238,13 @@ export function LiveMap({
         {userLocation ? (
           <LocationFocus point={userLocation} radiusKm={radiusKm} />
         ) : eventPoints.length ? (
-          <EventFocus nodes={showNodes ? valid : []} events={eventPoints} />
+          <EventFocus nodes={valid} events={eventPoints} />
         ) : devicePoint ? null : (
           <Focus node={active} nodes={valid} />
         )}
         <IndonesiaZoomLimit />
-        {!userLocation && showNodes && <SelectionFocus node={highlighted} />}
-        {showNodes && (
-          <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />
-        )}
+        {!userLocation && <SelectionFocus node={highlighted} />}
+        <WatersenseFocus point={watersense.find((point) => point.id === focusedWatersense)} />
         {locateUser && (
           <DeviceLocation point={devicePoint} onPoint={setDevicePoint} autoLocate={autoLocate} />
         )}
@@ -332,61 +316,59 @@ export function LiveMap({
           </>
         )}
         {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
-        {heatmap && <HazardMarkers />}
-        {showNodes &&
-          valid.map((n) => (
-            <Marker
-              key={n.id}
-              position={[n.latitude, n.longitude]}
-              icon={mapIcon("sensor", sensorSummary(n).tone, n.id === highlighted?.id)}
-              zIndexOffset={n.id === highlighted?.id ? 1000 : 0}
-              title={n.name}
-              alt={`Sensor ${n.name}`}
-              eventHandlers={{ click: () => onSelect(n.id) }}
-            >
-              {n.id === highlighted?.id && (
-                <Tooltip
-                  permanent
-                  direction="top"
-                  offset={[0, -20]}
-                  opacity={1}
-                  className="node-focus-tooltip"
-                >
-                  {n.name}
-                </Tooltip>
-              )}
-              <Popup minWidth={250} maxWidth={290} className="node-reading-popup">
-                <strong className="node-popup-title">{n.name}</strong>
-                <NodeStatus node={n} />
-                <NodeReadings node={n} />
-                <Link className="node-popup-detail" to={`/nodes/${encodeURIComponent(n.id)}`}>
-                  Lihat detail node <ArrowUpRight size={13} aria-hidden="true" />
-                </Link>
-              </Popup>
-            </Marker>
-          ))}
-        {showNodes &&
-          watersense.map((point) => (
-            <Marker
-              key={"watersense-" + point.id}
-              position={[point.latitude, point.longitude]}
-              title={point.name}
-              alt={`WATERSENSE ${point.name}`}
-              icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
-              zIndexOffset={point.id === focusedWatersense ? 1500 : 500}
-            >
-              <Tooltip direction="top" offset={[0, -18]}>
-                {point.name}
+        {showHazards && <HazardMarkers />}
+        {valid.map((n) => (
+          <Marker
+            key={n.id}
+            position={[n.latitude, n.longitude]}
+            icon={mapIcon("sensor", sensorSummary(n).tone, n.id === highlighted?.id)}
+            zIndexOffset={n.id === highlighted?.id ? 1000 : 0}
+            title={n.name}
+            alt={`Sensor ${n.name}`}
+            eventHandlers={{ click: () => onSelect(n.id) }}
+          >
+            {n.id === highlighted?.id && (
+              <Tooltip
+                permanent
+                direction="top"
+                offset={[0, -20]}
+                opacity={1}
+                className="node-focus-tooltip"
+              >
+                {n.name}
               </Tooltip>
-              <Popup className="node-reading-popup">
-                <strong className="node-popup-title">{point.name}</strong>
-                <p>WATERSENSE · {point.online ? "Terhubung" : "Offline"}</p>
-                <p>
-                  {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
-                </p>
-              </Popup>
-            </Marker>
-          ))}
+            )}
+            <Popup minWidth={250} maxWidth={290} className="node-reading-popup">
+              <strong className="node-popup-title">{n.name}</strong>
+              <NodeStatus node={n} />
+              <NodeReadings node={n} />
+              <Link className="node-popup-detail" to={`/nodes/${encodeURIComponent(n.id)}`}>
+                Lihat detail node <ArrowUpRight size={13} aria-hidden="true" />
+              </Link>
+            </Popup>
+          </Marker>
+        ))}
+        {watersense.map((point) => (
+          <Marker
+            key={"watersense-" + point.id}
+            position={[point.latitude, point.longitude]}
+            title={point.name}
+            alt={`WATERSENSE ${point.name}`}
+            icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
+            zIndexOffset={point.id === focusedWatersense ? 1500 : 500}
+          >
+            <Tooltip direction="top" offset={[0, -18]}>
+              {point.name}
+            </Tooltip>
+            <Popup className="node-reading-popup">
+              <strong className="node-popup-title">{point.name}</strong>
+              <p>WATERSENSE · {point.online ? "Terhubung" : "Offline"}</p>
+              <p>
+                {point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}
+              </p>
+            </Popup>
+          </Marker>
+        ))}
         {eventPoints.map((e) => (
           <Marker
             key={e.id}

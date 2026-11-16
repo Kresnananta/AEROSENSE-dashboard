@@ -7,6 +7,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { WatersensePoint } from "./LiveMap";
+import { HEAT_LAYERS, type HeatLayerKey } from "./heat-layers";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import {
@@ -36,12 +37,19 @@ export function SensorWorkspace({
   const { canManage } = useAccess();
   const { id } = useParams();
   const [mapParams, setMapParams] = useSearchParams();
-  const mapLayer = ["mixed", "events"].includes(mapParams.get("layer") || "")
-    ? mapParams.get("layer")!
-    : "sensors";
-  const eventType = ["fire", "earthquake"].includes(mapParams.get("event_type") || "")
-    ? mapParams.get("event_type")!
-    : "all";
+  const legacyLayer = mapParams.get("layer");
+  const selectedEvents = mapParams.get("event_type");
+  const eventType =
+    selectedEvents === "none" || selectedEvents === "fire" ||
+    selectedEvents === "earthquake" || selectedEvents === "all"
+      ? selectedEvents
+      : legacyLayer === "mixed" || legacyLayer === "events"
+        ? "all"
+        : "none";
+  const requestedHeat = mapParams.get("overlay") || "";
+  const heat = Object.keys(HEAT_LAYERS).includes(requestedHeat)
+    ? (requestedHeat as HeatLayerKey)
+    : "off";
   const dashboard = useLiveData<{
     nodes: LiveNode[];
     refreshed_at: string;
@@ -91,7 +99,7 @@ export function SensorWorkspace({
   // The API decides: "model" for operators, admins and auditors; "simple" for guests and warga.
   const modelView = history.data?.detail === "model";
   const environment = useLiveData<EnvironmentResponse>(
-    node && mode === "map"
+    node && mode === "map" && eventType !== "none"
       ? `/v1/environment?node_id=${encodeURIComponent(node.id)}&account=${encodeURIComponent(user?.id || "guest")}`
       : null,
     60000,
@@ -301,57 +309,56 @@ export function SensorWorkspace({
               {mode === "map" && (
                 <>
                   {mode === "map" && (
-                    <div className="map-controls" data-public={mapLayer !== "sensors"}>
+                    <div className="map-controls">
                       <div className="map-controls-main">
-                        <div className="map-node-picker">
-                          <MapPin size={17} aria-hidden="true" />
-                          <MonitoringSelect
-                            label="Titik acuan"
-                            value={node.id}
-                            onValueChange={setSelected}
-                            onPreviewChange={setPreviewNode}
-                            options={nodes.map((n) => ({ value: n.id, label: n.name }))}
-                          />
-                        </div>
-                        <div className="map-layer-picker" role="group" aria-label="Isi peta">
-                          {[
-                            { id: "sensors", label: "Sensor", name: "Sensor saja" },
-                            { id: "mixed", label: "Keduanya", name: "Sensor & kejadian" },
-                            { id: "events", label: "Kejadian", name: "Kejadian publik" },
-                          ].map((layer) => (
-                            <button
-                              key={layer.id}
-                              aria-label={layer.name}
-                              aria-pressed={mapLayer === layer.id}
-                              onClick={() => changeMapParam("layer", layer.id)}
-                            >
-                              {layer.label}
-                            </button>
-                          ))}
-                        </div>
-                        {mapLayer !== "sensors" && (
-                          <div className="map-kind-picker">
+                        <label className="map-filter">
+                          <span>Titik acuan</span>
+                          {nodes.length > 1 ? (
                             <MonitoringSelect
-                              label="Jenis kejadian"
-                              value={eventType}
-                              onValueChange={(value) => changeMapParam("event_type", value)}
-                              options={[
-                                { value: "all", label: "Semua kejadian" },
-                                { value: "fire", label: "Titik panas" },
-                                { value: "earthquake", label: "Gempa" },
-                              ]}
-                            />
-                          </div>
-                        )}
+                                label="Titik acuan"
+                                value={node.id}
+                                onValueChange={setSelected}
+                                onPreviewChange={setPreviewNode}
+                                options={nodes.map((n) => ({ value: n.id, label: n.name }))}
+                              />
+                          ) : (
+                            <strong className="map-reference">{node.name}</strong>
+                          )}
+                        </label>
+                        <label className="map-filter">
+                          <span>Kejadian publik</span>
+                          <MonitoringSelect
+                            label="Kejadian publik"
+                            value={eventType}
+                            onValueChange={(value) => changeMapParam("event_type", value)}
+                            options={[
+                              { value: "none", label: "Sembunyikan" },
+                              { value: "all", label: "Semua kejadian" },
+                              { value: "fire", label: "Titik panas" },
+                              { value: "earthquake", label: "Gempa" },
+                            ]}
+                          />
+                        </label>
+                        <label className="map-filter">
+                          <span>Lapisan wilayah</span>
+                          <MonitoringSelect
+                            label="Lapisan wilayah"
+                            value={heat}
+                            onValueChange={(value) => changeMapParam("overlay", value)}
+                            options={[
+                              { value: "off", label: "Peta dasar" },
+                              ...Object.entries(HEAT_LAYERS).map(([value, item]) => ({ value, label: item.label })),
+                            ]}
+                          />
+                        </label>
                       </div>
                       <div className="map-controls-meta">
                         <span role="status">
-                          {mapLayer !== "events" ? nodes.length + " node" : ""}
-                          {mapLayer === "mixed" ? " · " : ""}
-                          {mapLayer !== "sensors"
+                          {nodes.length} node
+                          {eventType !== "none"
                             ? environment.loading && !environment.data
-                              ? "Memuat kejadian…"
-                              : events.length + " kejadian"
+                              ? " · Memuat kejadian…"
+                              : " · " + events.length + " kejadian"
                             : ""}
                         </span>
                         <details className="map-info">
@@ -393,6 +400,7 @@ export function SensorWorkspace({
                               gempa atau menunjukkan radius dampak.
                             </p>
                             <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
+                            <p>Perbesar dengan mencubit layar, klik dua kali, atau tekan +/− saat peta terfokus.</p>
                             <p>
                               Titik biru menunjukkan lokasi perangkat setelah Anda mengizinkan akses
                               lokasi. Koordinat tetap di peramban dan tidak dikirim ke server
@@ -401,7 +409,7 @@ export function SensorWorkspace({
                           </div>
                         </details>
                       </div>
-                      {mapLayer !== "sensors" && eventWarning && (
+                      {eventType !== "none" && eventWarning && (
                         <p className="map-event-notice" role="status">
                           {eventWarning}
                         </p>
@@ -414,13 +422,13 @@ export function SensorWorkspace({
                       selected={node.id}
                       previewed={previewNode}
                       locateUser
-                      autoLocate={mapLayer === "sensors" && !mapParams.has("node_id")}
+                      autoLocate={eventType === "none" && !mapParams.has("node_id")}
                       onSelect={setSelected}
-                      showNodes={mode !== "map" || mapLayer !== "events"}
-                      events={mode === "map" && mapLayer !== "sensors" ? events : []}
+                      events={mode === "map" && eventType !== "none" ? events : []}
                       watersense={user ? watersense.data?.actuators : undefined}
                       focusedWatersense={mapParams.get("watersense")}
-                      heatmap={mode === "map"}
+                      heat={heat}
+                      showHazards={eventType === "all"}
                     />
                   </Suspense>
                 </>
