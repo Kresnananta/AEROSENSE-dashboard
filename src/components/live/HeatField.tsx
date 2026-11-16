@@ -328,6 +328,7 @@ export function HeatField({
           if (rank <= maxRank && view.contains([lat, lng])) points.push({ lat, lng, city: true });
       } else {
         const step = labelStep(view.getNorth() - view.getSouth());
+        const center = map.getCenter();
         for (
           let lat = Math.ceil(view.getSouth() / step) * step;
           lat <= view.getNorth();
@@ -339,19 +340,58 @@ export function HeatField({
             lng += step
           )
             points.push({ lat, lng, city: false });
+        points.sort(
+          (a, b) =>
+            (a.lat - center.lat) ** 2 +
+            (a.lng - center.lng) ** 2 -
+            ((b.lat - center.lat) ** 2 + (b.lng - center.lng) ** 2),
+        );
       }
+      const diffFloor: Record<HeatLayerKey, number> = {
+        temperature: 1.5,
+        pm25: 3,
+        rain: 0.5,
+        cloud: 12,
+      };
       const out: Label[] = [];
-      const placed: { x: number; y: number }[] = [];
+      const placed: { x: number; y: number; val: number; wind?: number; text: string }[] = [];
+      const sameNearby = (
+        x: number,
+        y: number,
+        val: number,
+        text: string,
+        windSpd?: number,
+        force?: boolean,
+      ) => {
+        if (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 145)) return true;
+        if (force) return false;
+        const minDelta = diffFloor[layer];
+        return placed.some((q) => {
+          const near = Math.hypot(q.x - x, q.y - y) < 340;
+          if (!near && q.text !== text) return false;
+          if (q.text === text) return true;
+          const valSame = Math.abs(q.val - val) < minDelta;
+          const windSame =
+            windSpd === undefined || q.wind === undefined || Math.abs(q.wind - windSpd) < 4;
+          return valSame && windSame;
+        });
+      };
+
       for (const { lat, lng, city } of points) {
         const p = map.latLngToContainerPoint([lat, lng]);
-        if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
+        if (p.x < 68 || p.y < 38 || p.x > size.x - 68 || p.y > size.y - 38) continue;
         if (p.x < 260 && p.y > size.y - 200) continue;
-        if (placed.some((q) => Math.abs(q.x - p.x) < 64 && Math.abs(q.y - p.y) < 34)) continue;
-        const value = sample(f.g, f.v, lat, lng);
-        if (value == null) continue;
+        const rawValue = sample(f.g, f.v, lat, lng);
+        if (rawValue == null) continue;
+        const value =
+          layer === "cloud"
+            ? Math.min(100, Math.max(0, rawValue))
+            : layer === "temperature"
+              ? rawValue
+              : Math.max(0, rawValue);
 
         const wmo = nearestGrid(f.g, f.g.weather_code, lat, lng);
-        const capeVal = f.cape ? sample(f.g, f.cape, lat, lng) : null;
+        const capeVal = f.cape ? Math.max(0, sample(f.g, f.cape, lat, lng) ?? 0) : null;
         const isThunder = (wmo != null && wmo >= 95) || (capeVal != null && capeVal >= 1000);
         const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
 
@@ -363,11 +403,12 @@ export function HeatField({
               ? `⚡ ${HEAT_LAYERS.rain.format(value)}`
               : `⚡ ${Math.round((capeVal || 1000) / 100) * 100}`
             : HEAT_LAYERS.rain.format(value);
+          if (sameNearby(p.x, p.y, value, text, undefined, isThunder)) continue;
           const stops = HEAT_LAYERS.rain.stops;
           const [r, gr, bl] = isThunder
             ? [18, 36, 66]
             : colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)));
-          placed.push(p);
+          placed.push({ x: p.x, y: p.y, val: value, text });
           out.push({
             key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
             position: [lat, lng],
@@ -377,24 +418,25 @@ export function HeatField({
             bg: `rgb(${r} ${gr} ${bl})`,
             fg: isThunder ? "#ffd54f" : "#fff",
           });
-          if (out.length >= 40) break;
+          if (out.length >= 12) break;
           continue;
         }
 
         if (layer === "cloud") {
           const u = f.uv ? sample(f.g, f.uv.u, lat, lng) ?? 0 : 0;
           const vv = f.uv ? sample(f.g, f.uv.v, lat, lng) ?? 0 : 0;
-          const spd = Math.round(Math.hypot(u, vv));
+          const spd = Math.max(0, Math.round(Math.hypot(u, vv)));
           const hasCloud = value >= (quiet ?? 20);
           if (!hasCloud && spd < 3) continue;
           const dir = spd >= 1 ? " " + arrow(u, vv) : "";
           const text = hasCloud ? `${spd}${dir} · ${Math.round(value)}%` : `${spd}${dir}`;
+          if (sameNearby(p.x, p.y, value, text, spd)) continue;
           const stops = HEAT_LAYERS.cloud.stops;
           const [r, gr, bl] = hasCloud
             ? colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)))
             : [232, 243, 255];
           const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
-          placed.push(p);
+          placed.push({ x: p.x, y: p.y, val: value, wind: spd, text });
           out.push({
             key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
             position: [lat, lng],
@@ -403,19 +445,20 @@ export function HeatField({
             bg: `rgb(${r} ${gr} ${bl})`,
             fg: light ? "#102a47" : "#fff",
           });
-          if (out.length >= 40) break;
+          if (out.length >= 12) break;
           continue;
         }
 
         if (quiet !== undefined && value < quiet) continue;
         const text = HEAT_LAYERS[layer].format(value);
+        if (sameNearby(p.x, p.y, value, text)) continue;
         const stops = HEAT_LAYERS[layer].stops;
         const [r, gr, bl] = colorAt(
           stops,
           Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)),
         );
         const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
-        placed.push(p);
+        placed.push({ x: p.x, y: p.y, val: value, text });
         out.push({
           key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
           position: [lat, lng],
@@ -424,7 +467,7 @@ export function HeatField({
           bg: `rgb(${r} ${gr} ${bl})`,
           fg: light ? "#1d2f43" : "#fff",
         });
-        if (out.length >= 40) break;
+        if (out.length >= 12) break;
       }
       setLabels(out);
     };
