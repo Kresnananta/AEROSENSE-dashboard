@@ -22,19 +22,21 @@ export const LAYERS = {
     source: "Open-Meteo / CAMS (model kualitas udara)",
     minStep: 0.2,
   },
-
   rain: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "precipitation",
+    extra: ["cape", "weather_code"],
     unit: "mm/jam",
-    source: "Open-Meteo (model cuaca, curah hujan)",
+    source: "Open-Meteo (radar hujan & energi badai CAPE)",
     minStep: 0.1,
   },
   cloud: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "cloud_cover",
+    windSpeed: "wind_speed_10m",
+    direction: "wind_direction_10m",
     unit: "%",
-    source: "Open-Meteo (model cuaca, tutupan awan)",
+    source: "Open-Meteo (tutupan awan & angin 10 m)",
     minStep: 0.1,
   },
   thunder: {
@@ -44,7 +46,6 @@ export const LAYERS = {
     source: "Open-Meteo (model cuaca, energi badai CAPE)",
     minStep: 0.1,
   },
-
   wind: {
     url: "https://api.open-meteo.com/v1/forecast",
     field: "wind_speed_10m",
@@ -98,33 +99,31 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
         lats.push((g.south + i * g.step).toFixed(3));
         lons.push((g.west + j * g.step).toFixed(3));
       }
+    const fields = [layer.field, layer.windSpeed, layer.direction, ...(layer.extra || [])].filter(Boolean);
     const data = await request(
-      `${layer.url}?latitude=${lats.join(",")}&longitude=${lons.join(",")}&current=${[layer.field, layer.direction].filter(Boolean).join(",")}&timezone=UTC`,
+      `${layer.url}?latitude=${lats.join(",")}&longitude=${lons.join(",")}&current=${fields.join(",")}&timezone=UTC`,
       { timeout: 15000 },
     ).catch(() => {
       throw fail("Data heatmap sedang tidak tersedia.", 503);
     });
     const list = Array.isArray(data) ? data : [data];
-    const flat = list.map((d) => {
-      const v = Number(d?.current?.[layer.field]);
-      return Number.isFinite(v) ? Math.round(v * 10) / 10 : null;
-    });
-    if (flat.length !== g.rows * g.cols) throw fail("Data heatmap tidak lengkap.", 502);
-    const rows = (flat) => Array.from({ length: g.rows }, (_, i) => flat.slice(i * g.cols, (i + 1) * g.cols));
-    const values = rows(flat);
-    const direction = layer.direction
-      ? rows(
-          list.map((d) => {
-            const v = Number(d?.current?.[layer.direction]);
-            return Number.isFinite(v) ? Math.round(v) : null;
-          }),
-        )
-      : undefined;
+    const gridOf = (fieldName, round = 10) => {
+      const flat = list.map((d) => {
+        const v = Number(d?.current?.[fieldName]);
+        return Number.isFinite(v) ? Math.round(v * round) / round : null;
+      });
+      return Array.from({ length: g.rows }, (_, i) => flat.slice(i * g.cols, (i + 1) * g.cols));
+    };
+    if (list.length !== g.rows * g.cols) throw fail("Data heatmap tidak lengkap.", 502);
+    const values = gridOf(layer.field, 10);
     const body = {
       layer: url.searchParams.get("layer"),
       ...g,
       values,
-      ...(direction ? { direction } : {}),
+      ...(layer.windSpeed ? { wind_speed: gridOf(layer.windSpeed, 10) } : {}),
+      ...(layer.direction ? { direction: gridOf(layer.direction, 1) } : {}),
+      ...(layer.extra?.includes("cape") ? { cape: gridOf("cape", 1) } : {}),
+      ...(layer.extra?.includes("weather_code") ? { weather_code: gridOf("weather_code", 1) } : {}),
       unit: layer.unit,
       source: layer.source,
       valid_at: list[0]?.current?.time ? list[0].current.time + "Z" : null,

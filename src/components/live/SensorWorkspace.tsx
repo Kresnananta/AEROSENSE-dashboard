@@ -47,8 +47,14 @@ export function SensorWorkspace({
         ? "all"
         : "none";
   const requestedHeat = mapParams.get("overlay") || "";
-  const heat = Object.keys(HEAT_LAYERS).includes(requestedHeat)
-    ? (requestedHeat as HeatLayerKey)
+  const heatAlias: Record<string, HeatLayerKey> = {
+    aqi: "pm25",
+    thunder: "rain",
+    wind: "cloud",
+  };
+  const normalizedHeat = heatAlias[requestedHeat] || requestedHeat;
+  const heat = Object.keys(HEAT_LAYERS).includes(normalizedHeat)
+    ? (normalizedHeat as HeatLayerKey)
     : "off";
   const dashboard = useLiveData<{
     nodes: LiveNode[];

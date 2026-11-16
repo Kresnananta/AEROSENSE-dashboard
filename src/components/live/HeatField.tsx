@@ -12,8 +12,10 @@ type Grid = {
   rows: number;
   cols: number;
   values: (number | null)[][];
-
+  wind_speed?: (number | null)[][];
   direction?: (number | null)[][];
+  cape?: (number | null)[][];
+  weather_code?: (number | null)[][];
   source: string;
   valid_at: string | null;
 };
@@ -35,15 +37,21 @@ function colorAt(stops: readonly Stop[], v: number) {
   return hex(stops[stops.length - 1][1]);
 }
 
-function filled(g: Grid) {
-  const known = g.values.flat().filter((v): v is number => typeof v === "number");
+function filledGrid(values: (number | null)[][]) {
+  const known = values.flat().filter((v): v is number => typeof v === "number");
   const mean = known.length ? known.reduce((a, b) => a + b, 0) / known.length : 0;
-  return g.values.map((row) => row.map((v) => (typeof v === "number" ? v : mean)));
+  return values.map((row) => row.map((v) => (typeof v === "number" ? v : mean)));
 }
 const cr = (p0: number, p1: number, p2: number, p3: number, t: number) =>
   p1 + 0.5 * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)));
 
-function render(g: Grid, v: number[][], stops: readonly Stop[]) {
+function render(g: Grid, v: number[][], key: HeatLayerKey) {
+  const cfg = HEAT_LAYERS[key] as {
+    stops: readonly Stop[];
+    alphaFloor?: number;
+    alphaCeiling?: number;
+  };
+  const stops = cfg.stops;
   const S = 32;
   const W = (g.cols - 1) * S + 1,
     H = (g.rows - 1) * S + 1;
@@ -56,6 +64,10 @@ function render(g: Grid, v: number[][], stops: readonly Stop[]) {
     v[Math.min(g.rows - 1, Math.max(0, i))][Math.min(g.cols - 1, Math.max(0, j))];
   const lo = stops[0][0],
     hi = stops[stops.length - 1][0];
+  const floor = cfg.alphaFloor;
+  const ceil = cfg.alphaCeiling;
+  const maxAlpha = key === "cloud" ? 215 : key === "rain" ? 235 : 255;
+
   for (let y = 0; y < H; y++) {
     const gy = ((H - 1 - y) / (H - 1)) * (g.rows - 1);
     const i = Math.min(Math.floor(gy), g.rows - 2),
@@ -66,14 +78,22 @@ function render(g: Grid, v: number[][], stops: readonly Stop[]) {
         tx = gx - j;
       const rowAt = (r: number) => cr(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx);
       const value = cr(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), ty);
-      const [r, gr, b] = colorAt(stops, Math.min(hi, Math.max(lo, value)));
+      let alphaRatio = 1;
+      if (floor !== undefined && ceil !== undefined) {
+        if (value <= floor) alphaRatio = 0;
+        else if (value < ceil) alphaRatio = (value - floor) / (ceil - floor);
+      }
       const o = (y * W + x) * 4;
+      if (alphaRatio <= 0.01) {
+        img.data[o + 3] = 0;
+        continue;
+      }
+      const [r, gr, b] = colorAt(stops, Math.min(hi, Math.max(lo, value)));
       img.data[o] = r;
       img.data[o + 1] = gr;
       img.data[o + 2] = b;
-
       const edge = Math.min(x, y, W - 1 - x, H - 1 - y) / (Math.min(W, H) * 0.12);
-      img.data[o + 3] = Math.round(255 * Math.min(1, edge));
+      img.data[o + 3] = Math.round(maxAlpha * alphaRatio * Math.min(1, Math.max(0, edge)));
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -92,13 +112,22 @@ function sample(g: Grid, v: number[][], lat: number, lng: number) {
   return cr(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), gy - i);
 }
 
+function nearestGrid(g: Grid, grid: (number | null)[][] | undefined, lat: number, lng: number) {
+  if (!grid) return null;
+  const i = Math.round((lat - g.south) / g.step);
+  const j = Math.round((lng - g.west) / g.step);
+  if (i < 0 || j < 0 || i >= g.rows || j >= g.cols) return null;
+  const val = grid[i]?.[j];
+  return typeof val === "number" ? val : null;
+}
+
 type Layer = { id: number; url: string; bounds: [[number, number], [number, number]] };
 type Field = {
   g: Grid;
   v: number[][];
+  cape?: number[][];
   zoom: number;
   covers: [[number, number], [number, number]];
-
   uv?: { u: number[][]; v: number[][] };
 };
 
@@ -132,7 +161,7 @@ function WindParticles({ field }: { field: Field }) {
     map.getContainer().appendChild(canvas);
     const ctx = canvas.getContext("2d")!;
     const CELL = 8,
-      SPEED = 0.12,
+      SPEED = 0.13,
       LIFE = 90;
     let raf = 0,
       W = 0,
@@ -178,13 +207,14 @@ function WindParticles({ field }: { field: Field }) {
       age[i] = Math.floor(Math.random() * LIFE);
     };
     const frame = () => {
-
       ctx.globalCompositeOperation = "destination-in";
-      ctx.fillStyle = "rgba(0,0,0,0.9)";
+      ctx.fillStyle = "rgba(0,0,0,0.88)";
       ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = "rgba(255,255,255,0.8)";
-      ctx.lineWidth = 1.1;
+      ctx.strokeStyle = "rgba(255,255,255,0.85)";
+      ctx.shadowColor = "rgba(16,42,71,0.35)";
+      ctx.shadowBlur = 2;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
       for (let i = 0; i < px.length; i++) {
         const cx = Math.round(px[i] / CELL),
@@ -208,6 +238,7 @@ function WindParticles({ field }: { field: Field }) {
         py[i] = ny;
       }
       ctx.stroke();
+      ctx.shadowBlur = 0;
       raf = requestAnimationFrame(frame);
     };
     const stop = () => {
@@ -237,13 +268,12 @@ type Label = {
   position: [number, number];
   text: string;
   city: boolean;
-
+  storm?: boolean;
   bg: string;
   fg: string;
 };
 
 const CITY_ZOOM = 10;
-
 const REGION = { south: -13, west: 92, north: 8, east: 143 };
 const clip = (b: {
   getSouth(): number;
@@ -293,7 +323,6 @@ export function HeatField({
 
       const points: { lat: number; lng: number; city: boolean }[] = [];
       if (zoom <= CITY_ZOOM) {
-
         const maxRank = zoom <= 5 ? 1 : zoom <= 7 ? 2 : 3;
         for (const [, lat, lng, rank] of [...ID_CITIES].sort((x, y) => x[3] - y[3]))
           if (rank <= maxRank && view.contains([lat, lng])) points.push({ lat, lng, city: true });
@@ -315,22 +344,71 @@ export function HeatField({
       const placed: { x: number; y: number }[] = [];
       for (const { lat, lng, city } of points) {
         const p = map.latLngToContainerPoint([lat, lng]);
-
         if (p.x < 24 || p.y < 24 || p.x > size.x - 24 || p.y > size.y - 24) continue;
         if (p.x < 260 && p.y > size.y - 200) continue;
         if (placed.some((q) => Math.abs(q.x - p.x) < 64 && Math.abs(q.y - p.y) < 34)) continue;
         const value = sample(f.g, f.v, lat, lng);
         if (value == null) continue;
 
+        const wmo = nearestGrid(f.g, f.g.weather_code, lat, lng);
+        const capeVal = f.cape ? sample(f.g, f.cape, lat, lng) : null;
+        const isThunder = (wmo != null && wmo >= 95) || (capeVal != null && capeVal >= 1000);
         const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
-        if (quiet !== undefined && value < quiet) continue;
-        let text = HEAT_LAYERS[layer].format(value);
-        if (f.uv) {
-          const u = sample(f.g, f.uv.u, lat, lng) ?? 0,
-            v = sample(f.g, f.uv.v, lat, lng) ?? 0;
-          if (Math.hypot(u, v) >= 1) text += " " + arrow(u, v);
+
+        if (layer === "rain") {
+          const wet = value >= (quiet ?? 0.1);
+          if (!wet && !isThunder) continue;
+          const text = isThunder
+            ? wet
+              ? `⚡ ${HEAT_LAYERS.rain.format(value)}`
+              : `⚡ ${Math.round((capeVal || 1000) / 100) * 100}`
+            : HEAT_LAYERS.rain.format(value);
+          const stops = HEAT_LAYERS.rain.stops;
+          const [r, gr, bl] = isThunder
+            ? [18, 36, 66]
+            : colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)));
+          placed.push(p);
+          out.push({
+            key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
+            position: [lat, lng],
+            text,
+            city,
+            storm: isThunder,
+            bg: `rgb(${r} ${gr} ${bl})`,
+            fg: isThunder ? "#ffd54f" : "#fff",
+          });
+          if (out.length >= 40) break;
+          continue;
         }
 
+        if (layer === "cloud") {
+          const u = f.uv ? sample(f.g, f.uv.u, lat, lng) ?? 0 : 0;
+          const vv = f.uv ? sample(f.g, f.uv.v, lat, lng) ?? 0 : 0;
+          const spd = Math.round(Math.hypot(u, vv));
+          const hasCloud = value >= (quiet ?? 20);
+          if (!hasCloud && spd < 3) continue;
+          const dir = spd >= 1 ? " " + arrow(u, vv) : "";
+          const text = hasCloud ? `${spd}${dir} · ${Math.round(value)}%` : `${spd}${dir}`;
+          const stops = HEAT_LAYERS.cloud.stops;
+          const [r, gr, bl] = hasCloud
+            ? colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)))
+            : [232, 243, 255];
+          const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
+          placed.push(p);
+          out.push({
+            key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
+            position: [lat, lng],
+            text,
+            city,
+            bg: `rgb(${r} ${gr} ${bl})`,
+            fg: light ? "#102a47" : "#fff",
+          });
+          if (out.length >= 40) break;
+          continue;
+        }
+
+        if (quiet !== undefined && value < quiet) continue;
+        const text = HEAT_LAYERS[layer].format(value);
         const stops = HEAT_LAYERS[layer].stops;
         const [r, gr, bl] = colorAt(
           stops,
@@ -385,7 +463,9 @@ export function HeatField({
         try {
           const g = await apiRequest<Grid>("/v1/heatmap?" + qs, { signal: abort.signal }, false);
           if (g.rows < 2 || g.cols < 2 || id !== seq) return;
-          const v = filled(g);
+          const v = filledGrid(g.values);
+          const windGrid = g.wind_speed ? filledGrid(g.wind_speed) : v;
+          const capeGrid = g.cape ? filledGrid(g.cape) : undefined;
           const bounds: Layer["bounds"] = [
             [g.south, g.west],
             [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
@@ -393,15 +473,16 @@ export function HeatField({
           field.current = {
             g,
             v,
+            ...(capeGrid ? { cape: capeGrid } : {}),
             zoom: map.getZoom(),
             covers: bounds,
-            ...(g.direction ? { uv: windComponents(g, v) } : {}),
+            ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
           };
           setWind(field.current.uv ? field.current : null);
 
           setLayers((old) => [
             ...old.slice(-1),
-            { id, url: render(g, v, HEAT_LAYERS[layer].stops), bounds },
+            { id, url: render(g, v, layer), bounds },
           ]);
           setTimeout(() => setLayers((old) => old.filter((l) => l.id >= id)), 700);
           relabel();
@@ -430,7 +511,7 @@ export function HeatField({
         labels.map((l) => [
           l.key,
           divIcon({
-            className: l.city ? "heat-label heat-label-city" : "heat-label",
+            className: `heat-label${l.city ? " heat-label-city" : ""}${l.storm ? " heat-label-storm" : ""}`,
             html: `<span style="background:${l.bg};color:${l.fg}">${l.text}</span>`,
             iconSize: [0, 0],
           }),
@@ -458,7 +539,7 @@ export function HeatField({
           icon={icons.get(l.key)!}
           interactive={false}
           keyboard={false}
-          zIndexOffset={-1000}
+          zIndexOffset={l.storm ? -400 : -1000}
         />
       ))}
     </>
