@@ -194,7 +194,7 @@ export function WeatherOutlook({
             <dl className="wx-today-stats">
               <div>
                 <dt>
-                  <Umbrella size={15} aria-hidden="true" /> Peluang hujan maks.
+                  <Umbrella size={15} aria-hidden="true" /> Peluang hujan tertinggi
                 </dt>
                 <dd>{unit(today.rain_chance, "%")}</dd>
               </div>
@@ -206,7 +206,7 @@ export function WeatherOutlook({
               </div>
               <div>
                 <dt>
-                  <Sun size={15} aria-hidden="true" /> UV maks
+                  <Sun size={15} aria-hidden="true" /> UV tertinggi
                 </dt>
                 <dd>
                   {num(today.uv)} <small>{uvLabel(today.uv)}</small>
@@ -215,7 +215,7 @@ export function WeatherOutlook({
               {!compact && (
                 <div>
                   <dt>
-                    <Wind size={15} aria-hidden="true" /> Hembusan maks
+                    <Wind size={15} aria-hidden="true" /> Hembusan angin tertinggi
                   </dt>
                   <dd>{num(today.gust)} km/jam</dd>
                 </div>
@@ -292,7 +292,7 @@ export function WeatherOutlook({
             </div>
             <dl className="wx-detail-stats">
               <div><dt>Suhu</dt><dd>{detailHour ? unit(detailHour.temperature, " °C") : `${unit(detailDay!.min, "°")} – ${unit(detailDay!.max, "°")}`}</dd></div>
-              <div><dt>{detailDay ? "Peluang hujan maks." : "Peluang hujan"}</dt><dd>{unit(detail.rain_chance, "%")}</dd></div>
+              <div><dt>{detailDay ? "Peluang hujan tertinggi" : "Peluang hujan"}</dt><dd>{unit(detail.rain_chance, "%")}</dd></div>
               <div><dt>{detailDay ? "Total curah hujan" : "Curah hujan satu jam terakhir"}</dt><dd>{unit(detail.rain, " mm")}</dd></div>
               <div><dt>Hembusan angin</dt><dd>{unit(detail.gust, " km/jam")}</dd></div>
             </dl>

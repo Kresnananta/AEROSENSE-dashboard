@@ -11,7 +11,7 @@ body {
   --aero-glass: #eef8ffe8;
   --aero-surface: #fff;
   --aero-sky: linear-gradient(106deg, #eff9ff, #c5e9ff 58%, #93d3ff);
-  --aero-landscape: url("/assets/brand/skyline.svg");
+  --aero-landscape: url("../assets/images/skyline.svg");
   --aero-illustration: var(--aero-landscape) right bottom / cover no-repeat, var(--aero-sky);
   --aero-panel-radius: 22px;
   --aero-hero-radius: 32px;
@@ -333,7 +333,9 @@ body {
 }
 
 .app-shell .aero-assist {
-  background: var(--aero-illustration);
+  background:
+    radial-gradient(ellipse at 50% 60%, #fff 0%, #f5f8ff 32%, transparent 68%),
+    linear-gradient(153deg, #f4f3ff, #dde7ff 58%, #bfcef8);
 }
 
 .app-shell .insight-disclosure {

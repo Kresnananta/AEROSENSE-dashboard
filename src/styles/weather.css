@@ -99,32 +99,45 @@
   margin: 0;
 }
 .wx-today-stats > div {
-  padding: 12px 14px;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 6px;
+  padding: 12px clamp(10px, 1.25vw, 16px);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.78);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
 }
 .wx-today-stats dt {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
-  font-size: 11.5px;
+  min-width: 0;
   color: #4c6782;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .wx-today-stats dt svg {
+  flex: none;
+  margin-top: 1px;
   color: #0875d9;
 }
 .wx-today-stats dd {
-  margin: 4px 0 0;
-  font-size: 18px;
-  font-weight: 750;
+  margin: 0;
   color: #11223d;
+  font-size: clamp(1.125rem, 1.5vw, 1.375rem);
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 .wx-today-stats dd small {
-  font-size: 11px;
+  display: block;
+  margin-top: 4px;
+  color: #93510a;
+  font-size: 12px;
   font-weight: 600;
-  color: #b8640b;
+  line-height: 1.3;
 }
 
 /* Warnings: tinted card, icon chip, mitigation in plain words. */
@@ -539,6 +552,14 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+@media (max-width: 1180px) {
+  .weather-outlook.is-compact .wx-today {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .weather-outlook.is-compact .wx-today-stats {
+    grid-column: 1 / -1;
+  }
+}
 @media (max-width: 900px) {
   .wx-today,
   .weather-outlook.is-compact .wx-today {
