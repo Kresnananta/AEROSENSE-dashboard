@@ -263,6 +263,121 @@ function WindParticles({ field }: { field: Field }) {
   return null;
 }
 
+function RainParticles({ field }: { field: Field }) {
+  const map = useMap();
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const canvas = document.createElement("canvas");
+    canvas.className = "wind-canvas";
+    map.getContainer().appendChild(canvas);
+    const ctx = canvas.getContext("2d")!;
+    const CELL = 12;
+    let raf = 0,
+      W = 0,
+      H = 0,
+      cw = 0,
+      ch = 0,
+      tick = 0;
+    let rainGrid = new Float32Array(0);
+    let stormSpots: { x: number; y: number }[] = [];
+    let drops: { x: number; y: number; len: number; vy: number }[] = [];
+
+    const build = () => {
+      const size = map.getSize();
+      W = size.x;
+      H = size.y;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      canvas.style.width = W + "px";
+      canvas.style.height = H + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cw = Math.ceil(W / CELL) + 1;
+      ch = Math.ceil(H / CELL) + 1;
+      rainGrid = new Float32Array(cw * ch);
+      stormSpots = [];
+      for (let y = 0; y < ch; y++) {
+        for (let x = 0; x < cw; x++) {
+          const ll = map.containerPointToLatLng([x * CELL, y * CELL]);
+          const r = sample(field.g, field.v, ll.lat, ll.lng) ?? 0;
+          rainGrid[y * cw + x] = r;
+          if (x % 4 === 0 && y % 4 === 0) {
+            const c = field.cape ? sample(field.g, field.cape, ll.lat, ll.lng) ?? 0 : 0;
+            const wmo = nearestGrid(field.g, field.g.weather_code, ll.lat, ll.lng);
+            if (c >= 1000 || (wmo != null && wmo >= 95)) stormSpots.push({ x: x * CELL, y: y * CELL });
+          }
+        }
+      }
+      const n = Math.min(700, Math.round((W * H) / 1400));
+      drops = Array.from({ length: n }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        len: 8 + Math.random() * 10,
+        vy: 6 + Math.random() * 6,
+      }));
+    };
+
+    const frame = () => {
+      tick++;
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < stormSpots.length; i++) {
+        const phase = (tick + i * 29) % 110;
+        if (phase < 10) {
+          const s = stormSpots[i];
+          const alpha = phase < 5 ? 0.42 : 0.16;
+          const grad = ctx.createRadialGradient(s.x, s.y, 2, s.x, s.y, 44);
+          grad.addColorStop(0, `rgba(255, 224, 102, ${alpha})`);
+          grad.addColorStop(1, "rgba(255, 224, 102, 0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 44, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.lineWidth = 1.15;
+      for (const d of drops) {
+        d.x -= d.vy * 0.22;
+        d.y += d.vy;
+        if (d.y > H) {
+          d.y = -12;
+          d.x = Math.random() * (W + 40);
+        }
+        if (d.x < 0) d.x += W;
+        const cx = Math.min(cw - 1, Math.max(0, Math.floor(d.x / CELL)));
+        const cy = Math.min(ch - 1, Math.max(0, Math.floor(d.y / CELL)));
+        const mm = rainGrid[cy * cw + cx];
+        if (mm < 0.08) continue;
+        const intensity = Math.min(1, 0.35 + mm / 10);
+        ctx.strokeStyle = `rgba(210, 240, 255, ${intensity.toFixed(2)})`;
+        ctx.beginPath();
+        ctx.moveTo(d.x, d.y);
+        ctx.lineTo(d.x - d.len * 0.22, d.y + d.len);
+        ctx.stroke();
+      }
+      raf = requestAnimationFrame(frame);
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      ctx.clearRect(0, 0, W, H);
+    };
+    const start = () => {
+      stop();
+      build();
+      raf = requestAnimationFrame(frame);
+    };
+    start();
+    map.on("movestart zoomstart", stop);
+    map.on("moveend resize", start);
+    return () => {
+      stop();
+      map.off("movestart zoomstart", stop);
+      map.off("moveend resize", start);
+      canvas.remove();
+    };
+  }, [map, field]);
+  return null;
+}
+
 type Label = {
   key: string;
   position: [number, number];
@@ -303,6 +418,7 @@ export function HeatField({
   const [labels, setLabels] = useState<Label[]>([]);
   const field = useRef<Field | null>(null);
   const [wind, setWind] = useState<Field | null>(null);
+  const [rainField, setRainField] = useState<Field | null>(null);
   const info = useRef(onInfo);
   info.current = onInfo;
   useEffect(() => {
@@ -311,6 +427,7 @@ export function HeatField({
     let seq = 0;
     field.current = null;
     setWind(null);
+    setRainField(null);
     setLayers([]);
     setLabels([]);
 
@@ -360,9 +477,11 @@ export function HeatField({
         y: number,
         val: number,
         text: string,
+        city: boolean,
         windSpd?: number,
         force?: boolean,
       ) => {
+        if (city) return placed.some((q) => Math.abs(q.x - x) < 72 && Math.abs(q.y - y) < 34);
         if (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 145)) return true;
         if (force) return false;
         const minDelta = diffFloor[layer];
@@ -376,6 +495,7 @@ export function HeatField({
           return valSame && windSame;
         });
       };
+      const maxLabels = zoom <= CITY_ZOOM ? 28 : 12;
 
       for (const { lat, lng, city } of points) {
         const p = map.latLngToContainerPoint([lat, lng]);
@@ -403,7 +523,7 @@ export function HeatField({
               ? `⚡ ${HEAT_LAYERS.rain.format(value)}`
               : `⚡ ${Math.round((capeVal || 1000) / 100) * 100}`
             : HEAT_LAYERS.rain.format(value);
-          if (sameNearby(p.x, p.y, value, text, undefined, isThunder)) continue;
+          if (sameNearby(p.x, p.y, value, text, city, undefined, isThunder)) continue;
           const stops = HEAT_LAYERS.rain.stops;
           const [r, gr, bl] = isThunder
             ? [18, 36, 66]
@@ -418,7 +538,7 @@ export function HeatField({
             bg: `rgb(${r} ${gr} ${bl})`,
             fg: isThunder ? "#ffd54f" : "#fff",
           });
-          if (out.length >= 12) break;
+          if (out.length >= maxLabels) break;
           continue;
         }
 
@@ -430,7 +550,7 @@ export function HeatField({
           if (!hasCloud && spd < 3) continue;
           const dir = spd >= 1 ? " " + arrow(u, vv) : "";
           const text = hasCloud ? `${spd}${dir} · ${Math.round(value)}%` : `${spd}${dir}`;
-          if (sameNearby(p.x, p.y, value, text, spd)) continue;
+          if (sameNearby(p.x, p.y, value, text, city, spd)) continue;
           const stops = HEAT_LAYERS.cloud.stops;
           const [r, gr, bl] = hasCloud
             ? colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)))
@@ -445,13 +565,13 @@ export function HeatField({
             bg: `rgb(${r} ${gr} ${bl})`,
             fg: light ? "#102a47" : "#fff",
           });
-          if (out.length >= 12) break;
+          if (out.length >= maxLabels) break;
           continue;
         }
 
         if (quiet !== undefined && value < quiet) continue;
         const text = HEAT_LAYERS[layer].format(value);
-        if (sameNearby(p.x, p.y, value, text)) continue;
+        if (sameNearby(p.x, p.y, value, text, city)) continue;
         const stops = HEAT_LAYERS[layer].stops;
         const [r, gr, bl] = colorAt(
           stops,
@@ -467,7 +587,7 @@ export function HeatField({
           bg: `rgb(${r} ${gr} ${bl})`,
           fg: light ? "#1d2f43" : "#fff",
         });
-        if (out.length >= 12) break;
+        if (out.length >= maxLabels) break;
       }
       setLabels(out);
     };
@@ -522,6 +642,7 @@ export function HeatField({
             ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
           };
           setWind(field.current.uv ? field.current : null);
+          setRainField(layer === "rain" ? field.current : null);
 
           setLayers((old) => [
             ...old.slice(-1),
@@ -565,6 +686,7 @@ export function HeatField({
   return (
     <>
       {wind && <WindParticles field={wind} />}
+      {rainField && <RainParticles field={rainField} />}
       {layers.map((l) => (
         <ImageOverlay
           key={l.id}
