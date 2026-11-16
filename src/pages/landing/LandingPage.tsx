@@ -125,11 +125,6 @@ export function LandingPage() {
             </div>
           </div>
           <div className="landing-hero-art" role="img" aria-label="Maskot AERO-BOT menyambut Anda">
-            <div className="landing-particles" aria-hidden="true">
-              {Array.from({ length: 4 }, (_, index) => (
-                <span key={index} className={`landing-art-dot art-dot-${index + 1}`} />
-              ))}
-            </div>
             <AeroMascot pose="welcome" className="landing-hero-mascot" />
             <div className="landing-cheer" aria-hidden="true">
               <Sparkle />

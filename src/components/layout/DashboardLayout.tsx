@@ -99,7 +99,7 @@ function DashboardShell() {
           menuOpen={mobileMenuOpen}
           onMenuClick={() => setMobileMenuOpen(true)}
         />
-        <main className="flex-1 p-4 sm:p-6 xl:p-8 max-w-[1760px] w-full mx-auto animate-[appear_0.32s_ease_both]">
+        <main className="app-content flex-1">
           {chatVisited && (
             <div hidden={!onChat}>
               <Suspense fallback={null}>

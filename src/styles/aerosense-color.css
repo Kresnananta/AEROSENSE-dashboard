@@ -1,23 +1,23 @@
 body {
   --aero-canvas-soft: #eaf5ff;
-  --aero-ink: #132f49;
+  --aero-ink: #102a47;
   --aero-muted: #3f5f79;
-  --aero-blue: #0957bd;
-  --aero-blue-hover: #074796;
-  --aero-control-radius: 16px;
+  --aero-blue: #0868dc;
+  --aero-blue-hover: #0758be;
+  --aero-control-radius: 14px;
   --aero-inset: clamp(16px, 2.5vw, 28px);
   --aero-display: clamp(2rem, 2.7vw, 2.625rem);
   --aero-ease: cubic-bezier(.2,.7,.25,1);
   --aero-glass: #eef8ffe8;
-  --aero-glass-depth: inset 0 1px 0 #fff, 0 5px 16px #194b7a16;
-  --aero-surface: #f5faff;
-  --aero-illustration: radial-gradient(ellipse at 20% 5%, #f0fcff, transparent 65%),
-    linear-gradient(145deg, #a8e6fb, #b8c9ff 78%, #ffd9c2);
-  --aero-panel-radius: 28px;
+  --aero-surface: #fff;
+  --aero-sky: linear-gradient(106deg, #eff9ff, #c5e9ff 58%, #93d3ff);
+  --aero-landscape: url("/assets/brand/skyline.svg");
+  --aero-illustration: var(--aero-landscape) right bottom / cover no-repeat, var(--aero-sky);
+  --aero-panel-radius: 22px;
   --aero-hero-radius: 32px;
-  --aero-card-radius: 22px;
+  --aero-card-radius: 16px;
   --aero-segment-radius: calc(var(--aero-card-radius) - 5px);
-  --aero-rim: #b8d6f0;
+  --aero-rim: #cddff0;
 }
 
 .landing-page {
@@ -43,18 +43,11 @@ body {
   color: var(--landing-blue);
 }
 
-.landing-page .landing-hero-art {
-  background: var(--aero-illustration);
-}
-
 .landing-page .landing-feature-detail {
-  --feature-surface: #eaf4ff;
+  --feature-surface: #fff;
   background-color: var(--feature-surface);
 }
 
-.landing-page .landing-feature-detail[data-feature="/environment"] { --feature-surface: #e5f7ef; }
-.landing-page .landing-feature-detail[data-feature="/aerobot"] { --feature-surface: #efeaff; }
-.landing-page .landing-feature-detail[data-feature="/analytics"] { --feature-surface: #fff2da; }
 
 .landing-page .landing-feature-options button[aria-pressed="true"] {
   background: #e4eeff;
@@ -67,12 +60,11 @@ body {
 
 .app-shell {
   --ui-surface-gradient: #deeeff;
-  background: radial-gradient(ellipse at 95% 2rem, #c2e3ff, transparent 46rem),
-    linear-gradient(160deg, var(--aero-canvas-soft), #d9edff);
+  background: var(--aero-canvas-soft);
 }
 
 .app-shell .app-sidebar {
-  background: linear-gradient(165deg, #fcfeff 32%, #e5f2ff);
+  background: #f8fcff;
   border-color: #c5def2;
 }
 
@@ -105,7 +97,7 @@ body {
 }
 
 .app-shell .nav-entry.active {
-  background: linear-gradient(180deg, #e7f6ff, #cde7ff);
+  background: #dceeff;
   color: #104da7;
 }
 
@@ -117,52 +109,72 @@ body {
   text-wrap: balance;
 }
 
-.environment-hub[data-topic="weather"], .insight-topics [data-topic="weather"] {
-  --topic-tint: #e5f2ff;
-  --topic-ink: #144a9a;
-  --topic-dark: #083785;
-  --topic-light: #1769c0;
-}
-.environment-hub[data-topic="air_quality"], .insight-topics [data-topic="air_quality"] {
-  --topic-tint: #ddf5ef;
-  --topic-ink: #096252;
-  --topic-dark: #07504b;
-  --topic-light: #087d72;
-}
-.environment-hub[data-topic="soil"], .insight-topics [data-topic="soil"] {
-  --topic-tint: #edf4df;
-  --topic-ink: #42601b;
-  --topic-dark: #314e21;
-  --topic-light: #587e34;
-}
-.environment-hub[data-topic="fire"], .insight-topics [data-topic="fire"] {
-  --topic-tint: #fff0df;
-  --topic-ink: #963b18;
-  --topic-dark: #773217;
-  --topic-light: #ae5126;
-}
-.environment-hub[data-topic="flood"], .insight-topics [data-topic="flood"] {
-  --topic-tint: #e0f5fb;
-  --topic-ink: #12647a;
-  --topic-dark: #124b68;
-  --topic-light: #137c96;
-}
-.environment-hub[data-topic="earthquake"], .insight-topics [data-topic="earthquake"] {
-  --topic-tint: #efe9ff;
-  --topic-ink: #5d3a91;
-  --topic-dark: #483075;
-  --topic-light: #7650a9;
+.app-shell .environment-hub .insight-lead,
+.app-shell .sensor-overview .sensor-hero {
+  --panel-light: var(--aero-ink);
+  --panel-muted: #254964;
+  --panel-accent: #085cba;
+  --panel-alert: #884000;
+  background: var(--aero-illustration);
+  border: 1px solid var(--aero-rim);
+  color: var(--aero-ink);
 }
 
-.app-shell .environment-hub[data-topic] .insight-lead {
-  background: radial-gradient(ellipse at 86% 17%, #ffffff25, transparent 47%),
-    linear-gradient(125deg, var(--topic-dark, #083785) 24%, var(--topic-light, #1769c0));
+.app-shell .environment-hub .insight-lead::before,
+.app-shell .sensor-overview .sensor-hero::before,
+.app-shell .insight-lead .panel-atmosphere {
+  display: none;
 }
 
-.app-shell .environment-hub[data-topic] .panel-metrics {
-  background: rgb(9 24 54 / 38%);
+.app-shell :is(.sensor-hero, .insight-lead) .panel-metrics {
+  gap: 10px;
+  background: transparent;
+  border-radius: 0;
 }
 
+.app-shell :is(.sensor-hero, .insight-lead) .panel-metrics > div {
+  border: 1px solid #c7dff1;
+  border-radius: var(--aero-card-radius);
+  background: #f8fcff;
+  backdrop-filter: none;
+  padding: clamp(12px, 1.5vw, 20px);
+}
+
+.app-shell .panel-metrics dt,
+.app-shell .panel-metrics dd small,
+.app-shell .panel-metrics > div > span {
+  color: #365773;
+}
+
+.app-shell .panel-metrics dd {
+  color: var(--aero-ink);
+}
+
+.app-shell .sensor-overview :is(.sensor-recommendation, .sensor-reading-time, .sensor-panel-footer) {
+  color: #254964;
+}
+
+.app-shell .sensor-overview .sensor-panel-footer > span {
+  background: #eff8ff;
+  border: 1px solid #cce1f3;
+}
+
+.app-shell .sensor-overview .sensor-hero .panel-link {
+  color: #064d9d;
+  text-underline-offset: .22em;
+}
+
+.app-shell .sensor-overview .sensor-hero .panel-link:hover {
+  text-decoration: underline;
+}
+
+.app-shell .sensor-hero .sensor-status-title span {
+  color: #075bc2;
+}
+
+.app-shell .insight-lead .status-pending {
+  color: var(--panel-muted);
+}
 .app-shell .insight-topics button {
   color: var(--aero-muted);
   background: transparent;
@@ -190,17 +202,26 @@ body {
 }
 
 .app-shell .chat-source-panel {
-  background: #eef3ff;
-  border: 1px solid #d7e1f4;
+  background: var(--aero-surface);
+  border: 1px solid var(--aero-rim);
   padding: 22px;
   border-radius: 18px;
 }
 
 .app-shell .chat-source-panel :is(h2, ul) { color: #25405f; }
-.app-shell .chat-source-panel .chat-mascot { max-width: 148px; }
 
 .app-shell .live-chat > header {
-  background: linear-gradient(135deg, #154595, #0957bd);
+  background: #eaf5ff;
+}
+
+.app-shell .live-chat > header :is(strong, small) {
+  color: var(--aero-ink);
+}
+
+.app-shell .live-message.user {
+  background: #dbeeff;
+  border-color: #c7dff5;
+  color: var(--aero-ink);
 }
 
 .app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
@@ -312,7 +333,7 @@ body {
 }
 
 .app-shell .aero-assist {
-  background: #e3f0ff;
+  background: var(--aero-illustration);
 }
 
 .app-shell .insight-disclosure {
@@ -511,7 +532,7 @@ svg.lucide {
 :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
   .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
   background: #eef8ff;
-  box-shadow: var(--aero-glass-depth);
+  box-shadow: none;
 }
 
 .app-shell .app-topbar {
@@ -566,7 +587,7 @@ svg.lucide {
 
 body:has(.login-page),
 .confirm-page {
-  background: radial-gradient(ellipse at 10% 0%, #d0ecff, transparent 50rem), #eff7ff;
+  background: var(--aero-canvas-soft);
 }
 
 .login-page .login-story {
@@ -762,11 +783,11 @@ body:has(.login-page),
   .landing-page .landing-header nav {
     border-radius: var(--aero-card-radius);
     background: #eef8ff;
-    box-shadow: var(--aero-glass-depth);
+    box-shadow: none;
   }
 }
 
-.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius > div) {
+.app-shell :is(.disaster-filters, .nearby-radius > div) {
   padding: 5px;
   gap: 4px;
   border: 1px solid var(--aero-rim);
@@ -774,19 +795,19 @@ body:has(.login-page),
   background: #f1f8ff;
 }
 
-.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters) button {
+.app-shell :is(.disaster-filters, .nearby-radius, .management-parameters) button {
   border-radius: var(--aero-segment-radius);
   min-height: 44px;
 }
 
-.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius, .management-parameters)
+.app-shell :is(.disaster-filters, .nearby-radius, .management-parameters)
   button[aria-pressed="true"] {
   color: #fff;
   background: var(--aero-blue);
   box-shadow: none;
 }
 
-.app-shell :is(.disaster-filters, .map-layer-picker, .nearby-radius) button:focus-visible {
+.app-shell :is(.disaster-filters, .nearby-radius) button:focus-visible {
   outline-offset: -2px;
 }
 
@@ -905,4 +926,168 @@ body:has(.login-page),
   .wa-settings-controls .live-button {
     justify-self: start;
   }
+}
+
+.app-content {
+  width: 100%;
+  min-width: 0;
+  max-width: 1480px;
+  margin-inline: auto;
+  padding: clamp(16px, 2.8vw, 38px);
+}
+
+.app-shell .app-topbar {
+  box-shadow: none;
+}
+
+.app-shell .sensor-overview {
+  display: grid;
+  gap: 16px;
+}
+
+.app-shell .sensor-overview .sensor-hero .insight-status {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: .8125rem;
+  margin-bottom: 12px;
+}
+
+.app-shell .aero-assist {
+  border: 1px solid var(--aero-rim);
+}
+
+.app-shell .aero-assist::before,
+.app-shell .aero-assist::after {
+  display: none;
+}
+
+.app-shell .aero-assist .assist-visual {
+  width: min(100%, 220px);
+  padding: 8px;
+}
+
+.app-shell .aero-assist .assist-link {
+  min-height: 44px;
+  border-radius: var(--aero-control-radius);
+}
+
+@media (max-width: 640px) {
+  .app-shell .aero-assist {
+    grid-template-columns: minmax(0, 1fr) minmax(88px, 30%);
+    grid-template-rows: auto auto;
+    display: grid;
+    gap: 8px 10px;
+    align-items: center;
+  }
+  .app-shell .aero-assist .assist-copy {
+    grid-column: 1;
+    text-align: start;
+  }
+  .app-shell .aero-assist .assist-visual {
+    grid-area: 1 / 2 / 3;
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    padding: 0;
+  }
+  .app-shell .aero-assist .assist-link {
+    grid-column: 1;
+    justify-self: start;
+  }
+}
+
+.landing-page {
+  background: var(--aero-canvas-soft);
+}
+
+.landing-page .landing-hero {
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-hero-radius);
+  background: var(--aero-illustration);
+  padding: clamp(24px, 4.5vw, 62px);
+  margin-bottom: clamp(40px, 6vw, 78px);
+  overflow: hidden;
+}
+
+.landing-page .landing-hero-art {
+  background: none;
+  border-radius: 0;
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 1.16;
+}
+
+.landing-page .landing-hero-mascot {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.landing-page :is(.landing-nav-login, .landing-button) {
+  border-radius: var(--aero-control-radius);
+}
+
+.landing-page .landing-feature-detail,
+.landing-page .landing-management {
+  background: var(--aero-surface);
+  border: 1px solid var(--aero-rim);
+}
+
+.app-shell .weather-outlook .wx-today {
+  background: var(--aero-sky);
+  border: 1px solid var(--aero-rim);
+}
+
+.app-shell :is(.wx-today-stats > div, .wx-card) {
+  background-color: #f1f8ff;
+}
+
+.app-shell .wx-card[aria-pressed="true"] {
+  background-color: #dceeff;
+  border-color: #71acee;
+}
+
+@media (max-width: 420px) {
+  .app-shell .sensor-overview .sensor-hero .panel-link {
+    font-size: .8125rem;
+  }
+  .landing-page .landing-hero {
+    background-position: right bottom;
+    background-size: auto 65%, auto;
+  }
+}
+
+:is(.app-shell .account-link, .app-shell .live-button, .login-page .login-submit,
+    .app-shell .monitoring-select[data-slot="select-trigger"], .app-shell .assist-link) {
+  border-radius: var(--aero-control-radius);
+  box-shadow: none;
+}
+
+.app-shell .aero-assist .assist-link {
+  background: var(--aero-blue);
+  box-shadow: none;
+}
+
+.app-shell .aero-assist .assist-link:hover {
+  background: var(--aero-blue-hover);
+}
+
+.app-shell .sensor-overview .sensor-status-title {
+  max-width: 18ch;
+}
+
+.app-shell .environment-hub.insights-compact .insight-lead {
+  background: var(--aero-sky);
+}
+
+@media (max-width: 640px) {
+  .app-shell .sensor-overview .sensor-hero {
+    background-size: auto 60%, auto;
+  }
+}
+
+.app-shell .live-chat .chat-guest {
+  background: #edf6ff;
+  color: var(--aero-muted);
 }

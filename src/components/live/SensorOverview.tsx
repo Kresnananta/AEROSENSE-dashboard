@@ -35,7 +35,6 @@ export function SensorOverview() {
   const invalid = hasReading && reading.quality?.invalid === true;
   const fresh = hasReading && !stale && !invalid;
   const lastReadingTime = reading?.observed_at || reading?.received_at;
-  const hubUrl = node ? `/environment?node_id=${encodeURIComponent(node.id)}` : "/environment";
   const pose =
     summary.tone === "danger"
       ? "alert"
@@ -75,10 +74,10 @@ export function SensorOverview() {
     (node?.pm25_validated === true && typeof pm25 === "number" && Number.isFinite(pm25));
   const keys = [showPm25 ? "pm25_ug_m3" : "dust_ug_m3", "temperature_c", "humidity_pct"];
   return (
-    <section className="insights-hub sensor-overview">
+    <section className="insights-hub sensor-overview" aria-labelledby="sensor-heading">
       <header className="insights-heading">
         <div>
-          <h1>
+          <h1 id="sensor-heading">
             <span className="heading-accent">Kondisi udara</span> di titik sensor
           </h1>
         </div>
@@ -144,9 +143,9 @@ export function SensorOverview() {
                   )}
                   <Link
                     className="panel-link"
-                    to={fresh && node ? `/nodes/${encodeURIComponent(node.id)}` : hubUrl}
+                    to={node ? `/nodes/${encodeURIComponent(node.id)}` : "/environment"}
                   >
-                    {fresh ? "Lihat detail sensor" : "Buka Hub Lingkungan"}
+                    {node ? "Lihat detail sensor" : "Buka Hub Lingkungan"}
                     <ArrowUpRight size={16} />
                   </Link>
                 </div>
@@ -156,7 +155,7 @@ export function SensorOverview() {
                   {keys.map((key) => {
                     const value = reading?.metrics[key];
                     return (
-                      <div key={key} style={{ backdropFilter: "var(--metric-backdrop)" }}>
+                      <div key={key}>
                         <dt>{metricLabels[key][0]}</dt>
                         <dd>
                           {typeof value === "number" && Number.isFinite(value) &&
@@ -174,17 +173,11 @@ export function SensorOverview() {
               )}
               {(fresh || node) && (
                 <footer className="sensor-panel-footer">
-                  {fresh ? (
+                  {fresh && (
                     <span>
                       <Radio size={13} />
                       {dateLabel(lastReadingTime)}
                     </span>
-                  ) : (
-                    node && (
-                      <Link className="panel-link" to={`/nodes/${encodeURIComponent(node.id)}`}>
-                        Lihat detail sensor <ArrowUpRight size={16} />
-                      </Link>
-                    )
                   )}
                   {node && (
                     <span>
@@ -202,30 +195,13 @@ export function SensorOverview() {
                     ? "Periksa titik ini sekarang."
                     : summary.tone === "warning"
                       ? "Ada yang perlu dicek."
-                      : "Ada yang ingin ditanyakan?"}
+                      : "Tanya soal udara sekitar"}
                 </h2>
                 {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
-                {summary.tone === "warning" && <p>Bandingkan dengan titik terdekat.</p>}
+                {summary.tone === "warning" && <p>Cari tahu apa arti status ini.</p>}
               </div>
               <div className="assist-visual">
-                <svg
-                  className="assist-airflow"
-                  viewBox="0 0 360 340"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <ellipse cx="180" cy="230" rx="154" ry="54" transform="rotate(-20 180 230)" />
-                  <path d="M28 160C74 116 123 122 165 145C213 171 283 172 330 120" />
-                  <path d="M44 271C102 301 232 303 312 245" />
-                </svg>
-                {Array.from({ length: 7 }, (_, index) => (
-                  <span
-                    key={index}
-                    className={`assist-particle particle-${index + 1}`}
-                    aria-hidden="true"
-                  />
-                ))}
-                <AeroMascot pose={pose} />
+                <AeroMascot pose={pose === "calm" ? "welcome" : pose} />
               </div>
               <Link to="/aerobot" className="assist-link">
                 Tanya AERO-BOT <ArrowUpRight size={15} />

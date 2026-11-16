@@ -859,81 +859,6 @@ input {
   inset: 0;
   margin: 0;
 }
-.assist-airflow {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  stroke: #43a9e8;
-  stroke-width: 2.5;
-  opacity: 0.65;
-  pointer-events: none;
-}
-.assist-airflow path {
-  stroke-dasharray: 4 9;
-}
-.assist-particle {
-  position: absolute;
-  translate: -50% -50%;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #fff 0 8%, #baf2ff 28%, #69c8ee 65%, #3b9ee0);
-  box-shadow: 0 8px 14px -7px #2b8ac978;
-  animation: assist-particle-drift 7s ease-in-out infinite;
-  pointer-events: none;
-}
-.particle-1 {
-  left: 10%;
-  top: 24%;
-  width: 30px;
-  height: 30px;
-}
-.particle-2 {
-  left: 82%;
-  top: 19%;
-  width: 18px;
-  height: 18px;
-  animation-delay: -2s;
-}
-.particle-3 {
-  left: 85%;
-  top: 58%;
-  width: 36px;
-  height: 36px;
-  animation-delay: -4s;
-}
-.particle-4 {
-  left: 9%;
-  top: 70%;
-  width: 19px;
-  height: 19px;
-  animation-delay: -3s;
-}
-.particle-5 {
-  left: 73%;
-  top: 84%;
-  width: 16px;
-  height: 16px;
-  animation-delay: -5s;
-}
-.particle-6 {
-  left: 33%;
-  top: 12%;
-  width: 10px;
-  height: 10px;
-  animation-delay: -1s;
-}
-.particle-7 {
-  left: 25%;
-  top: 87%;
-  width: 24px;
-  height: 24px;
-  animation-delay: -6s;
-}
-.aero-assist:has(.motion-paused) .assist-particle {
-  animation-play-state: paused;
-}
 @keyframes assist-particle-drift {
   0%,
   100% {
@@ -1535,7 +1460,6 @@ input {
 }
 @media (prefers-reduced-motion: reduce) {
   .aero-mascot,
-  .assist-particle,
   .sensor-float-object,
   .sensor-dust,
   .app-shell .sensor-hero .scene-sensor img {

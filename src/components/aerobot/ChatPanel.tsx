@@ -365,7 +365,7 @@ export function ChatPanel() {
         {!user && !isLoading && (
           <div className="chat-guest">
             <p>
-              Bertanya tanpa akun, langsung saja. <Link to="/login">Masuk</Link> untuk mode suara
+              <Link to="/login">Masuk</Link> untuk memakai mode suara
               dan riwayat titik pantau Anda.
             </p>
             <WhatsAppEntry />

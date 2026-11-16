@@ -204,81 +204,11 @@
     transform: translate3d(3px, -12px, 0) rotate(1deg);
   }
 }
-.landing-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-.landing-art-dot {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, #ecfcff 0%, #96e4f5 40%, #4baed7 100%);
-  animation: landing-particle-drift 7s ease-in-out infinite;
-}
-.art-dot-1 {
-  width: 26px;
-  height: 26px;
-  top: 14%;
-  left: 5%;
-}
-.art-dot-2 {
-  width: 13px;
-  height: 13px;
-  top: 5%;
-  left: 43%;
-  animation-delay: -2s;
-}
-.art-dot-3 {
-  width: 18px;
-  height: 18px;
-  top: 32%;
-  right: 0;
-  animation-delay: -4s;
-}
-.art-dot-4 {
-  width: 30px;
-  height: 30px;
-  bottom: 12%;
-  right: 3%;
-  animation-delay: -1s;
-}
-@keyframes landing-particle-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(5px, -13px, 0);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .landing-art-dot {
-    animation: none;
-  }
-}
-.art-dot-one {
-  width: 26px;
-  height: 26px;
-  top: 60px;
-  left: 32px;
-}
-.art-dot-two {
-  width: 14px;
-  height: 14px;
-  right: 10px;
-  top: 42%;
-}
-.art-dot-three {
-  width: 19px;
-  height: 19px;
-  left: 44%;
-  bottom: 93px;
-}
 .landing-section-heading {
   margin-bottom: var(--landing-gap);
 }
 .landing-page h2 {
-  font-size: clamp(30px, 3vw, 42px);
+  font-size: clamp(28px, 2.8vw, 38px);
   line-height: 1.18;
   letter-spacing: -0.035em;
   font-weight: 800;
