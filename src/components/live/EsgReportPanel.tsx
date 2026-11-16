@@ -163,23 +163,23 @@ export function EsgReportPanel({
           <div className="esg-report-tiles">
             <div>
               <span>Pembacaan</span>
-              <strong>{c.reading_count}</strong>
+              <strong>{formatNumber(c.reading_count, 0)}</strong>
               <small>pengamatan tercatat</small>
             </div>
             <div data-tone={valid >= 90 ? "ok" : "warn"}>
               <span>Data valid</span>
-              <strong>{valid}%</strong>
-              <small>{c.invalid_count} ditandai tidak valid</small>
+              <strong>{formatNumber(valid, 0)}%</strong>
+              <small>{formatNumber(c.invalid_count, 0)} ditandai tidak valid</small>
             </div>
             <div data-tone={above ? "warn" : "ok"}>
               <span>Pelampauan</span>
-              <strong>{above}</strong>
+              <strong>{formatNumber(above, 0)}</strong>
               <small>jumlah pembacaan</small>
             </div>
             <div>
               <span>Peringatan</span>
-              <strong>{preview.alerts.total}</strong>
-              <small>{preview.alerts.acknowledged} sudah ditinjau</small>
+              <strong>{formatNumber(preview.alerts.total, 0)}</strong>
+              <small>{formatNumber(preview.alerts.acknowledged, 0)} sudah ditinjau</small>
             </div>
           </div>
           <div className="live-table-wrap">

@@ -1,6 +1,6 @@
 import { SprinklerControl } from "@/components/live/SprinklerControl";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import {
   FileSpreadsheet,
   LockKeyhole,
@@ -11,6 +11,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAccess } from "@/hooks/useAccess";
+import { ROUTES } from "@/lib/constants";
 import { useLiveData } from "@/hooks/useLiveData";
 import { DataState } from "@/components/shared/DataState";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
@@ -212,6 +214,7 @@ function ThresholdEditor({
 
 export function ManagementPage() {
   const auth = useAuth();
+  const access = useAccess();
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(auth.user ? "/v1/dashboard" : null, 60000);
   const [selected, setSelected] = useState("");
   const [metric, setMetric] = useState("dust_ug_m3");
@@ -226,6 +229,8 @@ export function ManagementPage() {
   );
   const [exportNotice, setExportNotice] = useState("");
   const [savedNotice, setSavedNotice] = useState("");
+  if (access.loading) return <DataState loading />;
+  if (access.role === "robot") return <Navigate to={ROUTES.ENVIRONMENT} replace />;
   const canManage = !!node && ["admin", "operator"].includes(node.role);
   const currentMetric =
     metric === "tvoc_ppb" || (metric === "pm25_ug_m3" && !node?.pm25_validated) ? "dust_ug_m3" : metric;

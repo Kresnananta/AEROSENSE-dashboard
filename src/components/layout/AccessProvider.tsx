@@ -8,6 +8,7 @@ interface AccessResponse {
   can_audit_esg: boolean;
   can_view_model?: boolean;
   can_manage?: boolean;
+  can_use_robot_screen?: boolean;
 }
 
 export function AccessProvider({ children }: { children: ReactNode }) {
@@ -25,6 +26,7 @@ export function AccessProvider({ children }: { children: ReactNode }) {
         canAudit: data?.can_audit_esg === true,
         canViewModel: data?.can_view_model === true,
         canManage: data?.can_manage === true,
+        canUseRobotScreen: data?.can_use_robot_screen === true || data?.can_manage === true,
         loading: auth.isLoading || (signedIn && access.loading),
         signedIn,
         error: auth.error || access.error,

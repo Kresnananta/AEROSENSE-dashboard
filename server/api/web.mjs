@@ -1,7 +1,14 @@
 import { readEventLayers } from "./environment-events.mjs";
 import { summarizeEnvironment, orderEnvironmentFacts } from "./environment-insights.mjs";
 import { publicMonitoring } from "./public-monitoring.mjs";
-import { canAuditEsg, canManage, canViewModel, highestRole, PUBLIC_NODE_FIELDS } from "./access.mjs";
+import {
+  canAuditEsg,
+  canManage,
+  canUseRobotScreen,
+  canViewModel,
+  highestRole,
+  PUBLIC_NODE_FIELDS,
+} from "./access.mjs";
 const reportScope = {
   type: "ambient_monitoring",
   assurance_status: "not_assured",
@@ -57,6 +64,7 @@ export function webRoutes({ db, one, user, member, reader = member, send, filter
         can_audit_esg: auditors.length > 0,
         can_view_model: memberships.some((m) => canViewModel(m.role)),
         can_manage: memberships.some((m) => canManage(m.role)),
+        can_use_robot_screen: memberships.some((m) => canUseRobotScreen(m.role)),
       });
       return true;
     }

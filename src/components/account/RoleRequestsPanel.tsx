@@ -12,6 +12,7 @@ type Request = {
 type Queue = { requests: Request[]; locations: { id: string; nodes: string[] }[] };
 const ROLES = [
   ["viewer", "Warga"],
+  ["robot", "Robot AERO-BOT"],
   ["operator", "Pengelola kawasan"],
   ["auditor", "Auditor / peneliti"],
   ["admin", "Admin lokasi"],

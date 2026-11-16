@@ -12,9 +12,11 @@ export function DemoBanner() {
           ? "Administrator"
           : user?.app_metadata.demo_role === "operator"
             ? "Akun pengelola"
-            : user
-              ? "Akun warga"
-              : "Masuk"}
+            : user?.app_metadata.demo_role === "robot"
+              ? "Akun robot"
+              : user
+                ? "Akun warga"
+                : "Masuk"}
       </Link>
     </div>
   );

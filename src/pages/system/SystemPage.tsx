@@ -7,7 +7,7 @@ import { WhatsAppSettings } from "@/components/live/WhatsAppSettings";
 export function SystemPage() {
   const auth = useAuth(),
     navigate = useNavigate();
-  const { canManage } = useAccess();
+  const { canManage, canUseRobotScreen, role } = useAccess();
   const [notice, setNotice] = useState("");
   return (
     <div className="app-section-stack settings-page">
@@ -43,6 +43,21 @@ export function SystemPage() {
                 Keluar akun
               </button>
             </div>
+            {canUseRobotScreen && (
+              <div className="settings-row">
+                <div>
+                  <h2>Layar AERO-BOT</h2>
+                  <p>
+                    {role === "robot"
+                      ? "Tampilan wajah fisik dan Hub Lingkungan untuk unit AERO-BOT."
+                      : "Hubungkan layar wajah AERO-BOT fisik ke akun ini."}
+                  </p>
+                </div>
+                <Link className="live-button secondary" to="/robot-screen">
+                  Buka layar robot
+                </Link>
+              </div>
+            )}
             {canManage && (
               <div className="settings-row">
                 <div>

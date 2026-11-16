@@ -56,7 +56,19 @@ test("demo citizen cannot open admin reports, and no fallback reaches production
     can_audit_esg: false,
     can_view_model: false,
     can_manage: false,
+    can_use_robot_screen: false,
   });
+  const robot = authenticateDemo("robot@demo.aerosense.test", "RobotDemo2026!");
+  assert.equal(robot.app_metadata.demo_role, "robot");
+  assert.deepEqual(await demoRequest("/v1/access", {}, robot), {
+    role: "robot",
+    can_audit_esg: false,
+    can_view_model: false,
+    can_manage: false,
+    can_use_robot_screen: true,
+  });
+  await assert.rejects(demoRequest("/v1/esg/report", {}, robot), /admin/);
+  await assert.rejects(demoRequest("/v1/actuators/commands", { method: "POST", body: "{}" }, robot), /pengelola/);
   await assert.rejects(demoRequest("/v1/esg/report", {}, citizen), /admin/);
   assert.equal((await demoRequest("/v1/esg/report", {}, demoUser("admin"))).nodes.length, 16);
   await assert.rejects(

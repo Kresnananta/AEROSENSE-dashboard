@@ -1,8 +1,9 @@
-export const ROLE_RANK = { viewer: 1, auditor: 2, operator: 3, admin: 4 };
+export const ROLE_RANK = { robot: 1, viewer: 2, auditor: 3, operator: 4, admin: 5 };
 
 export const canViewModel = (role) => ["operator", "admin", "auditor"].includes(role);
 export const canAuditEsg = (role) => ["admin", "auditor"].includes(role);
 export const canManage = (role) => ["operator", "admin"].includes(role);
+export const canUseRobotScreen = (role) => ["robot", "operator", "admin"].includes(role);
 
 export function highestRole(memberships = []) {
   return memberships.reduce(

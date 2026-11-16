@@ -36,9 +36,9 @@
 }
 .esg-report-tiles > div {
   display: grid;
-  gap: 4px;
-  padding: 12px 18px 12px 0;
-  border-bottom: 1px solid #d6e7fb;
+  align-content: start;
+  gap: 6px;
+  padding: 16px 18px;
 }
 .esg-report-tiles span {
   font-size: 12px;
@@ -85,10 +85,10 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin: 0;
+  margin: 14px 0 0;
 }
 .esg-report-quality > div {
-  padding: 14px 0;
+  padding: 14px 16px;
   min-width: 0;
 }
 .esg-report-quality dt {
@@ -175,10 +175,19 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
+  margin-top: 12px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: var(--aero-control-radius, 14px);
+  background: #e7f2ff;
   color: #0759bc;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  transition: background 0.18s;
+}
+.esg-data-export:hover:not(:disabled) {
+  background: #d5e8ff;
 }
 .esg-data-export:disabled {
   opacity: 0.55;
@@ -194,6 +203,6 @@
   min-width: 0;
 }
 .esg-report .live-table-wrap {
-  border: 0;
-  border-radius: 0;
+  border: 1px solid #dce8f5;
+  border-radius: var(--aero-card-radius, 16px);
 }

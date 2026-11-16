@@ -54,7 +54,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
   return (
     <aside className="app-sidebar">
       <NavLink
-        to={ROUTES.DASHBOARD}
+        to={role === "robot" ? ROUTES.ENVIRONMENT : ROUTES.DASHBOARD}
         onClick={onClose}
         className="app-brand"
         aria-label="AEROSENSE — Beranda"
@@ -75,9 +75,11 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         {groups.map(({ label, paths }) => {
           const items = paths.flatMap((path) => visibleItems.filter((item) => item.path === path));
           if (!items.length) return null;
+          const groupLabel =
+            label === "Perangkat & laporan" && !canAudit && !canManage ? "Perangkat" : label;
           return (
-            <div className="nav-group" role="group" aria-label={label} key={label}>
-              <p>{label}</p>
+            <div className="nav-group" role="group" aria-label={groupLabel} key={label}>
+              <p>{groupLabel}</p>
               {items.map((item) => {
                 const Icon = ICONS[item.icon] || LayoutGrid;
                 return (

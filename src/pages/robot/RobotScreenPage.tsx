@@ -21,7 +21,12 @@ export function RobotScreenPage() {
   const { user, isLoading } = useAuth();
   const userId = user?.id;
   const [robot, setRobot] = useRobotSlot(userId);
-  const access = useLiveData<{ can_manage: boolean }>(user ? "/v1/access" : null, 60000);
+  const access = useLiveData<{ can_manage?: boolean; can_use_robot_screen?: boolean }>(
+    user ? "/v1/access?account=" + encodeURIComponent(user.id) : null,
+    60000,
+  );
+  const canUseScreen =
+    access.data?.can_use_robot_screen === true || access.data?.can_manage === true;
   const frame = useRef<HTMLIFrameElement>(null);
   const [ready, setReady] = useState(false);
   const [active, setActive] = useState(false);
@@ -50,7 +55,7 @@ export function RobotScreenPage() {
   }, [robot]);
 
   useEffect(() => {
-    if (!active || !userId || !access.data?.can_manage) return;
+    if (!active || !userId || !canUseScreen) return;
     const controller = new AbortController();
     const screen = () => (frame.current?.contentWindow as FaceWindow | null)?.aerobotDisplay;
     let reconnect: ReturnType<typeof setTimeout>;
@@ -113,7 +118,7 @@ export function RobotScreenPage() {
       clearTimeout(reconnect);
       screen()?.receive({ action: "stop" });
     };
-  }, [active, userId, access.data?.can_manage, robot]);
+  }, [active, userId, canUseScreen, robot]);
 
   useEffect(() => {
     const manifest = window.document.createElement("link");
@@ -137,8 +142,12 @@ export function RobotScreenPage() {
 
   if (isLoading || (user && access.loading)) return <p role="status">Menyiapkan layar…</p>;
   if (!user) return <Navigate to="/login?next=/robot-screen" replace />;
-  if (access.error || !access.data?.can_manage)
-    return <p role="alert">Layar robot hanya tersedia untuk pengelola kawasan dan admin.</p>;
+  if (access.error || !canUseScreen)
+    return (
+      <p role="alert">
+        Layar robot hanya tersedia untuk akun robot, pengelola kawasan, dan admin.
+      </p>
+    );
 
   return (
     <main style={{ position: "fixed", inset: 0, background: "#edf0ff" }}>

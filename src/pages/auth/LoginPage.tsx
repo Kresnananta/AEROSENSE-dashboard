@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { authService } from "@/services/auth.service";
+import { apiRequest } from "@/services/api";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { DEMO_ACCOUNTS } from "@/demo/session";
 
@@ -21,7 +22,12 @@ export function LoginPage() {
     setError("");
     try {
       await authService.login(email, password);
-      navigate(params.get("next") === "/robot-screen" ? "/robot-screen" : ROUTES.DASHBOARD);
+      if (params.get("next") === "/robot-screen") {
+        navigate("/robot-screen");
+        return;
+      }
+      const access = await apiRequest<{ role?: string }>("/v1/access").catch(() => null);
+      navigate(access?.role === "robot" ? ROUTES.ENVIRONMENT : ROUTES.DASHBOARD);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login belum berhasil.");
     } finally {

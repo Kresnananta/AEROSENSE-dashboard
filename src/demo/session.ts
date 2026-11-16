@@ -8,6 +8,12 @@ export const DEMO_ACCOUNTS = [
     password: "WargaDemo2026!",
   },
   {
+    role: "robot",
+    label: "Robot",
+    email: "robot@demo.aerosense.test",
+    password: "RobotDemo2026!",
+  },
+  {
     role: "operator",
     label: "Pengelola",
     email: "pengelola@demo.aerosense.test",
@@ -26,7 +32,9 @@ export function demoUser(role: string): User {
         ? "demo-admin"
         : account.role === "operator"
           ? "demo-operator"
-          : "demo-warga",
+          : account.role === "robot"
+            ? "demo-robot"
+            : "demo-warga",
     aud: "authenticated",
     role: "authenticated",
     email: account.email,

@@ -5,27 +5,39 @@ import {
   canViewModel,
   canAuditEsg,
   canManage,
+  canUseRobotScreen,
   highestRole,
   simpleReading,
 } from "../api/access.mjs";
 
 test("roles: what each account type may see", () => {
+  assert.equal(highestRole([{ role: "robot" }]), "robot");
   assert.equal(highestRole([{ role: "viewer" }, { role: "auditor" }]), "auditor");
   assert.equal(highestRole([{ role: "auditor" }, { role: "admin" }]), "admin");
   assert.equal(highestRole([]), null);
-  assert.deepEqual(["viewer", "operator", "auditor", "admin"].map(canViewModel), [
+  assert.deepEqual(["robot", "viewer", "operator", "auditor", "admin"].map(canViewModel), [
+    false,
     false,
     true,
     true,
     true,
   ]);
-  assert.deepEqual(["viewer", "operator", "auditor", "admin"].map(canAuditEsg), [
+  assert.deepEqual(["robot", "viewer", "operator", "auditor", "admin"].map(canAuditEsg), [
+    false,
     false,
     false,
     true,
     true,
   ]);
-  assert.deepEqual(["viewer", "operator", "auditor", "admin"].map(canManage), [
+  assert.deepEqual(["robot", "viewer", "operator", "auditor", "admin"].map(canManage), [
+    false,
+    false,
+    true,
+    false,
+    true,
+  ]);
+  assert.deepEqual(["robot", "viewer", "operator", "auditor", "admin"].map(canUseRobotScreen), [
+    true,
     false,
     true,
     false,
@@ -97,9 +109,21 @@ test("/v1/access and the ESG report follow the roles; model output is hidden fro
     can_audit_esg: false,
     can_view_model: false,
     can_manage: false,
+    can_use_robot_screen: false,
   });
   assert.equal((await warga("/v1/esg/report")).status, 403);
   assert.equal((await warga("/v1/dashboard")).body.nodes[0].latest.gru, null);
+
+  const robot = routes([{ role: "robot", location_id: "l1" }]);
+  assert.deepEqual((await robot("/v1/access")).body, {
+    role: "robot",
+    can_audit_esg: false,
+    can_view_model: false,
+    can_manage: false,
+    can_use_robot_screen: true,
+  });
+  assert.equal((await robot("/v1/esg/report")).status, 403);
+  assert.equal((await robot("/v1/dashboard")).body.nodes[0].latest.gru, null);
 
   const auditor = routes([
     { role: "auditor", location_id: "l1" },
@@ -110,6 +134,7 @@ test("/v1/access and the ESG report follow the roles; model output is hidden fro
     can_audit_esg: true,
     can_view_model: true,
     can_manage: false,
+    can_use_robot_screen: false,
   });
   const report = await auditor("/v1/esg/report");
   assert.equal(report.status, 200);
@@ -129,6 +154,7 @@ test("/v1/access and the ESG report follow the roles; model output is hidden fro
     can_audit_esg: false,
     can_view_model: true,
     can_manage: true,
+    can_use_robot_screen: true,
   });
   assert.equal((await operator("/v1/esg/report")).status, 403);
 });

@@ -18,7 +18,8 @@
   align-items: center;
   gap: 14px;
   padding: 21px 24px;
-  background: var(--ui-surface-gradient);
+  background: var(--aero-surface, #fff);
+  border: 1px solid var(--aero-rim, #dce8f5);
   border-radius: 16px;
   color: #2167ac;
 }

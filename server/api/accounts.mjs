@@ -224,7 +224,8 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
       if (!["approve", "reject"].includes(p.action)) throw fail("Pilih setujui atau tolak.");
       if (p.action === "approve") {
         if (!/^[a-zA-Z0-9_-]{2,40}$/.test(p.location_id || "")) throw fail("Pilih atau tulis ID lokasi.");
-        if (!["viewer", "operator", "auditor", "admin"].includes(p.role)) throw fail("Pilih peran.");
+        if (!["viewer", "robot", "operator", "auditor", "admin"].includes(p.role))
+          throw fail("Pilih peran.");
       }
       const result = await rpc("review_role_request", {
         p_request: id,

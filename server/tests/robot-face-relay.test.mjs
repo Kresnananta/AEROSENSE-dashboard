@@ -10,7 +10,9 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
       if (!id) throw Object.assign(new Error("Login diperlukan"), { status: 401 });
       return { id };
     },
-    db: async (_table, query) => [{ role: query.includes("viewer") ? "viewer" : "operator" }],
+    db: async (_table, query) => [
+      { role: query.includes("viewer") ? "viewer" : query.includes("robot") ? "robot" : "operator" },
+    ],
     filter: encodeURIComponent,
     rate: () => {},
     rawBody: async (req) => {
@@ -42,6 +44,7 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
   try {
     assert.equal((await request("/status")).status, 401);
     assert.equal((await request("/events", "viewer")).status, 403);
+    assert.equal((await request("/status", "robot")).status, 200);
     const stream = await fetch(base + "/events", {
       headers: { Authorization: "owner" },
       signal: abort.signal,

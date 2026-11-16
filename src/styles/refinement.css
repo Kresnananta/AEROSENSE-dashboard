@@ -624,7 +624,7 @@ input {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  flex: 1;
+  flex: 1 1 120px;
   gap: 8px;
   background: #fff;
   min-height: 40px;
@@ -1713,7 +1713,7 @@ input {
 .role-dialog h2 { font-size: 20px; font-weight: 700; color: #173a57; margin: 0 0 10px; letter-spacing: -0.02em; }
 .role-dialog p, .role-dialog li { font-size: 14px; line-height: 1.6; }
 .role-dialog ul { margin: 10px 0 18px; padding-left: 18px; display: grid; gap: 4px; }
-.role-requests { margin-bottom: 20px; }
+.role-requests { margin-bottom: 0; }
 .role-request { border: 1px solid #dce8f4; border-radius: 16px; padding: 16px; margin-top: 14px; display: grid; gap: 10px; }
 .role-request dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 13.5px; }
 .role-request dt { color: #657c91; }

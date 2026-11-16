@@ -314,8 +314,7 @@ export function SensorWorkspace({
               )}
               {mode === "map" && (
                 <>
-                  {mode === "map" && (
-                    <div className="map-controls">
+                  <div className="map-controls">
                       <div className="map-controls-main">
                         <label className="map-filter">
                           <span>Titik acuan</span>
@@ -421,7 +420,6 @@ export function SensorWorkspace({
                         </p>
                       )}
                     </div>
-                  )}
                   <Suspense fallback={<DataState loading />}>
                     <LiveMap
                       nodes={nodes}
@@ -674,10 +672,12 @@ export function SensorWorkspace({
                         <li key={a.id}>
                           <div>
                             <strong>
-                              {metricLabels[a.metric]?.[0] || a.metric}: {a.value} {a.unit}
+                              {metricLabels[a.metric]?.[0] || a.metric}:{" "}
+                              {a.value.toLocaleString("id-ID", { maximumFractionDigits: 2 })} {a.unit}
                             </strong>
                             <p>
-                              Ambang {a.threshold} {a.unit} · {dateLabel(a.created_at)}
+                              Ambang {a.threshold.toLocaleString("id-ID", { maximumFractionDigits: 2 })}{" "}
+                              {a.unit} · {dateLabel(a.created_at)}
                             </p>
                           </div>
                           {a.acknowledged_at ? (

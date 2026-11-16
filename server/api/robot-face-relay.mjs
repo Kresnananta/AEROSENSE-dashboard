@@ -1,4 +1,4 @@
-import { canManage } from "./access.mjs";
+import { canUseRobotScreen } from "./access.mjs";
 
 export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
   const screens = new Map();
@@ -6,8 +6,8 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
   async function authorize(req) {
     const account = await user(req);
     const roles = await db("ae_members", "user_id=eq." + filter(account.id));
-    if (!roles.some((row) => canManage(row.role)))
-      throw fail("Layar robot hanya tersedia untuk pengelola kawasan dan admin.", 403);
+    if (!roles.some((row) => canUseRobotScreen(row.role)))
+      throw fail("Layar robot hanya tersedia untuk akun robot, pengelola kawasan, dan admin.", 403);
     return account;
   }
   return async (req, res, url) => {

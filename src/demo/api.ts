@@ -89,7 +89,9 @@ export async function demoRequest(
       ? "admin"
       : account?.app_metadata.demo_role === "operator"
         ? "operator"
-        : "viewer";
+        : account?.app_metadata.demo_role === "robot"
+          ? "robot"
+          : "viewer";
   const index = DEMO_POINTS.findIndex(
     (n) => n.id === (url.searchParams.get("node_id") || body.node_id),
   );
@@ -153,7 +155,13 @@ export async function demoRequest(
     return { command };
   }
   if (p === "/v1/access")
-    return { role, can_audit_esg: role === "admin", can_view_model: manages, can_manage: manages };
+    return {
+      role,
+      can_audit_esg: role === "admin",
+      can_view_model: manages,
+      can_manage: manages,
+      can_use_robot_screen: manages || role === "robot",
+    };
   if ((p === "/v1/dashboard" || p === "/v1/nodes") && !post)
     return { nodes, refreshed_at: new Date().toISOString() };
   if (p === "/v1/esg/report") {

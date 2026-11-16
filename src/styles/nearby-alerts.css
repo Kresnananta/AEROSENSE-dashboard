@@ -220,7 +220,7 @@
   color: #526a80;
 }
 .nearby-other > div {
-  padding: 0 14px;
+  padding: 0 0 16px;
 }
 .nearby-alerts .nearby-method {
   margin-top: var(--section-gap, 20px);

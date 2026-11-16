@@ -347,6 +347,7 @@ body {
 
 .app-shell .insight-disclosure {
   padding-inline: clamp(14px, 1.6vw, 22px);
+  border: 1px solid var(--aero-rim);
 }
 
 .app-shell :is(.wx-card, .wx-today-stats > div, .esg-report-tiles > div, .insight-glance,
@@ -511,6 +512,11 @@ svg.lucide {
 
 .app-shell :is(.live-panel, .management-rules, .sprinkler-section, .wx-panel) {
   padding: var(--aero-inset);
+}
+
+.app-shell .live-panel.settings-list {
+  padding: 0;
+  overflow: hidden;
 }
 
 .app-shell .live-panel > .live-table-wrap {
@@ -1108,10 +1114,18 @@ body:has(.login-page),
   background: var(--aero-illustration);
 }
 
-.app-shell :is(.wx-today-stats > div, .wx-card, .insight-glance, .sensor-values article, .esg-report-tiles > div) {
+.app-shell :is(.wx-today-stats > div, .wx-card, .insight-glance, .sensor-values article, .esg-report-tiles > div, .esg-report-quality > div) {
   background: #f8fcff;
   border: 1px solid #cce1f3;
   box-shadow: none;
+}
+
+.app-shell .esg-report-tiles > div {
+  padding: 16px 18px;
+}
+
+.app-shell .esg-report-quality > div {
+  padding: 14px 16px;
 }
 
 .app-shell :is(.panel-metrics dd, .wx-today-stats dd, .glance-number strong, .sensor-values strong) {

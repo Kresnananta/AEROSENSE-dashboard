@@ -273,7 +273,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           }}
         />
       ) : !nodes.length ? (
-        <div>
+        <div className="app-section-stack">
           <DataState
             empty={
               user
