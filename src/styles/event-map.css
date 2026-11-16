@@ -278,7 +278,7 @@
   bottom: 28px;
   left: 10px;
   z-index: 500;
-  width: min(230px, calc(100% - 20px));
+  width: min(276px, calc(100% - 20px));
   padding: 7px 9px;
   border-radius: 10px;
   background: rgb(255 255 255 / 0.95);
@@ -295,7 +295,9 @@
 .heat-ticks {
   display: flex;
   justify-content: space-between;
-  margin: 2px 0 4px;
+  gap: 2px;
+  margin: 3px 0 4px;
+  font-size: 9.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }

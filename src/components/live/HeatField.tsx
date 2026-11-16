@@ -713,12 +713,10 @@ export function HeatField({
 
 export function HeatLegend({ layer, info }: { layer: HeatLayerKey; info: HeatInfo }) {
   const l = HEAT_LAYERS[layer];
-  const first = l.stops[0][0],
-    last = l.stops[l.stops.length - 1][0];
   const gradient = l.stops
-    .map(([v, c]) => `${c} ${((v - first) / (last - first)) * 100}%`)
+    .map(([, c], i) => `${c} ${(i / Math.max(1, l.stops.length - 1)) * 100}%`)
     .join(", ");
-  const ticks = [l.stops[0], l.stops[Math.floor(l.stops.length / 2)], l.stops[l.stops.length - 1]];
+  const ticks = l.stops;
   const time = info?.valid_at
     ? new Date(info.valid_at).toLocaleTimeString("id-ID", {
         timeZone: "Asia/Jakarta",
