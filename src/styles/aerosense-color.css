@@ -13,6 +13,11 @@ body {
   --aero-sky: linear-gradient(106deg, #eff9ff, #c5e9ff 58%, #93d3ff);
   --aero-landscape: url("../assets/images/skyline.svg");
   --aero-illustration: var(--aero-landscape) right bottom / cover no-repeat, var(--aero-sky);
+  --aero-sensor-landscape: url("../assets/images/skyline-sun.svg");
+  --aero-sensor-illustration: var(--aero-sensor-landscape) right bottom / cover no-repeat, var(--aero-sky);
+  --aero-bot-landscape: url("../assets/images/aerobot-sky.svg");
+  --aero-bot-sky: linear-gradient(153deg, #f4f3ff, #dde7ff 58%, #bfcef8);
+  --aero-bot-illustration: var(--aero-bot-landscape) center bottom / cover no-repeat, var(--aero-bot-sky);
   --aero-panel-radius: 22px;
   --aero-hero-radius: 32px;
   --aero-card-radius: 16px;
@@ -118,6 +123,10 @@ body {
   background: var(--aero-illustration);
   border: 1px solid var(--aero-rim);
   color: var(--aero-ink);
+}
+
+.app-shell .sensor-overview .sensor-hero {
+  background: var(--aero-sensor-illustration);
 }
 
 .app-shell .environment-hub .insight-lead::before,
@@ -333,9 +342,8 @@ body {
 }
 
 .app-shell .aero-assist {
-  background:
-    radial-gradient(ellipse at 50% 60%, #fff 0%, #f5f8ff 32%, transparent 68%),
-    linear-gradient(153deg, #f4f3ff, #dde7ff 58%, #bfcef8);
+  background: var(--aero-bot-illustration);
+  border: 1px solid #d5e0fb;
 }
 
 .app-shell .insight-disclosure {
@@ -589,7 +597,9 @@ svg.lucide {
 
 body:has(.login-page),
 .confirm-page {
-  background: var(--aero-canvas-soft);
+  min-height: 100dvh;
+  background: var(--aero-illustration);
+  background-attachment: fixed;
 }
 
 .login-page .login-story {
@@ -599,10 +609,10 @@ body:has(.login-page),
   min-height: 0;
   padding: clamp(22px, 4vw, 44px);
   border-radius: var(--aero-hero-radius);
-  background: var(--aero-illustration);
+  background: transparent;
   box-shadow: none;
   color: var(--aero-ink);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .login-page:has(.register-inner) {
@@ -652,6 +662,8 @@ body:has(.login-page),
 .login-page .login-form-panel {
   padding: clamp(20px, 4vw, 40px);
   background-color: var(--aero-surface);
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-hero-radius);
 }
 
 .login-page .login-form-inner {
@@ -1037,7 +1049,7 @@ body:has(.login-page),
 }
 
 .app-shell .weather-outlook .wx-today {
-  background: var(--aero-sky);
+  background: var(--aero-illustration);
   border: 1px solid var(--aero-rim);
 }
 
@@ -1080,7 +1092,7 @@ body:has(.login-page),
 }
 
 .app-shell .environment-hub.insights-compact .insight-lead {
-  background: var(--aero-sky);
+  background: var(--aero-illustration);
 }
 
 @media (max-width: 640px) {
