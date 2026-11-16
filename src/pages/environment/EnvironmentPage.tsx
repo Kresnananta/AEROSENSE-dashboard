@@ -220,14 +220,14 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
               </>
             )}
           </Heading>
-          <p>
-            <MapPin size={15} aria-hidden="true" />
-            {locationMode === "device" && userPoint && node
-              ? `${userPoint.latitude.toFixed(4)}, ${userPoint.longitude.toFixed(4)} · node acuan ${node.name}${nearest ? ` (${distanceLabel(nearest.distance)})` : ""}`
-              : node
-                ? `${node.latitude.toFixed(4)}, ${node.longitude.toFixed(4)}`
+          {((locationMode === "device" && userPoint && node) || !node) && (
+            <p>
+              <MapPin size={15} aria-hidden="true" />
+              {locationMode === "device" && userPoint && node
+                ? `Sekitar Anda · acuan ${node.name}${nearest ? ` (${distanceLabel(nearest.distance)})` : ""}`
                 : "Pilih titik sensor"}
-          </p>
+            </p>
+          )}
           {locationError && (
             <p className="environment-location-error" role="alert">
               {locationError}

@@ -4,15 +4,86 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f3f8ff" />
-    <meta name="description" content="AEROSENSE membantu tim Indonesia memahami kualitas udara, memantau node sensor, dan menyusun laporan lingkungan." />
+    <title>AEROSENSE - Pemantauan Kualitas Udara &amp; Lingkungan Indonesia</title>
+    <meta
+      name="description"
+      content="AEROSENSE memantau kualitas udara di sekitar kawasan industri secara real-time melalui node sensor, prakiraan cuaca, peta sensor Indonesia, dan asisten AERO-BOT."
+    />
+    <link rel="canonical" href="https://aerosense.me/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AEROSENSE" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:url" content="https://aerosense.me/" />
+    <meta property="og:title" content="AEROSENSE - Pemantauan Kualitas Udara &amp; Lingkungan" />
+    <meta
+      property="og:description"
+      content="Pantau pembacaan sensor udara, prakiraan cuaca, titik panas, peringatan dini, dan laporan lingkungan sekitar kawasan industri dalam satu platform."
+    />
+    <meta property="og:image" content="https://aerosense.me/assets/brand/aerosense-mark.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AEROSENSE - Pemantauan Kualitas Udara &amp; Lingkungan" />
+    <meta
+      name="twitter:description"
+      content="Pemantauan kualitas udara real-time, peta sensor Indonesia, hub lingkungan, dan asisten AERO-BOT."
+    />
+    <meta name="twitter:image" content="https://aerosense.me/assets/brand/aerosense-mark.png" />
     <link rel="icon" type="image/png" sizes="64x64" href="/assets/brand/aerosense-favicon.png" />
     <link rel="apple-touch-icon" href="/assets/brand/aerosense-touch-icon.png" />
     <link rel="preconnect" href="https://rsms.me" />
     <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-    <title>AEROSENSE - Pahami Lingkungan</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "AEROSENSE",
+            "url": "https://aerosense.me/",
+            "logo": "https://aerosense.me/assets/brand/aerosense-mark.png",
+            "sameAs": [
+              "https://github.com/ilanpr/AEROSENSE-dashboard",
+              "https://github.com/Kresnananta/AEROSENSE-dashboard"
+            ]
+          },
+          {
+            "@type": "WebApplication",
+            "name": "AEROSENSE Dashboard",
+            "url": "https://aerosense.me/",
+            "applicationCategory": "EnvironmentalMonitoring",
+            "operatingSystem": "Web",
+            "inLanguage": "id",
+            "description": "Platform pemantauan kualitas udara dan kondisi lingkungan sekitar kawasan industri berbasis node sensor IoT, analitik historis, peta sebaran Indonesia, dan asisten AERO-BOT."
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main style="max-width:760px;margin:48px auto;padding:0 20px;font-family:Inter,system-ui,sans-serif;color:#102a47;line-height:1.6">
+        <h1>Kenali udara dan cuaca di sekitar Anda bersama AEROSENSE</h1>
+        <p>
+          AEROSENSE adalah sistem pemantauan kualitas udara dan lingkungan untuk kawasan industri dan pemukiman di Indonesia.
+          Platform ini menggabungkan pembacaan sensor langsung di lapangan, riwayat deret waktu, estimasi kondisi wilayah, serta asisten AERO-BOT.
+        </p>
+        <section>
+          <h2>Kemampuan Utama Platform</h2>
+          <ul>
+            <li>Pemantauan titik sensor aktif untuk debu partikulat, suhu, kelembapan, dan ambang bahaya operator.</li>
+            <li>Hub Lingkungan terpadu untuk prakiraan cuaca per jam, kualitas udara wilayah, kondisi tanah, titik panas, sungai, dan info gempa.</li>
+            <li>Peta sebaran sensor interaktif di seluruh Indonesia beserta layer kondisi wilayah.</li>
+            <li>Asisten AERO-BOT dan integrasi WATERSENSE untuk peringatan dini serta tindak lanjut otomatis.</li>
+          </ul>
+        </section>
+        <nav aria-label="Tautan utama">
+          <a href="/dashboard">Buka Dashboard</a> ·
+          <a href="/environment">Hub Lingkungan</a> ·
+          <a href="/sensor-map">Peta Sensor</a> ·
+          <a href="/aerobot">Tanya AERO-BOT</a> ·
+          <a href="/login">Masuk</a>
+        </nav>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

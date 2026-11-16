@@ -180,7 +180,8 @@ export function SensorOverview() {
                   )}
                   {node && (
                     <span>
-                      Titik node: {node.latitude.toFixed(4)}, {node.longitude.toFixed(4)}
+                      <MapPin size={13} aria-hidden="true" />
+                      {node.name}
                     </span>
                   )}
                 </footer>
@@ -227,33 +228,22 @@ export function SensorOverview() {
               ))}
             </div>
           )}
-          <details className="insight-disclosure status-method">
-            <summary>
-              <span>Arti status sensor</span>
-              <ChevronDown size={17} />
-            </summary>
-            <div className="insight-detail-body">
-              <p>
-                Terpantau baik: pembacaan parameter udara berada di bawah ambang yang diatur.
-                Waspada: ambang peringatan terlewati atau belum pulih. Bahaya: ambang bahaya yang
-                diatur terlewati. Data lama, nilai tidak valid, atau aturan belum tersedia tidak
-                diberi status bersih.
-              </p>
-              <p>
-                Status ini mengikuti ambang perangkat. Indeks udara wilayah tersedia di Hub
-                Lingkungan. TVOC adalah estimasi kelompok senyawa organik volatil.
-              </p>
-              {node?.rules?.map((r) => (
-                <p key={r.metric}>
-                  {metricLabels[r.metric]?.[0] || r.metric}: waspada ≥ {r.high} {r.unit}
-                  {r.danger_high != null
-                    ? ` · bahaya ≥ ${r.danger_high} ${r.unit}`
-                    : " · ambang bahaya belum diatur"}
-                  .
-                </p>
-              ))}
-            </div>
-          </details>
+          {node?.rules && node.rules.length > 0 && (
+            <details className="insight-disclosure status-method">
+              <summary>
+                <span>Ambang status perangkat</span>
+                <ChevronDown size={17} />
+              </summary>
+              <div className="insight-detail-body">
+                {node.rules.map((r) => (
+                  <p key={r.metric}>
+                    {metricLabels[r.metric]?.[0] || r.metric}: waspada ≥ {r.high} {r.unit}
+                    {r.danger_high != null ? ` · bahaya ≥ ${r.danger_high} ${r.unit}` : ""}
+                  </p>
+                ))}
+              </div>
+            </details>
+          )}
         </>
       )}
     </section>

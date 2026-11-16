@@ -201,12 +201,12 @@ body {
 .app-shell .insight-topics {
   background: rgb(255 255 255 / 83%);
   border: 1px solid #dce8f2;
-  border-radius: 16px;
+  border-radius: var(--aero-card-radius);
   padding: 7px;
 }
 
 .app-shell .insight-topics button {
-  border-radius: 10px;
+  border-radius: var(--aero-segment-radius);
 }
 
 .app-shell .chat-source-panel {
@@ -1102,4 +1102,18 @@ body:has(.login-page),
 .app-shell .live-chat .chat-guest {
   background: #edf6ff;
   color: var(--aero-muted);
+}
+
+.app-shell .weather-outlook .wx-today:is(.tone-clear, .tone-partly, .tone-rain, .tone-heavy-rain, .tone-drizzle, .tone-thunder) {
+  background: var(--aero-illustration);
+}
+
+.app-shell :is(.wx-today-stats > div, .wx-card, .insight-glance, .sensor-values article, .esg-report-tiles > div) {
+  background: #f8fcff;
+  border: 1px solid #cce1f3;
+  box-shadow: none;
+}
+
+.app-shell :is(.panel-metrics dd, .wx-today-stats dd, .glance-number strong, .sensor-values strong) {
+  font-variant-numeric: tabular-nums;
 }
