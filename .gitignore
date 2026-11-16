@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-demo/
 *.local
 
 # Editor directories and files
@@ -24,4 +25,14 @@ dist-ssr
 *.sw?
 
 .env
+.env.*
+!.env.example
+artifacts/
 reference-ui
+
+# Generated document previews
+output/
+.impeccable/review/
+
+# Device Wi-Fi and MQTT secrets
+firmware/**/config.h

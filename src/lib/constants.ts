@@ -1,85 +1,79 @@
-/**
- * ============================================
- * AEROSENSE Dashboard — Application Constants
- * ============================================
- */
-
 /** Application metadata */
 export const APP_CONFIG = {
-  name: 'AEROSENSE',
-  description: 'Air Quality Monitoring Dashboard',
-  version: '0.1.0',
-} as const
+  name: "AEROSENSE",
+  description: "Air Quality Monitoring Dashboard",
+  version: "0.1.0",
+} as const;
 
 /** Route path constants for type-safe navigation */
 export const ROUTES = {
-  HOME: '/',
-  LOGIN: '/login',
-  REGISTER: '/register',
-  DASHBOARD: '/dashboard',
-  SENSOR_MAP: '/sensor-map',
-  ANALYTICS: '/analytics',
-  ESG_REPORTS: '/esg-reports',
-  ALERTS: '/alerts',
-  AEROBOT: '/aerobot',
-  NODE_MONITORING: '/nodes',
-  NODE_DETAIL: '/nodes/:id',
-  SYSTEM: '/system',
-} as const
+  HOME: "/",
+  LOGIN: "/login",
+  REGISTER: "/register",
+  DASHBOARD: "/dashboard",
+  SENSOR_MAP: "/sensor-map",
+  ANALYTICS: "/analytics",
+  ESG_REPORTS: "/esg-reports",
+  ALERTS: "/alerts",
+  AEROBOT: "/aerobot",
+  NODE_MONITORING: "/nodes",
+  NODE_DETAIL: "/nodes/:id",
+  SYSTEM: "/system",
+  MANAGEMENT: "/management",
+  ENVIRONMENT: "/environment",
+} as const;
 
 export interface NavItemConfig {
-  label: string
-  path: string
-  icon: string
-  badge?: string
-  badgeType?: 'count' | 'pill'
+  label: string;
+  path: string;
+  icon: string;
+  badge?: string;
+  badgeType?: "count" | "pill";
 }
 
 /** Navigation items for citizen-centric sidebar */
 export const NAV_ITEMS: readonly NavItemConfig[] = [
   {
-    label: 'Beranda',
+    label: "Beranda",
     path: ROUTES.DASHBOARD,
-    icon: 'LayoutGrid',
+    icon: "LayoutGrid",
   },
+  { label: "Hub Lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
+  { label: "Kelola kawasan", path: ROUTES.MANAGEMENT, icon: "Settings2" },
   {
-    label: 'Peta sensor',
+    label: "Peta sensor",
     path: ROUTES.SENSOR_MAP,
-    icon: 'Map',
+    icon: "Map",
   },
   {
-    label: 'Analitik AI',
+    label: "Riwayat & model",
     path: ROUTES.ANALYTICS,
-    icon: 'LineChart',
+    icon: "LineChart",
   },
   {
-    label: 'Audit ESG',
+    label: "Laporan lingkungan",
     path: ROUTES.ESG_REPORTS,
-    icon: 'FileText',
+    icon: "FileText",
   },
   {
-    label: 'Peringatan',
+    label: "Peringatan",
     path: ROUTES.ALERTS,
-    icon: 'Bell',
-    badge: '2',
-    badgeType: 'count',
+    icon: "Bell",
   },
   {
-    label: 'Tanya AERO-BOT',
+    label: "Tanya AERO-BOT",
     path: ROUTES.AEROBOT,
-    icon: 'MessageCircle',
-    badge: 'BARU',
-    badgeType: 'pill',
+    icon: "MessageCircle",
   },
   {
-    label: 'Monitoring node',
+    label: "Perangkat sensor",
     path: ROUTES.NODE_MONITORING,
-    icon: 'Radio',
+    icon: "Radio",
   },
-] as const
+] as const;
 
 /** API configuration */
 export const API_CONFIG = {
-  baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || "/api",
   timeout: 10000,
-} as const
+} as const;

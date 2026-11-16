@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" fill="none">
+  <defs>
+    <linearGradient id="far" x1="790" y1="260" x2="728" y2="455" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A0DCF8"/>
+      <stop offset="1" stop-color="#D9F2FF"/>
+    </linearGradient>
+    <linearGradient id="near" x1="832" y1="323" x2="815" y2="458" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#89C9F2"/>
+      <stop offset="1" stop-color="#C4E9FF"/>
+    </linearGradient>
+  </defs>
+  <g fill="#F6FCFF" opacity=".78">
+    <path d="M490 156c0-8 8-15 18-15 7 0 12 2 15 6 4-12 15-20 28-20 13 0 24 8 28 19 3-2 7-3 11-3 9 0 17 6 18 13H490Z"/>
+    <path d="M743 108c1-13 13-22 27-22 5 0 10 1 14 4 5-17 21-29 39-29 15 0 28 8 35 21 5-4 11-6 17-6 13 0 24 9 26 21 11-2 23 2 27 11H743Z"/>
+    <path d="M825 225c0-7 7-13 16-13 4 0 7 1 10 3a22 22 0 0 1 36 1c4-3 9-4 13-4 10 0 19 6 20 13h-95Z"/>
+  </g>
+  <g stroke="#F9FDFF" stroke-width="2.2" stroke-linecap="round" opacity=".72">
+    <path d="M672 91c7-5 14-5 20 0 6-7 13-9 20-6"/>
+    <path d="M709 119c4-3 9-4 13-1 4-5 9-6 13-4"/>
+  </g>
+  <path d="M80 450c93-18 153-61 240-55 69 5 105 27 160 15 98-21 135-119 243-118 93 0 147 69 237 46v112H80Z" fill="url(#far)"/>
+  <path d="M452 450c107-9 161-42 238-65 59-18 103-11 150-25 42-12 84-42 120-40v130H452Z" fill="url(#near)"/>
+  <path d="M559 450c84-17 165-8 235-26 71-18 104-47 166-45v71H559Z" fill="#CDEAFF"/>
+  <path d="M734 450c68-6 120-15 166-34 18-7 38-12 60-12v46H734Z" fill="#E5F5FF"/>
+</svg>
