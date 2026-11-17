@@ -290,3 +290,89 @@ test("presence retries the same event and receives the resulting robot command",
     await new Promise((resolve) => mock.close(resolve));
   }
 });
+test("chest page stream: camera wakes with a greeting, sleeps, and replaces the API presence", async () => {
+  const events = [];
+  const mock = http.createServer(async (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    if (req.url === "/v1/robot/event") {
+      let raw = "";
+      for await (const c of req) raw += c;
+      events.push(JSON.parse(raw));
+      res.end("{}");
+      return;
+    }
+    res.end(req.url === "/v1/robot/commands" ? '{"commands":[]}' : "{}");
+  });
+  await new Promise((resolve) => mock.listen(0, "127.0.0.1", resolve));
+  const child = spawn(process.execPath, ["start.mjs"], {
+    cwd: fileURLToPath(new URL("./", import.meta.url)),
+    env: {
+      ...process.env,
+      AEROBOT_DISPLAY_PORT: "4217",
+      AEROBOT_OPEN_WINDOW: "0",
+      AEROBOT_PRESENCE: "camera",
+      AEROBOT_SLEEP_AFTER_MS: "1500",
+      AEROBOT_CHAT_URL: "https://chest.example/aerobot",
+      AEROSENSE_API_URL: `http://127.0.0.1:${mock.address().port}`,
+      AEROBOT_DEVICE_ID: "chest-fixture",
+      AEROBOT_DEVICE_KEY: "fixture-only",
+    },
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+  let output = "";
+  child.stdout.on("data", (chunk) => (output += chunk));
+  const abort = new AbortController();
+  const detected = (value) =>
+    fetch("http://127.0.0.1:4217/presence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ detected: value }),
+    });
+  const collect = async (url, headers, sink) => {
+    const response = await fetch(url, { headers, signal: abort.signal });
+    sink.headers = response.headers;
+    const reader = response.body.getReader();
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) return;
+        sink.text += new TextDecoder().decode(value);
+      }
+    } catch {
+      // aborted at the end of the test
+    }
+  };
+  try {
+    await until(() => output.includes("physical face"));
+    const denied = await fetch("http://127.0.0.1:4217/presence/events", {
+      headers: { Origin: "https://elsewhere.example" },
+    });
+    assert.equal(denied.status, 403);
+    const face = { text: "" },
+      chest = { text: "" };
+    void collect("http://127.0.0.1:4217/events", {}, face);
+    void collect(
+      "http://127.0.0.1:4217/presence/events",
+      { Origin: "https://chest.example" },
+      chest,
+    );
+    await until(() => chest.text.includes("event: robot_state"));
+    assert.equal(chest.headers.get("access-control-allow-origin"), "https://chest.example");
+    assert.match(chest.text, /"awake":false/);
+    assert.equal((await detected(true)).status, 204);
+    await until(() => chest.text.includes("event: robot_wake"));
+    assert.match(chest.text, /"greet":true/);
+    const end = Date.now() + 6000;
+    while (!chest.text.includes("event: robot_sleep") && Date.now() < end) {
+      await detected(false);
+      await wait(300);
+    }
+    assert.ok(chest.text.includes("event: robot_sleep"));
+    await wait(1600);
+    assert.equal(events.length, 0, "the chest page greets, so no API presence event is sent");
+  } finally {
+    abort.abort();
+    child.kill();
+    await new Promise((resolve) => mock.close(resolve));
+  }
+});

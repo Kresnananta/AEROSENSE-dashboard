@@ -142,6 +142,22 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
       ).status,
       400,
     );
+    for (const action of ["wake", "sleep"]) {
+      assert.equal((await request("/events", "owner", { owner_id: "owner", action })).status, 202);
+      const face = JSON.parse(new TextDecoder().decode((await reader.read()).value).slice(6));
+      assert.equal(face.action, action);
+      assert.equal(face.monitorOnly, true);
+    }
+    assert.equal(
+      (
+        await request("/events", "owner", {
+          owner_id: "owner",
+          action: "wake",
+          audioBase64: audio.toString("base64"),
+        })
+      ).status,
+      400,
+    );
     abort.abort();
   } finally {
     abort.abort();

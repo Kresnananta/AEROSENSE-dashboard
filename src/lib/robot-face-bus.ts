@@ -21,7 +21,7 @@ export function configureRobotFace(
 export function publishRobotFace(
   userId: string | undefined,
   event: {
-    action: "speak" | "stop" | "thinking" | "expression";
+    action: "speak" | "stop" | "thinking" | "expression" | "wake" | "sleep";
     text?: string;
     audio?: Blob;
     emotion?: string;

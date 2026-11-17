@@ -133,11 +133,14 @@ export function useHandsFreeVoice(options: {
       resume() {
         void engine.current?.resume();
       },
-      speakAnswer(jobId: string, text: string, emotion?: string) {
-        return engine.current?.speakAnswer(jobId, text, emotion) ?? Promise.resolve();
+      speakAnswer(jobId: string, text: string, emotion?: string, listenAfter = false) {
+        return engine.current?.speakAnswer(jobId, text, emotion, listenAfter) ?? Promise.resolve();
       },
       announce(text: string) {
         return engine.current?.announce(text) ?? Promise.resolve();
+      },
+      greet(text: string) {
+        return engine.current?.greet(text) ?? Promise.resolve();
       },
       stopSpeaking() {
         engine.current?.stopSpeaking();

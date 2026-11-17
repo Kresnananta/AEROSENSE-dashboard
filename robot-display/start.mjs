@@ -50,6 +50,25 @@ let state = { action: "sleep" },
   closed = false,
   browserSession;
 const presence = createPresence(cameraMode ? { sleepAfterMs } : undefined);
+// Chest screen: the AEROSENSE chat page (/aerobot) listens to GET /presence/events and greets
+// through the web voice. While it is connected, the presence event is not also sent to the API,
+// so the robot never greets twice.
+const chestOrigin = new URL(process.env.AEROBOT_CHAT_URL || "https://aerosense.me/aerobot").origin;
+const chestClients = new Set();
+let chestAwake = null;
+function chestPacket(type, data) {
+  return `event: ${type}\ndata: ${JSON.stringify({ type, ...data, ts: Date.now() })}\n\n`;
+}
+function syncChest(greet) {
+  const awake = screenState().awake;
+  if (awake === chestAwake) return;
+  chestAwake = awake;
+  const packet = awake
+    ? chestPacket("robot_wake", { greet: !!greet })
+    : chestPacket("robot_sleep", {});
+  for (const client of chestClients) client.write(packet);
+  console.log(`[chest] ${awake ? "robot_wake" + (greet ? " (greet)" : "") : "robot_sleep"}`);
+}
 let voiceBusyUntil = 0;
 let irReader = null,
   lastIrSample = null,
@@ -69,6 +88,7 @@ function updatePresence(detected, source) {
   const wasAwake = presence.state(now).awake;
   const action = presence.update(detected, now, !!pending || Date.now() < voiceBusyUntil);
   if (!action && cameraMode && !wasAwake && presence.state(now).awake) {
+    syncChest(false);
     for (const client of clients) sendDisplay(client);
     for (const client of bodyClients) sendDisplay(client);
   }
@@ -102,6 +122,7 @@ function connectIr(portName) {
   console.log("[IR] Membaca " + portName + " pada 115200 baud.");
 }
 function queuePresence(source = "ir") {
+  if (chestClients.size) return; // the chest page greets with the web voice
   if (device && key)
     presenceEvent = { event_id: source + "-" + randomUUID(), type: "presence", created: Date.now() };
 }
@@ -129,6 +150,7 @@ function emit(event) {
   state = event;
   for (const client of clients) client.write(`data: ${JSON.stringify(event)}\n\n`);
   if (event.action === "wake" || event.action === "sleep") {
+    syncChest(event.action === "wake");
     if (cameraMode) for (const client of clients) sendDisplay(client);
     for (const client of bodyClients) sendDisplay(client);
   }
@@ -185,14 +207,44 @@ async function acknowledge(id, result) {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    const chestStream =
+      req.url.split("?")[0] === "/presence/events" && req.headers.origin === chestOrigin;
     if (
       req.headers.host !== `${host}:${port}` ||
-      (req.headers.origin && req.headers.origin !== origin)
+      (req.headers.origin && req.headers.origin !== origin && !chestStream)
     ) {
       res.writeHead(403);
       return res.end();
     }
     const url = new URL(req.url, origin);
+    if (url.pathname === "/presence/events") {
+      if (req.method !== "GET") {
+        res.writeHead(405);
+        return res.end();
+      }
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-store",
+        Connection: "keep-alive",
+        ...(chestStream
+          ? {
+              "Access-Control-Allow-Origin": chestOrigin,
+              "Access-Control-Allow-Private-Network": "true",
+              Vary: "Origin",
+            }
+          : {}),
+      });
+      chestClients.add(res);
+      chestAwake = screenState().awake;
+      res.write("retry: 2000\n");
+      res.write(chestPacket("robot_state", { awake: chestAwake }));
+      const pulse = setInterval(() => res.write(": keepalive\n\n"), 15000);
+      req.on("close", () => {
+        clearInterval(pulse);
+        chestClients.delete(res);
+      });
+      return;
+    }
     if (url.pathname === "/tts" && req.method === "POST") {
       if (!ttsUrl || !ttsKey) {
         res.writeHead(503);
@@ -449,6 +501,7 @@ server.listen(port, host, async () => {
     "Commands: wake | sleep | think | neutral | happy | concerned | warning | danger | surprised | say TEXT | play PATH | TEXT | ports | ir COM5",
   );
   if (cameraMode) console.log(`Camera presence: POST ${origin}/presence · sleep after ${sleepAfterMs / 1000}s`);
+  console.log(`Chest screen stream: ${origin}/presence/events (allowed page origin ${chestOrigin})`);
   if (!cameraMode && !offline && process.env.AEROBOT_IR_PORT) connectIr(process.env.AEROBOT_IR_PORT);
   if (!offline && !cameraMode && process.env.AEROBOT_OPEN_WINDOW !== "0") {
     const candidates =
@@ -551,6 +604,7 @@ function close() {
   browserSession?.close();
   clearInterval(interval);
   for (const client of clients) client.end();
+  for (const client of chestClients) client.end();
   for (const client of bodyClients) client.end();
   input.close();
   server.close();

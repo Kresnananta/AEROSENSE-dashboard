@@ -29,6 +29,8 @@ import { configureRobotFace, publishRobotFace } from "@/lib/robot-face-bus";
 import { useAccess } from "@/hooks/useAccess";
 import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 import { detectWakePhrase } from "@/lib/handsfree";
+import { useRobotPresence } from "@/hooks/useRobotPresence";
+import { presenceUrl, ROBOT_GREETING, type PresenceCommand } from "@/lib/robot-presence";
 import { startProcessingSound } from "@/lib/processing-sound";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
@@ -65,7 +67,7 @@ export function ChatPanel() {
   const userId = user?.id;
   const [slot, setSlot] = useRobotSlot(userId);
   const onChat = useLocation().pathname === "/aerobot";
-  const { canUseRobotScreen } = useAccess();
+  const { canUseRobotScreen, role } = useAccess();
   useEffect(() => {
     configureRobotFace(userId, canUseRobotScreen, slot);
     return () => configureRobotFace(undefined, false);
@@ -141,7 +143,7 @@ export function ChatPanel() {
   useEffect(() => {
     if (onChat && params.get("question")) setInput(params.get("question")!);
   }, [onChat, params]);
-  const voiceJobs = useRef(new Map<string, "manual" | "handsfree">());
+  const voiceJobs = useRef(new Map<string, "manual" | "handsfree" | "greeting">());
   const sendRef = useRef<(text: string, fromVoice?: boolean) => Promise<string | null>>(
     async () => null,
   );
@@ -166,6 +168,47 @@ export function ChatPanel() {
     },
   });
   const handsFreeControls = handsFree.controls;
+  // Robot chest screen: the robot-display hub on the mini PC (fed by the presence camera) wakes
+  // the robot. The page publishes the face "wake" to the tablet, turns voice mode on, and asks
+  // the n8n workflow for a Gemini greeting with today's conditions, spoken with the /aerobot
+  // voice; then it listens without the wake phrase. One greeting per wake: the next one comes
+  // only after the robot has slept (5 minutes without anyone) and woken again.
+  // Only the dedicated robot account uses it (operators/admins can test with ?camera=1).
+  const cameraEnabled =
+    onChat &&
+    !!userId &&
+    canUseRobotScreen &&
+    (role === "robot" || params.get("camera") === "1") &&
+    handsFree.supported &&
+    voice.configured &&
+    !DEMO_MODE;
+  const handsFreePhase = useRef(handsFree.phase);
+  handsFreePhase.current = handsFree.phase;
+  const greetWhenReady = useRef(false);
+  const greetedThisWake = useRef(false);
+  const requestGreeting = useRef<() => void>(() => {});
+  const presenceLink = useRobotPresence({
+    enabled: cameraEnabled,
+    url: presenceUrl(params.get("camera_url")),
+    onCommand: (command: PresenceCommand) => {
+      if (command.kind === "sleep") {
+        greetWhenReady.current = false;
+        greetedThisWake.current = false;
+        handsFreeControls.disable();
+        publishRobotFace(userId, { action: "sleep" });
+        return;
+      }
+      publishRobotFace(userId, { action: "wake" });
+      const phase = handsFreePhase.current;
+      if (phase === "off") handsFreeControls.enable();
+      if (!command.greet || greetedThisWake.current) return;
+      if (phase === "waiting" || phase === "listening") requestGreeting.current();
+      else greetWhenReady.current = true;
+    },
+  });
+  useEffect(() => {
+    if (greetWhenReady.current && handsFree.phase === "waiting") requestGreeting.current();
+  }, [handsFree.phase]);
   const voiceSpeak = useRef(voice.speak);
   voiceSpeak.current = voice.speak;
   const voiceStop = useRef(voice.stopSpeaker);
@@ -246,10 +289,26 @@ export function ChatPanel() {
           });
           if (spoken) {
             voiceJobs.current.delete(job.id);
-            if (spoken === "handsfree")
+            if (spoken === "greeting")
+              void handsFreeControls.speakAnswer(
+                job.id,
+                job.result!.text!,
+                job.result!.emotion,
+                true,
+              );
+            else if (spoken === "handsfree")
               void handsFreeControls.speakAnswer(job.id, job.result!.text!, job.result!.emotion);
             else void voiceSpeak.current(job.id, job.result!.text!, job.result!.emotion);
           }
+          return;
+        }
+        if (spoken === "greeting" && (job.status === "failed" || Date.now() - started > 60000)) {
+          // The workflow could not greet: fall back to the fixed greeting, still with the
+          // /aerobot voice, and keep listening.
+          voiceJobs.current.delete(job.id);
+          setPending(null);
+          setBusy(false);
+          void handsFreeControls.greet(ROBOT_GREETING);
           return;
         }
         if (job.status === "failed") {
@@ -347,6 +406,25 @@ export function ChatPanel() {
     }
   }
   sendRef.current = send;
+  requestGreeting.current = async () => {
+    greetWhenReady.current = false;
+    if (greetedThisWake.current) return;
+    greetedThisWake.current = true;
+    // Someone is already chatting: do not interrupt with a greeting.
+    if (!user || sending.current || pending) return;
+    const targetNode = robotId ? undefined : contextNode?.id;
+    sending.current = true;
+    try {
+      const job = await chatService.greet(crypto.randomUUID(), targetNode, robotId);
+      if (!active.current || owner.current !== user.id) return;
+      voiceJobs.current.set(job.id, "greeting");
+      setPending(job.id);
+    } catch {
+      void handsFreeControls.greet(ROBOT_GREETING);
+    } finally {
+      sending.current = false;
+    }
+  };
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
     <>
@@ -358,7 +436,11 @@ export function ChatPanel() {
           />
           <div>
             <strong>AERO-BOT</strong>
-            <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
+            <small>
+              {robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}
+              {cameraEnabled &&
+                " · kamera " + (presenceLink === "connected" ? "tersambung" : "belum tersambung")}
+            </small>
           </div>
           <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
         </header>

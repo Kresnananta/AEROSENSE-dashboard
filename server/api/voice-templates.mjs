@@ -1,4 +1,8 @@
+// Spoken by the chest screen when the presence camera wakes the robot.
+export const ROBOT_GREETING = "Halo, saya AERO-BOT. Ada yang bisa saya bantu?";
+
 export const voiceTemplates = new Set([
+  ROBOT_GREETING,
   "Maaf, layanan sedang sibuk. Silakan ulangi pertanyaan Anda.",
   "Maaf, suara belum terdengar jelas. Silakan ulangi.",
   "Maaf, belum terdengar jelas. Silakan ulangi.",

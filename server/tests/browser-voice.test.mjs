@@ -344,3 +344,8 @@ test("speech errors expose only a controlled message and keep upstream status in
     console.error = original;
   }
 });
+test("the presence greeting is an allowed spoken template", async () => {
+  const { voiceTemplates, ROBOT_GREETING } = await import("../api/voice-templates.mjs");
+  assert.ok(voiceTemplates.has(ROBOT_GREETING));
+  assert.match(ROBOT_GREETING, /^Halo, saya AERO-BOT\./);
+});

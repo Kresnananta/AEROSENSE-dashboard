@@ -31,7 +31,8 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
     if (req.method === "POST") {
       const body = JSON.parse(await rawBody(req, 1600000));
       if (body.owner_id !== account.id) throw fail("Akun pengirim tidak sesuai.", 403);
-      if (!["thinking", "expression", "speak", "stop"].includes(body.action))
+      // wake/sleep come from the robot's presence camera (chest screen) and only animate the face.
+      if (!["thinking", "expression", "speak", "stop", "wake", "sleep"].includes(body.action))
         throw fail("Event wajah tidak valid.", 400);
       if (
         typeof body.text !== "undefined" &&

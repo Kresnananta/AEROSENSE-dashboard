@@ -1,4 +1,5 @@
 import { actuatorRoutes } from "./actuators.mjs";
+import { chatRequest } from "./presence-greeting.mjs";
 import { robotFaceRelay } from "./robot-face-relay.mjs";
 import { nodeRoutes } from "./nodes.mjs";
 import http from "node:http";
@@ -1205,6 +1206,7 @@ const server = http.createServer(async (req, res) => {
         const p = JSON.parse(await rawBody(req, 10000));
         if (path === "/v1/chat") {
           rate("chat:" + u.id, 8);
+          if (p.presence === true) rate("presence:" + u.id, 2);
           if (p.node_id) await reader(u, p.node_id);
           const key = req.headers["idempotency-key"] || randomUUID();
           if (!/^[a-zA-Z0-9_-]{1,80}$/.test(key)) throw new Error("Invalid idempotency key");
@@ -1212,9 +1214,8 @@ const server = http.createServer(async (req, res) => {
             "web_chat",
             "web:" + u.id + ":" + key,
             {
-              text: cleanText(p.text),
+              ...chatRequest(p),
               node_ids: p.node_id ? [p.node_id] : [],
-              voice: p.voice === true,
             },
             u.id,
           );
@@ -1310,17 +1311,14 @@ const server = http.createServer(async (req, res) => {
           if (!rob?.enabled) return send(res, 404, { error: "Robot not available" });
           await member(u, rob.node_id);
           rate("robot-chat:" + u.id, 8);
+          if (p.presence === true) rate("presence:" + u.id, 2);
           const key = req.headers["idempotency-key"] || randomUUID();
           if (!/^[a-zA-Z0-9_-]{1,80}$/.test(key)) throw new Error("Invalid idempotency key");
+          const request = chatRequest(p, "Bagaimana kondisi udara sekarang?");
           const j = await enqueue(
-            p.voice === true ? "web_chat" : "robot_chat",
+            request.voice ? "web_chat" : "robot_chat",
             "touch:" + u.id + ":" + key,
-            {
-              robot_id: rob.id,
-              node_ids: [rob.node_id],
-              text: cleanText(p.text || "Bagaimana kondisi udara sekarang?"),
-              voice: p.voice === true,
-            },
+            { robot_id: rob.id, node_ids: [rob.node_id], ...request },
             u.id,
           );
           return send(res, 202, { id: j.id });

@@ -20,6 +20,18 @@ export const chatService = {
       ),
     });
   },
+  /** Presence greeting from the robot chest screen; the server fixes the instruction text. */
+  greet(key: string, nodeId?: string, robotId?: string) {
+    return apiRequest<ChatJob>(robotId ? "/v1/robot/touch" : "/v1/chat", {
+      method: "POST",
+      headers: { "Idempotency-Key": key },
+      body: JSON.stringify(
+        robotId
+          ? { presence: true, robot_id: robotId, voice: true }
+          : { presence: true, node_id: nodeId || undefined, voice: true },
+      ),
+    });
+  },
   async sendGuest(text: string, nodeId: string) {
     const job = await apiRequest<ChatJob>(
       "/v1/guest/chat",
