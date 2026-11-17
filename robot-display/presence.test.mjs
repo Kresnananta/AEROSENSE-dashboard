@@ -22,6 +22,16 @@ test("speech holds the face awake; loss of connection is unknown, not absence", 
   assert.equal(p.state(131000).awake, true);
   assert.equal(p.state(131000).idleMs, 0);
 });
+test("camera keeps both displays awake until five minutes after the last sighting", () => {
+  const p = createPresence({ sleepAfterMs: 300_000 });
+  assert.equal(p.update(true, 0), "wake");
+  for (let t = 1000; t < 240_000; t += 1000) assert.equal(p.update(false, t), null);
+  assert.equal(p.update(true, 240_000), null);
+  for (let t = 241_000; t < 540_000; t += 1000) assert.equal(p.update(false, t), null);
+  assert.equal(p.update(false, 539_999), null);
+  assert.equal(p.update(false, 540_000), "sleep");
+  assert.equal(p.update(true, 540_001), "wake");
+});
 test("serial decoding handles chunk boundaries, boot text and invalid data", () => {
   const x = {
     type: "ir",

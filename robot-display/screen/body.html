@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Layar Dada AERO-BOT</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+      iframe { display: block; width: 100%; height: 100%; border: 0; visibility: hidden; }
+      body[data-awake="true"] iframe { visibility: visible; }
+    </style>
+  </head>
+  <body>
+    <iframe title="Dasbor AEROSENSE"></iframe>
+    <script type="module">
+      const dashboard = document.querySelector("iframe");
+      const events = new EventSource("/events?display=body");
+      events.addEventListener("display", (event) => {
+        const { awake, dashboard: url } = JSON.parse(event.data);
+        if (dashboard.dataset.url !== url) {
+          dashboard.src = url;
+          dashboard.dataset.url = url;
+        }
+        document.body.dataset.awake = awake;
+      });
+    </script>
+  </body>
+</html>

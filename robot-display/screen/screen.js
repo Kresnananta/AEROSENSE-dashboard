@@ -337,8 +337,11 @@ document.addEventListener("pointerdown", () => {
     .resume()
     .catch(() => {});
 });
-if (!window.aerobotRemote && (location.pathname === "/" || location.port === "4210")) {
+if (!window.aerobotRemote && ["/", "/index.html"].includes(location.pathname)) {
   const events = new EventSource("/events");
+  events.addEventListener("display", (event) => {
+    document.body.dataset.display = JSON.parse(event.data).awake ? "on" : "off";
+  });
   events.onmessage = (event) => {
     try {
       receive(JSON.parse(event.data));
