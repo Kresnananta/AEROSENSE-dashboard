@@ -59,6 +59,7 @@ export function RobotScreenPage() {
     const controller = new AbortController();
     const screen = () => (frame.current?.contentWindow as FaceWindow | null)?.aerobotDisplay;
     let reconnect: ReturnType<typeof setTimeout>;
+    let settle: ReturnType<typeof setTimeout> | undefined;
     let awakened = false;
     async function connect() {
       try {
@@ -103,7 +104,12 @@ export function RobotScreenPage() {
             if (packet.startsWith("data: ")) {
               const event = JSON.parse(packet.slice(6));
               if (Number.isFinite(event.start_at)) event.localStartAt = event.start_at - offset;
-              screen()?.receive(event);
+              clearTimeout(settle);
+              if (event.replay && event.action === "sleep") {
+                // Nobody in front of the robot: after the start-up wake, sleep after 5 seconds
+                // and wait for the presence camera.
+                settle = setTimeout(() => screen()?.receive({ action: "sleep" }), 5000);
+              } else screen()?.receive(event);
             }
           }
           if (buffer.length > 1600000) throw new Error("Paket layar terlalu besar.");
@@ -121,6 +127,7 @@ export function RobotScreenPage() {
     return () => {
       controller.abort();
       clearTimeout(reconnect);
+      clearTimeout(settle);
       screen()?.receive({ action: "stop" });
     };
   }, [active, userId, canUseScreen, robot]);

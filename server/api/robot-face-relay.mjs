@@ -2,6 +2,9 @@ import { canUseRobotScreen } from "./access.mjs";
 
 export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
   const screens = new Map();
+  // Last wake/sleep per account and robot, so a face screen that connects later (tablet
+  // started after the chest page) shows the robot's current state instead of staying awake.
+  const lastState = new Map();
   const fail = (message, status) => Object.assign(new Error(message), { status });
   async function authorize(req) {
     const account = await user(req);
@@ -76,6 +79,8 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
         event.audioBase64 = body.audioBase64;
         event.mime = "audio/wav";
       }
+      if (event.action === "wake" || event.action === "sleep")
+        lastState.set(scope, { action: event.action, monitorOnly: true });
       const packet = `data: ${JSON.stringify(event)}\n\n`;
       for (const screen of clients) {
         if (screen.writableLength > 2000000) screen.end();
@@ -100,6 +105,8 @@ export function robotFaceRelay({ user, db, filter, rawBody, send, rate }) {
       "X-Accel-Buffering": "no",
     });
     res.write(": connected\n\n");
+    if (lastState.has(scope))
+      res.write(`data: ${JSON.stringify({ ...lastState.get(scope), replay: true })}\n\n`);
     const heartbeat = setInterval(() => res.write(": keepalive\n\n"), 15000);
     const permission = setInterval(() => {
       void authorize(req).catch(() => res.end());
