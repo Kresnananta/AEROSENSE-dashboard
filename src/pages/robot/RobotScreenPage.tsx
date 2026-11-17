@@ -59,6 +59,7 @@ export function RobotScreenPage() {
     const controller = new AbortController();
     const screen = () => (frame.current?.contentWindow as FaceWindow | null)?.aerobotDisplay;
     let reconnect: ReturnType<typeof setTimeout>;
+    let awakened = false;
     async function connect() {
       try {
         const sent = Date.now();
@@ -84,6 +85,10 @@ export function RobotScreenPage() {
           throw new Error("Layar belum tersambung.");
         }
         setNotice("");
+        if (!awakened) {
+          awakened = true;
+          screen()?.receive({ action: "wake" });
+        }
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";

@@ -377,9 +377,10 @@ export function ChatPanel() {
           </p>
         )}
         {canUseRobotScreen && (
-          <label className="chat-scope">
-            Layar robot
+          <div className="chat-scope">
+            <label htmlFor="chat-robot-slot">Layar robot</label>
             <select
+              id="chat-robot-slot"
               value={slot}
               onChange={(e) => setSlot(e.target.value)}
               disabled={busy || !!pending || !!voice.speaking || handsFree.phase === "speaking"}
@@ -390,7 +391,13 @@ export function ChatPanel() {
                 </option>
               ))}
             </select>
-          </label>
+            <Link
+              to="/robot-screen"
+              className="font-semibold text-[#0059b9] underline underline-offset-2"
+            >
+              Buka layar
+            </Link>
+          </div>
         )}
         {!robotId && availableNodes.length > 0 && (
           <div className="chat-scope">

@@ -48,7 +48,7 @@ export function publishRobotFace(
   queue = queue
     .then(async () => {
       if (cloudOwner !== userId || cloudRobot !== robot) return;
-      if (Date.now() - checkedAt > 5000) {
+      if (!cloudConnected || Date.now() - checkedAt > 5000) {
         const status = await apiRequest<{ connected: boolean }>(
           "/v1/robot-face/status?robot_id=" + robot,
           { signal: AbortSignal.timeout(1500) },
@@ -103,8 +103,8 @@ export async function prepareRobotFaceSpeech(
   if (!ready) return;
   if (signal.aborted || cloudOwner !== userId || robot !== cloudRobot) return;
   const statusRequest =
-    Date.now() - checkedAt < 5000
-      ? Promise.resolve({ connected: cloudConnected })
+    cloudConnected && Date.now() - checkedAt < 5000
+      ? Promise.resolve({ connected: true })
       : apiRequest<{ connected: boolean }>("/v1/robot-face/status?robot_id=" + robot, {
           signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]),
         }).catch(() => null);
