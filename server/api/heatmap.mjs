@@ -114,7 +114,7 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
       return Array.from({ length: g.rows }, (_, i) => flat.slice(i * g.cols, (i + 1) * g.cols));
     };
     if (list.length !== g.rows * g.cols) throw fail("Data heatmap tidak lengkap.", 502);
-    const values = gridOf(layer.field, 10);
+    const values = gridOf(layer.field, url.searchParams.get("layer") === "rain" ? 100 : 10);
     const body = {
       layer: url.searchParams.get("layer"),
       ...g,

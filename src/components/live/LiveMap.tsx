@@ -220,7 +220,7 @@ export function LiveMap({
   if (!active && !userLocation)
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
   return (
-    <div className={"live-map" + (heat !== "off" ? " heat-on" : "")}>
+    <div className={"live-map" + (heat !== "off" ? " heat-on" : "")} data-heat={heat}>
       {heat !== "off" && <HeatLegend layer={heat} info={heatInfo} />}
       <MapContainer
         center={

@@ -310,6 +310,12 @@
   opacity: 0.82;
 }
 
+.live-map[data-heat="rain"] .leaflet-heat-pane,
+.live-map[data-heat="cloud"] .leaflet-heat-pane {
+  mix-blend-mode: normal;
+  opacity: 0.84;
+}
+
 .heat-overlay {
   animation: heat-fade-in 0.5s ease-out;
 }

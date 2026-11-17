@@ -346,7 +346,8 @@ function demoHeatmap(q: URLSearchParams) {
                   : layer === "thunder"
                     ? Math.max(0, 1400 + 1600 * wave)
                     : 80 + 40 * wave;
-      return Math.round(v * 10) / 10;
+      const precision = layer === "rain" ? 100 : 10;
+      return Math.round(v * precision) / precision;
     }),
   );
   const direction =

@@ -43,6 +43,28 @@ function filledGrid(values: (number | null)[][]) {
 const cr = (p0: number, p1: number, p2: number, p3: number, t: number) =>
   p1 + 0.5 * t * (p2 - p0 + t * (2 * p0 - 5 * p1 + 4 * p2 - p3 + t * (3 * (p1 - p2) + p3 - p0)));
 
+function mcSlope(a: number, b: number, c: number) {
+  const d0 = b - a,
+    d1 = c - b;
+  return d0 * d1 <= 0 ? 0 : (2 * d0 * d1) / (d0 + d1);
+}
+function mc(p0: number, p1: number, p2: number, p3: number, t: number) {
+  const m1 = mcSlope(p0, p1, p2),
+    m2 = mcSlope(p1, p2, p3);
+  const t2 = t * t,
+    t3 = t2 * t;
+  return (
+    (2 * t3 - 3 * t2 + 1) * p1 +
+    (t3 - 2 * t2 + t) * m1 +
+    (-2 * t3 + 3 * t2) * p2 +
+    (t3 - t2) * m2
+  );
+}
+function smoothstep(edge0: number, edge1: number, x: number) {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
 function render(g: Grid, v: number[][], key: HeatLayerKey) {
   const cfg = HEAT_LAYERS[key] as {
     stops: readonly Stop[];
@@ -50,7 +72,9 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
     alphaCeiling?: number;
   };
   const stops = cfg.stops;
-  const S = 32;
+  const monotone = key === "rain";
+  const interp = monotone ? mc : cr;
+  const S = monotone ? 40 : 32;
   const W = (g.cols - 1) * S + 1,
     H = (g.rows - 1) * S + 1;
   const canvas = document.createElement("canvas");
@@ -64,7 +88,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
     hi = stops[stops.length - 1][0];
   const floor = cfg.alphaFloor;
   const ceil = cfg.alphaCeiling;
-  const maxAlpha = key === "cloud" ? 225 : key === "rain" ? 245 : 255;
+  const maxAlpha = key === "cloud" ? 215 : key === "rain" ? 215 : 255;
 
   for (let y = 0; y < H; y++) {
     const gy = ((H - 1 - y) / (H - 1)) * (g.rows - 1);
@@ -74,12 +98,12 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
       const gx = (x / (W - 1)) * (g.cols - 1);
       const j = Math.min(Math.floor(gx), g.cols - 2),
         tx = gx - j;
-      const rowAt = (r: number) => cr(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx);
-      const value = cr(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), ty);
+      const rowAt = (r: number) => interp(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx);
+      const value = interp(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), ty);
       let alphaRatio = 1;
       if (floor !== undefined && ceil !== undefined) {
         if (value <= floor) alphaRatio = 0;
-        else if (value < ceil) alphaRatio = 0.45 + 0.55 * ((value - floor) / (ceil - floor));
+        else if (value < ceil) alphaRatio = smoothstep(floor, ceil, value);
       }
       const o = (y * W + x) * 4;
       if (alphaRatio <= 0.01) {
@@ -98,7 +122,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
   return canvas.toDataURL();
 }
 
-function sample(g: Grid, v: number[][], lat: number, lng: number) {
+function sample(g: Grid, v: number[][], lat: number, lng: number, monotone = false) {
   const gy = (lat - g.south) / g.step,
     gx = (lng - g.west) / g.step;
   if (gy < 0 || gx < 0 || gy > g.rows - 1 || gx > g.cols - 1) return null;
@@ -106,17 +130,9 @@ function sample(g: Grid, v: number[][], lat: number, lng: number) {
     v[Math.min(g.rows - 1, Math.max(0, i))][Math.min(g.cols - 1, Math.max(0, j))];
   const i = Math.min(Math.floor(gy), g.rows - 2),
     j = Math.min(Math.floor(gx), g.cols - 2);
-  const rowAt = (r: number) => cr(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), gx - j);
-  return cr(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), gy - i);
-}
-
-function nearestGrid(g: Grid, grid: (number | null)[][] | undefined, lat: number, lng: number) {
-  if (!grid) return null;
-  const i = Math.round((lat - g.south) / g.step);
-  const j = Math.round((lng - g.west) / g.step);
-  if (i < 0 || j < 0 || i >= g.rows || j >= g.cols) return null;
-  const val = grid[i]?.[j];
-  return typeof val === "number" ? val : null;
+  const interp = monotone ? mc : cr;
+  const rowAt = (r: number) => interp(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), gx - j);
+  return interp(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), gy - i);
 }
 
 type Layer = { id: number; url: string; bounds: [[number, number], [number, number]] };
@@ -268,7 +284,7 @@ function RainParticles({ field }: { field: Field }) {
     canvas.className = "wind-canvas";
     map.getContainer().appendChild(canvas);
     const ctx = canvas.getContext("2d")!;
-    const CELL = 12;
+    const CELL = 10;
     let raf = 0,
       W = 0,
       H = 0,
@@ -276,16 +292,18 @@ function RainParticles({ field }: { field: Field }) {
       ch = 0;
     let rainGrid = new Float32Array(0);
     let wetCells: { x: number; y: number }[] = [];
-    let drops: { x: number; y: number; len: number; vy: number; life: number }[] = [];
+    let drops: { x: number; y: number; len: number; vy: number; life: number; maxLife: number }[] = [];
 
     const spawnDrop = () => {
       const cell = wetCells[Math.floor(Math.random() * wetCells.length)];
+      const maxLife = 18 + Math.floor(Math.random() * 18);
       return {
         x: cell.x + Math.random() * CELL,
         y: cell.y + Math.random() * CELL,
-        len: 6 + Math.random() * 6,
-        vy: 3.5 + Math.random() * 2.5,
-        life: 14 + Math.floor(Math.random() * 18),
+        len: 7 + Math.random() * 5,
+        vy: 3.4 + Math.random() * 2.2,
+        life: Math.floor(Math.random() * maxLife),
+        maxLife,
       };
     };
 
@@ -308,42 +326,42 @@ function RainParticles({ field }: { field: Field }) {
           const px = x * CELL;
           const py = y * CELL;
           const ll = map.containerPointToLatLng([px, py]);
-          const rRaw = sample(field.g, field.v, ll.lat, ll.lng) ?? 0;
-          const rNear = nearestGrid(field.g, field.v, ll.lat, ll.lng) ?? 0;
-          const r = rNear < 0.05 && rRaw < 0.25 ? 0 : Math.max(0, rRaw);
+          const r = Math.max(0, sample(field.g, field.v, ll.lat, ll.lng, true) ?? 0);
           rainGrid[y * cw + x] = r;
-          if (r >= 0.15) wetCells.push({ x: px, y: py });
+          if (r >= 0.25) wetCells.push({ x: px, y: py });
         }
       }
       if (!wetCells.length) {
         drops = [];
         return;
       }
-      const n = Math.min(480, Math.max(24, wetCells.length * 2));
+      const n = Math.min(260, Math.max(16, Math.round(wetCells.length * 1.1)));
       drops = Array.from({ length: n }, () => spawnDrop());
     };
 
     const frame = () => {
       if (!wetCells.length) return;
       ctx.clearRect(0, 0, W, H);
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.1;
+      ctx.lineCap = "round";
       for (let i = 0; i < drops.length; i++) {
         const d = drops[i];
-        d.x -= d.vy * 0.22;
+        d.x -= d.vy * 0.2;
         d.y += d.vy;
         d.life--;
         const cx = Math.min(cw - 1, Math.max(0, Math.floor(d.x / CELL)));
         const cy = Math.min(ch - 1, Math.max(0, Math.floor(d.y / CELL)));
         const mm = rainGrid[cy * cw + cx];
-        if (d.life <= 0 || mm < 0.12 || d.y > H || d.x < 0) {
+        if (d.life <= 0 || mm < 0.2 || d.y > H || d.x < 0) {
           drops[i] = spawnDrop();
           continue;
         }
-        const intensity = Math.min(0.95, 0.55 + mm / 8);
-        ctx.strokeStyle = `rgba(12, 54, 128, ${intensity.toFixed(2)})`;
+        const env = Math.sin(Math.PI * (d.life / d.maxLife));
+        const alpha = Math.min(0.65, (0.28 + Math.min(1, mm / 8) * 0.35) * env);
+        ctx.strokeStyle = `rgba(232, 246, 255, ${alpha.toFixed(2)})`;
         ctx.beginPath();
         ctx.moveTo(d.x, d.y);
-        ctx.lineTo(d.x - d.len * 0.22, d.y + d.len);
+        ctx.lineTo(d.x - d.len * 0.2, d.y + d.len);
         ctx.stroke();
       }
       raf = requestAnimationFrame(frame);
@@ -490,7 +508,7 @@ export function HeatField({
         const p = map.latLngToContainerPoint([lat, lng]);
         if (p.x < 68 || p.y < 38 || p.x > size.x - 68 || p.y > size.y - 38) continue;
         if (p.x < 260 && p.y > size.y - 200) continue;
-        const rawValue = sample(f.g, f.v, lat, lng);
+        const rawValue = sample(f.g, f.v, lat, lng, layer === "rain");
         if (rawValue == null) continue;
         const value =
           layer === "cloud"

@@ -65,11 +65,11 @@ export function ChatPanel() {
   const userId = user?.id;
   const [slot, setSlot] = useRobotSlot(userId);
   const onChat = useLocation().pathname === "/aerobot";
-  const { canManage } = useAccess();
+  const { canUseRobotScreen } = useAccess();
   useEffect(() => {
-    configureRobotFace(userId, canManage, slot);
+    configureRobotFace(userId, canUseRobotScreen, slot);
     return () => configureRobotFace(undefined, false);
-  }, [userId, canManage, slot]);
+  }, [userId, canUseRobotScreen, slot]);
   const [params] = useSearchParams();
   const [robotParam, setRobotId] = useState<string | undefined>(
     params.get("robot_id") || undefined,
@@ -376,7 +376,7 @@ export function ChatPanel() {
             {authError}
           </p>
         )}
-        {canManage && (
+        {canUseRobotScreen && (
           <label className="chat-scope">
             Layar robot
             <select
