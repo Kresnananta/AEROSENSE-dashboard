@@ -12,8 +12,6 @@ class FakeDisplay:
     def off(self):
         self.calls.append("off")
 
-    def keep_awake(self, awake):
-        pass
 
 
 def types(evs):
@@ -76,14 +74,16 @@ class _Recorder:
         return lambda *args: self.log.append((self.name, fn, args))
 
 
-def test_windows_calls_monitor_standby_and_wake_nudge():
+def test_windows_keeps_system_awake_and_only_turns_the_monitor_off():
     log = []
     w = WindowsDisplayControl.__new__(WindowsDisplayControl)
     w.user32, w.kernel32 = _Recorder(log, "user32"), _Recorder(log, "kernel32")
+    w.hold_system_awake()
+    # ES_CONTINUOUS | ES_SYSTEM_REQUIRED: the PC never sleeps, so the camera keeps watching
+    assert log == [("kernel32", "SetThreadExecutionState", (0x80000000 | 0x1,))]
+    log.clear()
     w.off()
-    assert ("user32", "PostMessageW", (0xFFFF, 0x0112, 0xF170, 2)) in log
-    assert ("kernel32", "SetThreadExecutionState", (0x80000000,)) in log
+    assert log == [("user32", "PostMessageW", (0xFFFF, 0x0112, 0xF170, 2))]
     log.clear()
     w.on()
-    assert [c[1] for c in log] == ["mouse_event", "mouse_event", "SetThreadExecutionState"]
-    assert log[2][2] == (0x80000000 | 0x2 | 0x1,)
+    assert [c[1] for c in log] == ["mouse_event", "mouse_event"]

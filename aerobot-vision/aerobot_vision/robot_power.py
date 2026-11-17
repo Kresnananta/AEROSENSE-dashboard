@@ -33,8 +33,6 @@ class NoDisplayControl:
     def off(self) -> None:
         print(f"[layar] (simulasi) monitor MATI{self.reason}", flush=True)
 
-    def keep_awake(self, awake: bool) -> None:
-        pass
 
 
 class WindowsDisplayControl:
@@ -51,26 +49,25 @@ class WindowsDisplayControl:
 
         self.user32 = ctypes.windll.user32
         self.kernel32 = ctypes.windll.kernel32
+        self.hold_system_awake()
+
+    def hold_system_awake(self) -> None:
+        """Laptop/mini PC tidak boleh tidur (sleep): kamera harus tetap jalan agar robot bisa
+        bangun sendiri saat ada orang. Hanya layar yang dimatikan. Status ini terikat pada thread
+        pemanggil, jadi dipanggil sekali dari thread utama yang hidup selama program berjalan."""
+        self.kernel32.SetThreadExecutionState(self.ES_CONTINUOUS | self.ES_SYSTEM_REQUIRED)
 
     def on(self) -> None:
         # SC_MONITORPOWER -1 tidak andal di Windows 10/11; gerakan mouse 1 piksel membangunkan layar.
         self.user32.mouse_event(self.MOUSEEVENTF_MOVE, 0, 1, 0, 0)
         self.user32.mouse_event(self.MOUSEEVENTF_MOVE, 0, -1, 0, 0)
-        self.keep_awake(True)
         print("[layar] monitor NYALA", flush=True)
 
     def off(self) -> None:
-        self.keep_awake(False)
+        # Hanya layar yang standby; sistem tetap menyala (hold_system_awake).
         # PostMessage (bukan SendMessage) agar tidak menggantung jika ada jendela yang tidak merespons.
         self.user32.PostMessageW(self.HWND_BROADCAST, self.WM_SYSCOMMAND, self.SC_MONITORPOWER, 2)
         print("[layar] monitor MATI (standby)", flush=True)
-
-    def keep_awake(self, awake: bool) -> None:
-        # Selama robot bangun, cegah Windows mematikan layar / tidur sendiri.
-        flags = self.ES_CONTINUOUS
-        if awake:
-            flags |= self.ES_DISPLAY_REQUIRED | self.ES_SYSTEM_REQUIRED
-        self.kernel32.SetThreadExecutionState(flags)
 
 
 def make_display_control(mode: str = "auto"):

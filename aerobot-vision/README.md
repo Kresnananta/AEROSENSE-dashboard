@@ -102,7 +102,8 @@ kamera (aerobot_vision) --POST /presence--> hub robot-display/start.mjs (mini PC
    lalu jalankan `aerobot-vision/scripts/start_robot.bat`. Pertama kali dengan `set SETUP=1`: login akun robot,
    izinkan mikrofon dan "akses jaringan lokal".
 3. Tablet: `aerosense.me/robot-screen` dengan akun robot yang sama, ketuk "Aktifkan wajah".
-4. Windows: *Turn off display* = Never (program kamera yang mengatur layar).
+4. Windows: *Turn off display* = Never dan *Sleep* = Never saat dicolok listrik. Program kamera juga
+   menahan PC agar tidak sleep; hanya layar yang standby, sehingga kamera tetap siaga.
 
 Pengaturan di `config.yaml > robot` (`mode: hub`) dan `robot_display.url`
 (`http://127.0.0.1:4210/presence`, wajib `127.0.0.1`). Lama tidur diatur di hub
