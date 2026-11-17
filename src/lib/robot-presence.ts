@@ -5,7 +5,7 @@
  *   robot_sleep                 nobody seen for the idle timeout (default 5 minutes)
  *   robot_state  {awake}        sent on (re)connect so a reloaded page resyncs without greeting
  */
-export const ROBOT_GREETING = "Halo, saya AERO-BOT. Ada yang bisa saya bantu?";
+export const ROBOT_GREETING = "Halo halo! Aku AERO-BOT. Kalau kamu punya pertanyaan tentang lingkungan, tanya aku ya!";
 export const DEFAULT_PRESENCE_URL = "http://127.0.0.1:4210/presence/events";
 
 export type PresenceCommand = { kind: "wake"; greet: boolean } | { kind: "sleep" };

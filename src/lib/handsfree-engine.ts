@@ -44,8 +44,7 @@ export interface HandsFreeEngine {
   start(): Promise<void>;
   resume(): Promise<void>;
   stop(): void;
-  /** listenAfter: after speaking (the presence greeting), listen without "Halo AERO-BOT". */
-  speakAnswer(jobId: string, text: string, emotion?: string, listenAfter?: boolean): Promise<void>;
+  speakAnswer(jobId: string, text: string, emotion?: string): Promise<void>;
   announce(text: string): Promise<void>;
   /** Speak a greeting, then listen for a question without requiring "Halo AERO-BOT". */
   greet(text: string): Promise<void>;
@@ -496,7 +495,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     });
   }
 
-  async function speakAnswer(jobId: string, text: string, emotion?: string, listenAfter = false) {
+  async function speakAnswer(jobId: string, text: string, emotion?: string) {
     if (state.phase === "off" || state.phase === "starting") return;
     const token = run;
     clearInterval(thinkingTimer);
@@ -538,12 +537,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
       callbacks.onPlayback?.(null, "");
     }
 
-    if (token !== run) return;
-    if (listenAfter) {
-      // The presence camera saw the visitor: it acts as the wake word for the first question.
-      wakeAuthorized = true;
-      enterListening(GREETING_LISTEN_MS, true, "Silakan sampaikan pertanyaan Anda.");
-    } else enterWaiting("Ucapkan Halo AERO-BOT untuk pertanyaan berikutnya.");
+    if (token === run) enterWaiting("Ucapkan Halo AERO-BOT untuk pertanyaan berikutnya.");
   }
 
   async function announce(text: string) {

@@ -1,5 +1,5 @@
 // Spoken by the chest screen when the presence camera wakes the robot.
-export const ROBOT_GREETING = "Halo, saya AERO-BOT. Ada yang bisa saya bantu?";
+export const ROBOT_GREETING = "Halo halo! Aku AERO-BOT. Kalau kamu punya pertanyaan tentang lingkungan, tanya aku ya!";
 
 export const voiceTemplates = new Set([
   ROBOT_GREETING,

@@ -14,10 +14,10 @@
 2. Pengendali memutuskan bangun/tidur dan menyiarkan `GET /presence/events`
    (`robot_state`, `robot_wake {greet}`, `robot_sleep`) ke halaman dada `AEROBOT_CHAT_URL`.
 3. Halaman dada `/aerobot` (akun robot, Chrome kiosk) saat `robot_wake`: kirim `wake` ke wajah
-   tablet `/robot-screen`, nyalakan mode suara, minta sapaan ke workflow n8n (`/v1/chat` dengan
-   `presence: true`; teks instruksi tetap di server, job ditandai `greeting` agar "Jawaban website"
-   memakai Gemini, bukan rute data langsung untuk `presence`) lalu ucapkan dengan suara `/aerobot`
-   dan langsung mendengarkan tanpa "Halo AERO-BOT". Satu sapaan per bangun.
+   tablet `/robot-screen`, nyalakan mode suara, ucapkan sapaan pendek tanpa data
+   ("Halo halo! Aku AERO-BOT. Kalau kamu punya pertanyaan tentang lingkungan, tanya aku ya!")
+   dengan suara `/aerobot`, lalu langsung mendengarkan tanpa "Halo AERO-BOT". Kondisi lingkungan
+   dijawab Gemini lewat workflow saat pengunjung bertanya. Satu sapaan per bangun.
 6. Wajah tablet: setelah "Aktifkan wajah" ditekan, relay mengirim status bangun/tidur terakhir;
    tanpa orang wajah tidur dalam 5 detik. Hub di mini PC memakai `AEROBOT_SLEEP_AFTER_MS=5000`,
    monitor dada mati 5 menit setelah robot tidur.

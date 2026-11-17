@@ -143,7 +143,7 @@ export function ChatPanel() {
   useEffect(() => {
     if (onChat && params.get("question")) setInput(params.get("question")!);
   }, [onChat, params]);
-  const voiceJobs = useRef(new Map<string, "manual" | "handsfree" | "greeting">());
+  const voiceJobs = useRef(new Map<string, "manual" | "handsfree">());
   const sendRef = useRef<(text: string, fromVoice?: boolean) => Promise<string | null>>(
     async () => null,
   );
@@ -169,10 +169,10 @@ export function ChatPanel() {
   });
   const handsFreeControls = handsFree.controls;
   // Robot chest screen: the robot-display hub on the mini PC (fed by the presence camera) wakes
-  // the robot. The page publishes the face "wake" to the tablet, turns voice mode on, and asks
-  // the n8n workflow for a Gemini greeting with today's conditions, spoken with the /aerobot
-  // voice; then it listens without the wake phrase. One greeting per wake: the next one comes
-  // only after the robot has slept (5 minutes without anyone) and woken again.
+  // the robot. The page publishes the face "wake" to the tablet, turns voice mode on and says a
+  // short friendly greeting (no data; the visitor asks for conditions) with the /aerobot voice,
+  // then listens without the wake phrase. One greeting per wake: the next one comes only after
+  // the robot has slept and woken again.
   // Only the dedicated robot account uses it (operators/admins can test with ?camera=1).
   const cameraEnabled =
     onChat &&
@@ -289,26 +289,10 @@ export function ChatPanel() {
           });
           if (spoken) {
             voiceJobs.current.delete(job.id);
-            if (spoken === "greeting")
-              void handsFreeControls.speakAnswer(
-                job.id,
-                job.result!.text!,
-                job.result!.emotion,
-                true,
-              );
-            else if (spoken === "handsfree")
+            if (spoken === "handsfree")
               void handsFreeControls.speakAnswer(job.id, job.result!.text!, job.result!.emotion);
             else void voiceSpeak.current(job.id, job.result!.text!, job.result!.emotion);
           }
-          return;
-        }
-        if (spoken === "greeting" && (job.status === "failed" || Date.now() - started > 60000)) {
-          // The workflow could not greet: fall back to the fixed greeting, still with the
-          // /aerobot voice, and keep listening.
-          voiceJobs.current.delete(job.id);
-          setPending(null);
-          setBusy(false);
-          void handsFreeControls.greet(ROBOT_GREETING);
           return;
         }
         if (job.status === "failed") {
@@ -406,24 +390,17 @@ export function ChatPanel() {
     }
   }
   sendRef.current = send;
-  requestGreeting.current = async () => {
+  requestGreeting.current = () => {
     greetWhenReady.current = false;
     if (greetedThisWake.current) return;
     greetedThisWake.current = true;
     // Someone is already chatting: do not interrupt with a greeting.
     if (!user || sending.current || pending) return;
-    const targetNode = robotId ? undefined : contextNode?.id;
-    sending.current = true;
-    try {
-      const job = await chatService.greet(crypto.randomUUID(), targetNode, robotId);
-      if (!active.current || owner.current !== user.id) return;
-      voiceJobs.current.set(job.id, "greeting");
-      setPending(job.id);
-    } catch {
-      void handsFreeControls.greet(ROBOT_GREETING);
-    } finally {
-      sending.current = false;
-    }
+    setMessages((prev) => [
+      ...prev,
+      { id: "greeting-" + crypto.randomUUID(), sender: "bot", text: ROBOT_GREETING, emotion: "happy" },
+    ]);
+    void handsFreeControls.greet(ROBOT_GREETING);
   };
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
