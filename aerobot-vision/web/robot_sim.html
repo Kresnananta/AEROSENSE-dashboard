@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AERO-BOT Simulator</title>
+<style>
+  :root { --bg:#0f172a; --panel:#020617; --fg:#e2e8f0; --muted:#94a3b8; --ok:#22c55e; --off:#475569; --eye:#38bdf8; }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; padding:16px; }
+  .wrap { max-width:900px; margin:0 auto; }
+  h2 { margin:0 0 4px } p.sub { margin:0 0 16px; color:var(--muted) }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:640px){ .grid{ grid-template-columns:1fr } }
+  .card { background:var(--panel); border-radius:16px; padding:14px; }
+  .card h3 { margin:0 0 10px; font-size:15px; color:var(--muted); font-weight:600 }
+  .face { height:170px; border-radius:14px; background:#0b1220; display:flex; align-items:center; justify-content:center; gap:56px; }
+  .eye { width:56px; height:56px; background:var(--eye); border-radius:50%; transition:.6s; }
+  .sleeping .eye { height:6px; opacity:.45 } .waking .eye { height:28px } .awake .eye { height:56px }
+  .chest { height:170px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition:.5s; background:#e2e8f0; color:#0f172a; }
+  .chest.off { background:#000; color:#334155 }
+  .pill { display:inline-block; padding:3px 10px; border-radius:99px; font-size:13px; background:var(--off); }
+  .pill.on { background:var(--ok); color:#022c22 }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:14px 0; }
+  input { flex:1; min-width:220px; padding:8px; border-radius:8px; border:1px solid #334155; background:var(--panel); color:var(--fg); }
+  button { padding:8px 14px; border-radius:8px; border:0; background:#38bdf8; color:#020617; font-weight:600; cursor:pointer; }
+  #log { font-family:ui-monospace,monospace; font-size:13px; color:var(--muted); background:var(--panel); border-radius:12px; padding:12px; height:200px; overflow:auto; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>AERO-BOT – simulator bangun/tidur</h2>
+  <p class="sub">Meniru layar dada + wajah tablet. Event dari program kamera: robot_wake / robot_sleep / robot_state.</p>
+  <div class="grid">
+    <div class="card"><h3>Wajah (tablet)</h3>
+      <div id="face" class="face sleeping"><div class="eye"></div><div class="eye"></div></div>
+      <div class="row"><span>Animasi:</span> <b id="faceState">sleeping</b></div>
+    </div>
+    <div class="card"><h3>Layar dada (mini PC)</h3>
+      <div id="chest" class="chest off"><b id="chestText">LAYAR MATI</b><span id="voicePill" class="pill">mode suara mati</span></div>
+      <div class="row"><span>Kamera:</span> <span id="conn" class="pill">belum tersambung</span></div>
+    </div>
+  </div>
+  <div class="row">
+    <input id="url" value="http://127.0.0.1:8765/events" aria-label="URL stream kamera">
+    <button id="connect">Sambungkan</button>
+    <button id="unlock">Aktifkan suara</button>
+  </div>
+  <div id="log" role="log"></div>
+</div>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const log = (m) => { $("log").textContent = new Date().toLocaleTimeString() + "  " + m + "\n" + $("log").textContent; };
+  const sim = { awake:false, voice:false, chestOn:false, greets:0 };
+  window.__sim = sim;
+  let offTimer;
+  function face(mode) { $("face").className = "face " + mode; $("faceState").textContent = mode; }
+  function chest(on) { sim.chestOn = on; $("chest").className = "chest" + (on ? "" : " off"); $("chestText").textContent = on ? "AEROSENSE · AERO-BOT" : "LAYAR MATI"; }
+  function voice(on) { sim.voice = on; $("voicePill").className = "pill" + (on ? " on" : ""); $("voicePill").textContent = on ? "mode suara aktif" : "mode suara mati"; }
+  function say(text) {
+    try { const u = new SpeechSynthesisUtterance(text); u.lang = "id-ID"; speechSynthesis.speak(u); } catch (_) {}
+  }
+  function wake(greet) {
+    clearTimeout(offTimer);
+    sim.awake = true; chest(true); voice(true); face("waking");
+    setTimeout(() => sim.awake && face("awake"), 1200);
+    log("BANGUN → layar dada nyala, mode suara aktif, wajah bangun");
+    if (greet) setTimeout(() => { if (!sim.awake) return; sim.greets++; log('SAPA: "Halo, saya AERO-BOT. Ada yang bisa saya bantu?" → lalu mendengarkan'); say("Halo, saya AERO-BOT. Ada yang bisa saya bantu?"); }, 1200);
+  }
+  function sleep() {
+    sim.awake = false; voice(false); face("sleeping");
+    log("TIDUR → animasi tidur, mode suara mati (layar dada mati setelah jeda)");
+    offTimer = setTimeout(() => { if (!sim.awake) { chest(false); log("layar dada MATI"); } }, 6000);
+  }
+  let es;
+  function connect() {
+    if (es) es.close();
+    es = new EventSource($("url").value);
+    es.onopen = () => { $("conn").textContent = "tersambung"; $("conn").className = "pill on"; };
+    es.onerror = () => { $("conn").textContent = "terputus, mencoba lagi…"; $("conn").className = "pill"; };
+    const data = (e) => { try { return JSON.parse(e.data); } catch (_) { return {}; } };
+    es.addEventListener("robot_wake", (e) => wake(data(e).greet !== false));
+    es.addEventListener("robot_sleep", () => sleep());
+    es.addEventListener("robot_state", (e) => { const d = data(e); log("status awal: " + (d.awake ? "bangun" : "tidur")); d.awake ? wake(false) : (sim.awake = false, voice(false), face("sleeping")); });
+  }
+  $("connect").onclick = connect;
+  $("unlock").onclick = () => { say(" "); log("suara diaktifkan"); };
+  connect();
+</script>
+</body>
+</html>

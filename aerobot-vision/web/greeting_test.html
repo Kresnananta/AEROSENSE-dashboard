@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AERO-BOT Greeting Test</title>
+<style>
+  :root { --bg:#0f172a; --fg:#e2e8f0; --muted:#94a3b8; --ok:#22c55e; --bad:#ef4444; --eye:#38bdf8; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; padding:16px; }
+  .wrap { max-width:720px; margin:0 auto; }
+  .face { height:220px; background:#020617; border-radius:24px; display:flex; align-items:center; justify-content:center; gap:70px; transition:.3s; }
+  .eye { width:70px; height:70px; background:var(--eye); border-radius:50%; transition:.4s; }
+  .sleeping .eye { height:8px; border-radius:8px; opacity:.5; }
+  .waking .eye { height:30px; }
+  .happy .eye { height:70px; border-radius:70px 70px 12px 12px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:16px 0; }
+  input { flex:1; min-width:220px; padding:8px; border-radius:8px; border:1px solid #334155; background:#020617; color:var(--fg); }
+  button { padding:8px 14px; border-radius:8px; border:0; background:#38bdf8; color:#020617; font-weight:600; cursor:pointer; }
+  .badge { padding:4px 10px; border-radius:99px; font-size:13px; background:#334155; }
+  .badge.ok { background:var(--ok); color:#020617 } .badge.bad { background:var(--bad) }
+  #log { font-family:ui-monospace,monospace; font-size:13px; color:var(--muted); background:#020617; border-radius:12px; padding:12px; height:220px; overflow:auto; white-space:pre-wrap; }
+  #state { font-size:18px; margin:8px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>AERO-BOT – uji sapaan kamera</h2>
+  <div id="face" class="face sleeping"><div class="eye"></div><div class="eye"></div></div>
+  <div id="state">Status wajah: <b id="expr">sleeping</b> · Orang terlihat: <b id="ppl">-</b></div>
+  <div class="row">
+    <input id="url" value="http://127.0.0.1:8765/events">
+    <button id="connect">Sambungkan</button>
+    <span id="conn" class="badge">belum terhubung</span>
+  </div>
+  <div class="row">
+    <button id="unlock">Aktifkan suara (klik sekali)</button>
+    <button id="test">Uji sapaan manual</button>
+  </div>
+  <div id="log"></div>
+</div>
+<script src="aerobot-vision-client.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const log = (m) => { $("log").textContent = new Date().toLocaleTimeString() + "  " + m + "\n" + $("log").textContent; };
+  let client = null, sleepTimer = null;
+  function setFace(expr) {
+    $("face").className = "face " + expr; $("expr").textContent = expr;
+    clearTimeout(sleepTimer);
+    if (expr !== "sleeping") sleepTimer = setTimeout(() => setFace("sleeping"), 20000);
+  }
+  function connect() {
+    if (client) client.close();
+    client = AerobotVision.connect({
+      url: $("url").value,
+      greetingAudioUrl: new URLSearchParams(location.search).get("audio") || "",
+      onFace: (e) => { setFace(e); log("wajah -> " + e); },
+      onGreet: (ev) => log("SAPA (track #" + ev.track_id + ", kedekatan " + ev.proximity + ")"),
+      onGreetDone: () => log("sapaan selesai -> mulai mendengarkan"),
+      onEngaged: (ev) => log("orang masih di depan -> tampilkan info kualitas udara"),
+      onPresence: (ev) => { $("ppl").textContent = ev.people_visible; },
+      onConnection: (ok) => { $("conn").textContent = ok ? "terhubung" : "terputus (mencoba lagi…)"; $("conn").className = "badge " + (ok ? "ok" : "bad"); },
+    });
+    window.__greetCount = 0;
+  }
+  $("connect").onclick = connect;
+  $("unlock").onclick = () => { AerobotVision.unlockAudio(); log("audio diaktifkan"); };
+  $("test").onclick = () => client && client.greetNow();
+  connect();
+</script>
+</body>
+</html>

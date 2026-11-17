@@ -9,7 +9,8 @@
 
 ### Layar dada + wajah tablet (alur gabungan)
 
-1. Program kamera `aerobot_vision` (mini PC) mengirim `POST /presence` ke pengendali lokal ini.
+1. Program kamera `aerobot-vision/` (Python, mini PC) mengirim `POST /presence` ke pengendali lokal ini.
+   Jalankan semuanya dengan `aerobot-vision/scripts/start_robot.bat`.
 2. Pengendali memutuskan bangun/tidur dan menyiarkan `GET /presence/events`
    (`robot_state`, `robot_wake {greet}`, `robot_sleep`) ke halaman dada `AEROBOT_CHAT_URL`.
 3. Halaman dada `/aerobot` (akun robot, Chrome kiosk) saat `robot_wake`: kirim `wake` ke wajah

@@ -1,0 +1,9 @@
+__pycache__/
+*.pt
+*.engine
+*_openvino_model/
+runs/
+dataset_*/
+rekaman/
+.env
+venv/
