@@ -348,6 +348,22 @@ test("chest page stream: camera wakes with a greeting, sleeps, and replaces the 
       headers: { Origin: "https://elsewhere.example" },
     });
     assert.equal(denied.status, 403);
+    const preflight = await fetch("http://127.0.0.1:4217/presence/events", {
+      method: "OPTIONS",
+      headers: {
+        Origin: "https://chest.example",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Private-Network": "true",
+      },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), "https://chest.example");
+    assert.equal(preflight.headers.get("access-control-allow-private-network"), "true");
+    const strangerPreflight = await fetch("http://127.0.0.1:4217/presence/events", {
+      method: "OPTIONS",
+      headers: { Origin: "https://elsewhere.example", "Access-Control-Request-Method": "GET" },
+    });
+    assert.equal(strangerPreflight.status, 403);
     const face = { text: "" },
       chest = { text: "" };
     void collect("http://127.0.0.1:4217/events", {}, face);

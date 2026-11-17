@@ -218,6 +218,20 @@ const server = http.createServer(async (req, res) => {
     }
     const url = new URL(req.url, origin);
     if (url.pathname === "/presence/events") {
+      // Chrome checks a public page's request to this machine first (CORS / Local Network
+      // Access preflight); without this answer the chest page is never connected.
+      if (req.method === "OPTIONS" && chestStream) {
+        res.writeHead(204, {
+          "Access-Control-Allow-Origin": chestOrigin,
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Cache-Control, Last-Event-ID",
+          "Access-Control-Allow-Private-Network": "true",
+          "Access-Control-Allow-Local-Network": "true",
+          "Access-Control-Max-Age": "600",
+          Vary: "Origin",
+        });
+        return res.end();
+      }
       if (req.method !== "GET") {
         res.writeHead(405);
         return res.end();
