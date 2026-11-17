@@ -84,8 +84,8 @@ kamera (aerobot_vision) --POST /presence--> hub robot-display/start.mjs (mini PC
 ```
 
 - **Tidur cepat, layar hemat daya.** Tanpa orang 5 detik (`AEROBOT_SLEEP_AFTER_MS=5000`) wajah tidur
-  dan mode dengar mati, kamera siaga. Monitor dada baru mati setelah robot tidur 5 menit
-  (`robot.display_off_delay_s: 300`), supaya layar tidak berkedip tiap ada orang lewat.
+  dan mode dengar mati, kamera siaga. Monitor dada mati 20 detik setelah robot tidur
+  (`robot.display_off_delay_s`, demo: 20 detik; 300 = 5 menit), supaya layar tidak berkedip tiap ada orang lewat.
 - **Satu sapaan per bangun.** Orang datang lagi setelah robot tidur akan disapa lagi. Reload halaman
   tidak menyapa ulang.
 - **Wajah tablet mengikuti status robot.** Setelah "Aktifkan wajah" ditekan saat start-up, wajah tidur

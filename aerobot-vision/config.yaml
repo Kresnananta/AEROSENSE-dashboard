@@ -24,7 +24,7 @@ robot:
   # mode standalone: program ini memutuskan sendiri (untuk simulator web/robot_sim.html).
   mode: hub
   idle_sleep_s: 300             # standalone: tidur setelah 5 menit tanpa orang. hub: jeda awal sebelum monitor mati
-  display_off_delay_s: 300      # monitor dada mati setelah robot tidur 5 menit (wajah sudah tidur lebih dulu)
+  display_off_delay_s: 20       # monitor dada mati 20 detik setelah robot tidur (demo; 300 = 5 menit)
   display_control: auto         # auto = matikan/nyalakan monitor (hanya Windows) | off = jangan sentuh monitor
 
 robot_display:
