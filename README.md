@@ -31,7 +31,9 @@ API publik → n8n Hub lingkungan → cache Supabase → API → web & konteks A
 - `firmware/` — Firmware node sensor, mist sprinkler, dan WATERSENSE MQTT.
 - `gateway/` — Layanan penerima LoRa gateway (`lora_receiver.py`).
 - `n8n/` — Script dan workflow automasi n8n.
-- `robot-display/` — Utilitas tampilan dan suara robot.
+- `robot-display/` — Utilitas tampilan dan suara robot, termasuk hub lokal kamera (`start.mjs`).
+- `aerobot-vision/` — Program kamera AERO-BOT (deteksi orang YOLOv8) untuk mini PC robot.
+- `docs/STATUS.md` — Status terbaru AERO-BOT: alur kamera, layar dada, wajah tablet, cara menjalankan.
 - `scripts/` — Script bantu build workflow dan deployment.
 
 ## Menjalankan Lokal
