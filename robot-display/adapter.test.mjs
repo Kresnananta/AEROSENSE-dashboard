@@ -365,8 +365,10 @@ test("chest page stream: camera wakes with a greeting, sleeps, and replaces the 
     });
     assert.equal(strangerPreflight.status, 403);
     const face = { text: "" },
-      chest = { text: "" };
+      chest = { text: "" },
+      body = { text: "" };
     void collect("http://127.0.0.1:4217/events", {}, face);
+    void collect("http://127.0.0.1:4217/events?display=body", {}, body);
     void collect(
       "http://127.0.0.1:4217/presence/events",
       { Origin: "https://chest.example" },
@@ -384,6 +386,10 @@ test("chest page stream: camera wakes with a greeting, sleeps, and replaces the 
       await wait(300);
     }
     assert.ok(chest.text.includes("event: robot_sleep"));
+    // Screens stay lit while asleep: only the face animation sleeps.
+    await until(() => face.text.includes('"action":"sleep"'));
+    assert.doesNotMatch(body.text, /"awake":false/);
+    assert.doesNotMatch(face.text, /event: display\ndata: \{"awake":false/);
     await wait(1600);
     assert.equal(events.length, 0, "the chest page greets, so no API presence event is sent");
   } finally {

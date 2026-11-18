@@ -50,3 +50,18 @@ def test_reads_server_sent_events():
                         b': keepalive\n\nevent: robot_sleep\ndata: {}\n\n')
     f._read(stream)
     assert d.calls == ["on"] and f.awake is False
+
+
+def test_keep_on_display_never_turns_screens_off():
+    from aerobot_vision.robot_power import KeepOnDisplay
+
+    d = KeepOnDisplay(False)
+    calls = []
+    d.on = lambda: calls.append("on")
+    d.off = lambda: calls.append("off")
+    f = HubFollower("x", d, display_off_delay_s=0.05, startup_grace_s=0.05)
+    f.handle("robot_state", {"awake": False})
+    f.handle("robot_wake", {"greet": True})
+    f.handle("robot_sleep", {})
+    time.sleep(0.15)
+    assert "off" not in calls and f.awake is False

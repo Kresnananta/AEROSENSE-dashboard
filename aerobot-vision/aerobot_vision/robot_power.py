@@ -1,13 +1,13 @@
 """
-Status bangun/tidur robot + kontrol daya monitor dada (mini PC Windows).
+Status bangun/tidur robot + daya layar dada (mini PC Windows).
 
-- Ada orang di depan robot (behavior.present) saat robot tidur  -> monitor nyala, event `robot_wake`
-  (web dada menyalakan mode suara + menyapa; wajah tablet memutar animasi bangun).
-- Tidak ada orang selama `idle_sleep_s` (default 5 menit)       -> event `robot_sleep`
-  (wajah memutar animasi tidur, mode suara mati), lalu setelah `display_off_delay_s` monitor mati.
+- Ada orang di depan robot saat robot tidur -> robot bangun (wajah bangun, mode suara, sapaan).
+- Tidak ada orang                           -> robot tidur (animasi tidur, mode suara mati).
 
-Monitor dimatikan dengan sinyal standby Windows (DPMS); monitor menyala lagi saat robot bangun
-atau saat layar disentuh / mouse digerakkan.
+display_control:
+  keep_on (bawaan) : layar dada dan PC selalu menyala; saat tidur hanya animasi tidur.
+  auto             : layar dada standby `display_off_delay_s` detik setelah robot tidur (Windows).
+  off              : program tidak menyentuh daya layar/PC sama sekali.
 """
 import sys
 from dataclasses import dataclass
@@ -16,13 +16,15 @@ from dataclasses import dataclass
 @dataclass
 class PowerConfig:
     idle_sleep_s: float = 300.0          # tanpa orang selama ini -> tidur
-    display_off_delay_s: float = 6.0     # tunggu animasi tidur selesai sebelum monitor mati
-    display_control: str = "auto"        # auto (hanya Windows) | off
+    display_off_delay_s: float = 6.0     # mode auto: monitor mati N detik setelah robot tidur
+    display_control: str = "keep_on"     # keep_on | auto (hanya Windows) | off
     mode: str = "hub"                    # hub: ikuti start.mjs | standalone: putuskan sendiri
 
 
 class NoDisplayControl:
     """Dipakai di luar Windows atau jika display_control: off. Hanya mencatat."""
+
+    controls_power = True
 
     def __init__(self, reason: str = ""):
         self.reason = reason
@@ -35,7 +37,30 @@ class NoDisplayControl:
 
 
 
+class KeepOnDisplay:
+    """Layar dada dan PC selalu menyala; tidur hanya berupa animasi di wajah."""
+
+    controls_power = False
+
+    def __init__(self, windows: bool):
+        if windows:
+            import ctypes
+
+            # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED, dari thread utama:
+            # Windows tidak mematikan layar dan tidak menidurkan PC selama program berjalan.
+            ctypes.windll.kernel32.SetThreadExecutionState(0x80000000 | 0x1 | 0x2)
+        print("[layar] mode keep_on: layar dada dan PC selalu menyala", flush=True)
+
+    def on(self) -> None:
+        pass
+
+    def off(self) -> None:
+        pass
+
+
 class WindowsDisplayControl:
+    controls_power = True
+
     HWND_BROADCAST = 0xFFFF
     WM_SYSCOMMAND = 0x0112
     SC_MONITORPOWER = 0xF170
@@ -70,7 +95,13 @@ class WindowsDisplayControl:
         print("[layar] monitor MATI (standby)", flush=True)
 
 
-def make_display_control(mode: str = "auto"):
+def make_display_control(mode: str = "keep_on"):
+    if mode == "keep_on":
+        try:
+            return KeepOnDisplay(sys.platform == "win32")
+        except Exception as e:  # noqa: BLE001
+            print(f"[warn] tidak bisa menahan layar menyala: {e}", flush=True)
+            return KeepOnDisplay(False)
     if mode == "off":
         return NoDisplayControl(" — display_control: off")
     if sys.platform == "win32":

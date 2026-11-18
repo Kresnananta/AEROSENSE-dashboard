@@ -80,8 +80,13 @@ function screenState() {
     dashboard: dashboardUrl.href,
   };
 }
+// Team decision: the face and chest screens stay lit while the robot sleeps; sleep is shown by
+// the sleeping animation only. AEROBOT_DARK_WHEN_ASLEEP=1 restores the dark screens.
+const darkWhenAsleep = process.env.AEROBOT_DARK_WHEN_ASLEEP === "1";
 function sendDisplay(client) {
-  client.write(`event: display\ndata: ${JSON.stringify(screenState())}\n\n`);
+  const display = screenState();
+  if (!darkWhenAsleep) display.awake = true;
+  client.write(`event: display\ndata: ${JSON.stringify(display)}\n\n`);
 }
 function updatePresence(detected, source) {
   const now = performance.now();

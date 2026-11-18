@@ -52,6 +52,9 @@ class HubFollower:
                 print("[robot] BANGUN (dari hub)", flush=True)
                 self.display.on()
                 return
+            if not getattr(self.display, "controls_power", True):
+                print("[robot] TIDUR (dari hub) -> animasi tidur, layar tetap menyala", flush=True)
+                return
             # Saat program baru mulai, beri waktu menyiapkan robot sebelum layar mati.
             delay = self.grace if first else self.delay
             print(f"[robot] TIDUR (dari hub) -> monitor mati dalam {delay:.0f} detik", flush=True)

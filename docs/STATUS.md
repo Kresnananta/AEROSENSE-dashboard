@@ -19,10 +19,10 @@
    dengan suara `/aerobot`, lalu langsung mendengarkan tanpa "Halo AERO-BOT". Kondisi lingkungan
    dijawab Gemini lewat workflow saat pengunjung bertanya. Satu sapaan per bangun.
 6. Wajah tablet: setelah "Aktifkan wajah" ditekan, relay mengirim status bangun/tidur terakhir;
-   tanpa orang wajah tidur dalam 5 detik. Hub di mini PC memakai `AEROBOT_SLEEP_AFTER_MS=5000`,
-   monitor dada mati 20 detik setelah robot tidur (`display_off_delay_s`, 300 = 5 menit).
-4. `robot_sleep` (lima menit tanpa orang): mode suara mati, wajah tidur, lalu program kamera
-   mematikan monitor dada (standby Windows) setelah animasi tidur.
+   tanpa orang wajah tidur dalam 5 detik. Hub di mini PC memakai `AEROBOT_SLEEP_AFTER_MS=5000`.
+4. `robot_sleep` (tanpa orang): mode suara mati dan wajah memutar animasi tidur. Sesuai keputusan
+   tim, layar dada dan layar wajah tetap menyala saat tidur (`display_control: keep_on`,
+   `AEROBOT_DARK_WHEN_ASLEEP=0`); program kamera juga menahan PC agar tidak sleep.
 5. Selama halaman dada tersambung, event `presence` tidak dikirim ke API agar tidak menyapa dua kali.
 
 ## Berikutnya
