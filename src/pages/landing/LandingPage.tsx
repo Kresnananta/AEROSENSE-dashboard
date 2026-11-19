@@ -10,13 +10,15 @@ import {
   Menu,
   X,
   Settings2,
-  Sparkle,
   LockKeyhole,
   FileSpreadsheet,
 } from "lucide-react";
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
+import { weatherSceneForPeriod } from "@/lib/time-of-day";
+import type { Scene } from "@/lib/environment-presentation";
 import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
 
@@ -67,7 +69,10 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState(0);
   const { user } = useAuth();
+  const dayPeriod = useDayPeriod();
   const feature = features[active];
+  const weatherScene = weatherSceneForPeriod({ icon: "partly", period: dayPeriod }) as Scene;
+  const activeScene = feature.path === "/environment" ? weatherScene : feature.scene;
   return (
     <div className="landing-page">
       <a className="landing-skip" href="#konten">
@@ -105,32 +110,29 @@ export function LandingPage() {
         </nav>
       </header>
       <main id="konten">
-        <section className="landing-hero landing-container">
+        <section className="landing-hero landing-container" data-day-period={dayPeriod}>
           <div className="landing-hero-copy">
-            <h1>
-              Kenali udara dan cuaca <span>di sekitar Anda.</span>
-            </h1>
+            <h1>Kenali udara dan cuaca di sekitar Anda.</h1>
             <p>
               Cek kualitas udara, prakiraan hujan, dan peringatan di sekitar Anda.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
                 Lihat pemantauan
-                <ArrowRight size={19} />
+                <ArrowRight size={18} />
               </Link>
               <Link className="landing-text-link" to="/aerobot">
                 Tanya AERO-BOT
-                <ArrowUpRight size={17} />
+                <ArrowUpRight size={16} />
               </Link>
             </div>
           </div>
-          <div className="landing-hero-art" role="img" aria-label="Maskot AERO-BOT menyambut Anda">
+          <div
+            className="landing-hero-art"
+            role="img"
+            aria-label="Maskot AERO-BOT menyambut Anda"
+          >
             <AeroMascot pose="welcome" className="landing-hero-mascot" />
-            <div className="landing-cheer" aria-hidden="true">
-              <Sparkle />
-              <Sparkle />
-              <Sparkle />
-            </div>
           </div>
         </section>
 
@@ -146,9 +148,9 @@ export function LandingPage() {
                   aria-pressed={active === index}
                   onClick={() => setActive(index)}
                 >
-                  <item.icon size={22} />
+                  <item.icon size={20} />
                   <span>{item.title}</span>
-                  <ArrowUpRight size={17} />
+                  <ArrowUpRight size={16} />
                 </button>
               ))}
             </div>
@@ -158,14 +160,14 @@ export function LandingPage() {
                 <p>{feature.description}</p>
                 <Link className="landing-text-link" to={feature.path}>
                   {feature.action}
-                  <ArrowRight size={17} />
+                  <ArrowRight size={16} />
                 </Link>
               </div>
               <div className="landing-feature-illustration">
                 {feature.path === "/analytics" ? (
                   <LandingTrend />
-                ) : feature.scene ? (
-                  <ConditionScene scene={feature.scene} />
+                ) : activeScene ? (
+                  <ConditionScene scene={activeScene} />
                 ) : (
                   <AeroMascot pose="watch" />
                 )}
@@ -182,7 +184,7 @@ export function LandingPage() {
           <ol className="landing-workflow-steps">
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                1
+                01
               </span>
               <div>
                 <h3>Ukur di lokasi</h3>
@@ -191,7 +193,7 @@ export function LandingPage() {
             </li>
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                2
+                02
               </span>
               <div>
                 <h3>Cek kondisi sekitar</h3>
@@ -200,7 +202,7 @@ export function LandingPage() {
             </li>
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                3
+                03
               </span>
               <div>
                 <h3>Tinjau peringatan</h3>

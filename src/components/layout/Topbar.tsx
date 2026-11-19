@@ -38,18 +38,18 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
           aria-label="Buka menu navigasi"
           aria-controls="mobile-navigation"
           aria-expanded={menuOpen}
-          className="md:hidden w-8 h-8 rounded-lg bg-[#e8f3ff] text-[#0870f0] grid place-items-center hover:bg-[#d9ecff] transition-colors cursor-pointer"
+          className="md:hidden w-8 h-8 rounded-lg bg-[#e8f1fc] text-[#0a58ca] grid place-items-center hover:bg-[#d8e7fa] transition-colors cursor-pointer"
         >
-          <Menu className="w-4 h-4 stroke-[2]" />
+          <Menu size={18} />
         </button>
 
         <nav
           aria-label="Lokasi halaman"
-          className="flex items-center gap-2 text-[#526d88] text-xs font-semibold"
+          className="flex items-center gap-2 text-[#3f566a] text-xs font-semibold"
         >
           <span className="hidden sm:inline">AEROSENSE</span>
-          <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#526d88]" />
-          <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
+          <ChevronRight size={14} className="hidden sm:block text-[#3f566a]" />
+          <strong className="text-[#102436] font-bold">{currentLabel}</strong>
         </nav>
       </div>
 
@@ -58,9 +58,9 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
           type="button"
           onClick={() => navigate(ROUTES.ALERTS)}
           aria-label="Lihat peringatan"
-          className="relative w-8 h-8 rounded-lg text-[#59718e] hover:bg-[#f0f6fc] hover:text-[#086cfb] grid place-items-center transition-colors cursor-pointer"
+          className="relative w-8 h-8 rounded-lg text-[#3f566a] hover:bg-[#edf2ee] hover:text-[#0a58ca] grid place-items-center transition-colors cursor-pointer"
         >
-          <Bell className="w-4 h-4" />
+          <Bell size={18} />
         </button>
 
         <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>

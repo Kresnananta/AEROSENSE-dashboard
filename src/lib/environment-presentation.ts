@@ -1,3 +1,9 @@
+import {
+  currentDayPeriod,
+  dayPeriodFromHour,
+  weatherSceneForPeriod,
+  wibHour,
+} from "./time-of-day.ts";
 import type {
   EnvironmentFact,
   EnvironmentInsight,
@@ -36,11 +42,6 @@ export type Highlight = { label: string; value: string; unit: string };
 
 const number = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
 const riverDay = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
-const weatherHour = new Intl.DateTimeFormat("id-ID", {
-  hour: "numeric",
-  hourCycle: "h23",
-  timeZone: "Asia/Jakarta",
-});
 export const riverDayLabel = (at: string) => riverDay.format(new Date(at));
 
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
@@ -63,34 +64,35 @@ export function conditionScene(
   now = Date.now(),
 ): Scene {
   if (insight.category === "weather") {
-    if (!insight.available) return "cloudy";
+    const nowPeriod = currentDayPeriod(now);
+    if (!insight.available) return nowPeriod === "night" ? "cloudy-night" : "cloudy";
     const weather = currentFacts(facts, now).find(
       (f) => f.category === "weather" && /WMO|weather.?code/i.test(f.label),
     );
-    const timestamp = Date.parse(weather?.valid_at || insight.valid_at || "");
-    const hour = Number.isFinite(timestamp) ? Number(weatherHour.format(timestamp)) : NaN;
-    const night = hour < 5 || hour >= 18;
-    const code = weather?.value;
+    const validTs = Date.parse(weather?.valid_at || insight.valid_at || "");
+    const useValidTs = Number.isFinite(validTs) && Math.abs(now - validTs) <= 90 * 60 * 1000;
+    const period = useValidTs ? dayPeriodFromHour(wibHour(validTs)) : nowPeriod;
+    const code = typeof weather?.value === "number" ? weather.value : null;
+    const title = insight.title || "";
+    const night = period === "night";
+
     if (typeof code === "number") {
       if ([95, 96, 97, 99].includes(code)) return night ? "storm-night" : "storm";
       if ([51, 53, 55, 56, 57].includes(code)) return night ? "drizzle-night" : "drizzle";
       if ([61, 66, 80].includes(code)) return night ? "light-rain-night" : "light-rain";
-      if ([63, 65, 67, 81, 82].includes(code))
-        return night ? "rain-night" : "steady-rain";
+      if ([63, 65, 67, 81, 82].includes(code)) return night ? "rain-night" : "steady-rain";
       if (code === 45 || code === 48) return night ? "fog-night" : "fog";
     }
-    if (/petir/i.test(insight.title)) return night ? "storm-night" : "storm";
-    if (/gerimis/i.test(insight.title)) return night ? "drizzle-night" : "drizzle";
-    if (/hujan/i.test(insight.title)) return night ? "rain-night" : "steady-rain";
-    if (/terasa hangat/i.test(insight.title)) return night ? "warm-night" : "sunny-dusk";
-    if (!night && /terasa panas/i.test(insight.title)) return "sunny";
-    if (code === 0 || code === 1 || code === 2) {
-      if (night) return "sunny-night";
-      if (hour < 11) return "sunny-morning";
-      if (hour >= 17) return "sunny-dusk";
-      return code === 0 ? "sunny" : "partly-cloudy";
-    }
-    return night ? "cloudy-night" : "cloudy";
+    if (/petir/i.test(title)) return night ? "storm-night" : "storm";
+    if (/gerimis/i.test(title)) return night ? "drizzle-night" : "drizzle";
+    if (/hujan/i.test(title)) return night ? "rain-night" : "steady-rain";
+
+    return weatherSceneForPeriod({
+      code,
+      period,
+      warm: /terasa hangat/i.test(title),
+      hot: /terasa panas/i.test(title),
+    }) as Scene;
   }
   if (insight.category === "air_quality") {
     return insight.available && ["notice", "warning", "danger"].includes(insight.tone)

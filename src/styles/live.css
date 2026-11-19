@@ -972,8 +972,8 @@ select,
   outline-offset: 3px;
 }
 .live-messages {
-  scrollbar-color: #bfd8f1 #f3f8ff;
-  scrollbar-width: thin;
+  scrollbar-color: #5c7388 #edf1ee;
+  scrollbar-width: auto;
 }
 .environment-hub ::selection,
 .live-chat ::selection {
@@ -1176,17 +1176,21 @@ select,
 .app-shell .live-chat > header .live-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border-radius: 999px;
-  padding: 5px 12px;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: #eaf5ef;
+  color: #16593f;
+  border: 1px solid #c9e1d4;
 }
-.app-shell .live-chat > header .live-tag::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+.live-state-art {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 12px;
+  object-fit: contain;
 }
 .chat-guest {
   display: flex;

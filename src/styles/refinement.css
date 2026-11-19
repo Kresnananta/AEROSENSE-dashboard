@@ -446,7 +446,8 @@ input {
   flex-wrap: nowrap;
   overflow-x: auto;
   padding: 4px 2px 12px;
-  scrollbar-width: thin;
+  scrollbar-width: auto;
+  scrollbar-color: #5c7388 #edf1ee;
   scroll-snap-type: x proximity;
 }
 .app-shell .node-strip button {
@@ -741,8 +742,7 @@ input {
   min-height: 112px;
   border: 1px solid #ffffff48;
   background: rgba(6, 57, 126, 0.58);
-  backdrop-filter: var(--metric-backdrop);
-  -webkit-backdrop-filter: var(--metric-backdrop);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 16px;
   color: #fff;
   box-shadow:
@@ -939,29 +939,34 @@ input {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 8px;
+  padding: 4px 9px;
   width: fit-content;
-  border-radius: 7px;
-  font-size: 10px;
-  line-height: 1.5;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  line-height: 1.4;
   font-weight: 600;
   white-space: nowrap;
 }
 .node-status.status-calm {
-  color: #176044;
-  background: #e6f5ec;
+  color: #16593f;
+  background: #eef7f2;
+  border-color: #c8e3d5;
 }
 .node-status.status-warning {
-  color: #88510b;
-  background: #fff0d1;
+  color: #7c4406;
+  background: #fdf6e8;
+  border-color: #ebd3a7;
 }
 .node-status.status-danger {
-  color: #a12e38;
-  background: #fdebef;
+  color: #98222f;
+  background: #fceef0;
+  border-color: #efc4ca;
 }
 .node-status.status-pending {
-  color: #526779;
-  background: #edf2f7;
+  color: #384f63;
+  background: #f2f5f7;
+  border-color: #d3dde4;
 }
 .app-shell .node-strip button {
   min-width: 175px;
@@ -1288,11 +1293,10 @@ input {
   margin: 0;
 }
 .app-shell .sensor-hero-copy .insight-status {
-  margin-bottom: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 10px;
-  font-weight: 750;
+  margin-bottom: 12px;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
 }
 .app-shell .sensor-hero-copy .sensor-recommendation {
   margin: 12px 0 0;

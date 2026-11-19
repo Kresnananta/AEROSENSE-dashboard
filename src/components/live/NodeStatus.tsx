@@ -17,7 +17,7 @@ export function NodeStatus({ node }: { node: LiveNode }) {
       className={`node-status status-${status.tone}`}
       title="Status pemantauan berdasarkan ambang sensor yang diatur; bukan AQI atau kategori kesehatan."
     >
-      <Icon size={13} aria-hidden="true" />
+      <Icon size={14} aria-hidden="true" />
       {status.label}
     </span>
   );

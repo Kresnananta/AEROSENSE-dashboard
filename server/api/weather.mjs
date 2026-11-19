@@ -23,8 +23,14 @@ const hourLabel = (t) => String(t).slice(11, 16).replace(":", ".") + " WIB";
 
 export function weatherAlerts(hourly, daily) {
   const alerts = [];
-  const span = (list) =>
-    list.length ? `${hourLabel(list[0].time)}–${hourLabel(list[list.length - 1].time)}` : "";
+  const span = (list) => {
+    if (!list.length) return "";
+    const first = list[0].time;
+    const last = list[list.length - 1].time;
+    if (first === last) return hourLabel(first);
+    const nextDay = String(last).slice(0, 10) > String(first).slice(0, 10);
+    return `${hourLabel(first)}–${hourLabel(last)}${nextDay ? " besok" : ""}`;
+  };
   const thunder = hourly.filter(
     (h) => h.code >= 95 || (h.cape >= 1500 && (h.rain_chance ?? 0) >= 40),
   );

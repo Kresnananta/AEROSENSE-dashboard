@@ -44,7 +44,22 @@ test("forecast starts at the current local hour and explains warnings", () => {
   assert.equal(o.daily[0].label, "Hujan petir");
   const types = o.alerts.map((a) => a.type);
   assert.deepEqual(types, ["thunder", "heavy_rain", "uv"]);
-  assert.match(o.alerts[0].text, /15\.00 WIB/);
+  assert.match(o.alerts[0].text, /15\.00 WIB\./);
+  assert.doesNotMatch(o.alerts[0].text, /15\.00 WIB–15\.00 WIB/);
+});
+
+test("overnight weather alert span clarifies next day", () => {
+  const overnight = {
+    ...forecast,
+    hourly: {
+      ...forecast.hourly,
+      weather_code: hours.map((_, i) => (i === 19 || i === 32 ? 95 : 2)),
+    },
+  };
+  const o = parseForecast(overnight, Date.parse("2026-11-13T11:00:00Z"));
+  const thunder = o.alerts.find((a) => a.type === "thunder");
+  assert.ok(thunder);
+  assert.match(thunder.text, /19\.00 WIB–08\.00 WIB besok/);
 });
 
 test("expired hourly forecast does not reuse past hours", () => {

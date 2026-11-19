@@ -89,7 +89,7 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
                     onClick={onClose}
                     className={({ isActive }) => (isActive ? "nav-entry active" : "nav-entry")}
                   >
-                    <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
+                    <Icon size={18} aria-hidden="true" />
                     <span>{item.path === ROUTES.ANALYTICS && !canViewModel ? "Riwayat udara" : item.label}</span>
                   </NavLink>
                 );

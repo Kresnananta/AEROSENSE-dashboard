@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { DataState } from "@/components/shared/DataState";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { sensorSummary, TEMP_STATUS_PM25_ONLY, type SensorRule } from "@/lib/environment-presentation";
@@ -14,6 +15,7 @@ import "@/styles/insights.css";
 
 export function SensorOverview() {
   const { user, isLoading } = useAuth();
+  const dayPeriod = useDayPeriod();
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(
     `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
@@ -64,9 +66,6 @@ export function SensorOverview() {
           : summary.tone === "calm"
             ? "Udara dalam batas baik."
             : summary.title;
-  const titleParts = heroTitle.trim().split(/\s+/);
-  const titleAccent = titleParts.pop();
-
   const pm25 = reading?.metrics.pm25_ug_m3;
 
   const showPm25 = TEMP_STATUS_PM25_ONLY ||
@@ -76,9 +75,7 @@ export function SensorOverview() {
     <section className="insights-hub sensor-overview" aria-labelledby="sensor-heading">
       <header className="insights-heading">
         <div>
-          <h1 id="sensor-heading">
-            <span className="heading-accent">Kondisi udara</span> di titik sensor
-          </h1>
+          <h1 id="sensor-heading">Kondisi udara di titik sensor</h1>
         </div>
         <button
           className="live-icon-button"
@@ -98,17 +95,15 @@ export function SensorOverview() {
       ) : (
         <>
           <div className={`sensor-focus-grid${fresh ? "" : " sensor-focus-grid--unavailable"}`}>
-            <article className={`sensor-hero tone-${summary.tone}${fresh ? "" : " sensor-hero--unavailable"}`}>
+            <article
+              className={`sensor-hero tone-${summary.tone}${fresh ? "" : " sensor-hero--unavailable"}`}
+              data-day-period={dayPeriod}
+            >
               <div className="sensor-hero-copy">
                 <span className={`insight-status ${fresh ? "" : "status-pending"}`}>
-                  <span />
                   {summary.tone === "calm" ? "Estimasi sensor terbaru" : summary.label}
                 </span>
-                <h2 className="sensor-status-title">
-                  {titleParts.join(" ")}
-                  {titleParts.length > 0 && " "}
-                  <span>{titleAccent}</span>
-                </h2>
+                <h2 className="sensor-status-title">{heroTitle}</h2>
                 <p className="sensor-recommendation">
                   <ArrowRight size={17} aria-hidden="true" />
                   <span>

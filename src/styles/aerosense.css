@@ -252,8 +252,8 @@
 }
 
 .sidebar-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: #d0e2f5 transparent;
+  scrollbar-width: auto;
+  scrollbar-color: #5c7388 #edf1ee;
 }
 
 .sidebar-scroll::-webkit-scrollbar {

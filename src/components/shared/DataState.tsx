@@ -14,6 +14,17 @@ export function DataState({
 }) {
   return (
     <div className="live-state" role={error ? "alert" : "status"}>
+      {!loading && (
+        <img
+          className="live-state-art"
+          src={error ? "/assets/aerobot/falcon/guide.webp" : "/assets/aerobot/falcon/calm.webp"}
+          alt=""
+          width={96}
+          height={96}
+          loading="lazy"
+          decoding="async"
+        />
+      )}
       <strong>
         {loading
           ? "Memuat data…"

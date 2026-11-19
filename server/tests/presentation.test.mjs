@@ -83,10 +83,11 @@ test("weather illustrations use both the condition and the reading's time in WIB
     ["2026-11-05T23:00:00Z", 0, "sunny-morning"],
     ["2026-11-06T05:00:00Z", 0, "sunny"],
     ["2026-11-06T05:00:00Z", 2, "partly-cloudy"],
-    ["2026-11-06T05:00:00Z", 2, "sunny-dusk", "Cuaca terasa hangat"],
+    ["2026-11-06T05:00:00Z", 2, "partly-cloudy", "Cuaca terasa hangat"],
     ["2026-11-06T05:00:00Z", 2, "sunny", "Cuaca terasa panas"],
-    ["2026-11-07T00:00:00Z", 3, "sunny-dusk", "Cuaca terasa hangat"],
+    ["2026-11-07T00:00:00Z", 3, "sunny-morning", "Cuaca terasa hangat"],
     ["2026-11-06T05:00:00Z", 45, "fog", "Cuaca terasa hangat"],
+    ["2026-11-06T08:00:00Z", 0, "sunny-dusk"],
     ["2026-11-06T10:00:00Z", 0, "sunny-dusk"],
     ["2026-11-06T10:00:00Z", 63, "steady-rain"],
     ["2026-11-06T11:00:00Z", 2, "sunny-night"],
@@ -108,6 +109,22 @@ test("weather illustrations use both the condition and the reading's time in WIB
     });
     assert.equal(conditionScene({ ...insight, title }, [weather], checkedAt), scene);
   }
+  // When a cached daytime reading is viewed hours later at night, follow current WIB period
+  const cachedAfternoon = fact({
+    label: "Kode kondisi cuaca (WMO)",
+    value: 0,
+    valid_at: "2026-11-06T09:00:00Z",
+    fresh_until: "2026-11-06T15:00:00Z",
+  });
+  assert.equal(
+    conditionScene(insight, [cachedAfternoon], Date.parse("2026-11-06T13:00:00Z")),
+    "sunny-night",
+  );
+  // Unavailable weather at night uses cloudy-night
+  assert.equal(
+    conditionScene({ category: "weather", available: false }, [], Date.parse("2026-11-06T13:00:00Z")),
+    "cloudy-night",
+  );
 });
 test("moderate regional air quality uses the haze illustration", () => {
   const ispu = fact({

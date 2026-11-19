@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { WeatherOutlook } from "@/components/weather/WeatherOutlook";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
@@ -50,6 +51,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
     60000,
   );
+  const dayPeriod = useDayPeriod();
   const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
   const topics = useRef<HTMLDivElement>(null);
@@ -206,19 +208,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <header className="insights-heading">
         <div>
           <Heading>
-            {locationMode === "device" && userPoint ? (
-              <>
-                Lingkungan <span className="heading-accent">di sekitar Anda</span>
-              </>
-            ) : node ? (
-              <>
-                Lingkungan di <span className="heading-accent">{node.name}</span>
-              </>
-            ) : (
-              <>
-                Lingkungan <span className="heading-accent">sekitar</span>
-              </>
-            )}
+            {locationMode === "device" && userPoint
+              ? "Lingkungan di sekitar Anda"
+              : node
+                ? `Lingkungan di ${node.name}`
+                : "Lingkungan sekitar"}
           </Heading>
           {((locationMode === "device" && userPoint && node) || !node) && (
             <p>
@@ -299,11 +293,15 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           <article
             key={selected.category}
             className={`insight-lead panel-${scene} tone-${selected.tone}`}
+            data-day-period={
+              selected.category === "weather" || selected.category === "air_quality"
+                ? dayPeriod
+                : undefined
+            }
           >
             <Atmosphere />
             <div className="insight-message">
               <span className={`insight-status ${selected.available ? "" : "status-pending"}`}>
-                <span />
                 {selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
               <h2>{selected.title}</h2>

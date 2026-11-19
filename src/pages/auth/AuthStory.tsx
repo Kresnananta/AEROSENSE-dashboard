@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
 import { AeroMascot } from "@/components/environment/AeroMascot";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { ROUTES } from "@/lib/constants";
 
 export function AuthStory() {
+  const dayPeriod = useDayPeriod();
   return (
-    <aside className="login-story">
+    <aside className="login-story" data-day-period={dayPeriod}>
       <Link to={ROUTES.HOME} className="login-brand" aria-label="AEROSENSE">
         <img src="/assets/brand/aerosense-mark.png" width="38" height="38" alt="" />
         <span>AERO<strong>SENSE</strong></span>

@@ -162,7 +162,7 @@ export function RobotScreenPage() {
     );
 
   return (
-    <main style={{ position: "fixed", inset: 0, background: "#edf0ff" }}>
+    <main style={{ position: "fixed", inset: 0, background: "#eef4f6" }}>
       <iframe
         ref={frame}
         title="Wajah AERO-BOT"

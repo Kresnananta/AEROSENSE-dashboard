@@ -17,36 +17,32 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { conditionArtUrl } from "@/lib/condition-art";
+import {
+  dayPeriodFromHour,
+  dayPeriodLabel,
+  weatherSceneForPeriod,
+  wibHour,
+  type DayPeriod,
+} from "@/lib/time-of-day";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from "@/types/weather.types";
 import "@/styles/weather.css";
 
-const SCENE: Record<string, string> = {
-  clear: "sunny",
-  partly: "partly-cloudy",
-  cloudy: "cloudy",
-  fog: "fog",
-  drizzle: "drizzle",
-  rain: "steady-rain",
-  "heavy-rain": "steady-rain",
-  thunder: "storm",
-};
-const NIGHT: Record<string, string> = {
-  clear: "sunny-night",
-  partly: "cloudy-night",
-  cloudy: "cloudy-night",
-  fog: "fog-night",
-  drizzle: "drizzle-night",
-  rain: "rain-night",
-  "heavy-rain": "rain-night",
-  thunder: "storm-night",
-};
-function WeatherArt({ weather, size }: { weather: WeatherDay | WeatherHour; size: number }) {
+function WeatherArt({
+  weather,
+  size,
+  period = "day",
+}: {
+  weather: WeatherDay | WeatherHour | Outlook["current"];
+  size: number;
+  period?: DayPeriod;
+}) {
   const { icon, code } = weather;
-  const night = "time" in weather && weather.is_day === false;
-  const scene = code != null && [61, 66, 80].includes(code) ? (night ? "light-rain-night" : "light-rain")
-    : (night ? NIGHT[icon] : SCENE[icon]) || "cloudy";
+  const resolvedPeriod = "time" in weather ? dayPeriodFromHour(wibHour(weather.time)) : period;
+  const isDay = "is_day" in weather ? weather.is_day : null;
+  const scene = weatherSceneForPeriod({ icon, code, period: resolvedPeriod, isDay });
   return (
     <img
       className="wx-art"
@@ -108,6 +104,7 @@ export function WeatherOutlook({
     : null;
   const wx = useLiveData<Outlook>(path, 900000, false);
   const hz = useLiveData<Hazards>(compact ? null : "/v1/hazards", 600000, false);
+  const dayPeriod = useDayPeriod();
   const [selection, setSelection] = useState<{ path: string | null; time: string } | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   if (!point) return null;
@@ -159,11 +156,14 @@ export function WeatherOutlook({
       {o && !today && <p className="live-notice">Prakiraan harian belum tersedia.</p>}
       {o && today && (
         <div className="wx-body">
-          <article className={`wx-today tone-${today.icon}`}>
-            <WeatherArt weather={today} size={compact ? 116 : 148} />
+          <article className={`wx-today tone-${o.current?.icon || today.icon}`} data-day-period={dayPeriod}>
+            <WeatherArt weather={o.current ?? today} period={dayPeriod} size={compact ? 116 : 148} />
             <div className="wx-today-copy">
-              <span className="wx-eyebrow">Hari ini</span>
-              <h3>{today.label}</h3>
+              <p className="wx-dateline">
+                Hari ini · {dayPeriodLabel(dayPeriod)}
+                {o.current?.temperature != null && <> · Saat ini {unit(o.current.temperature, "°")}</>}
+              </p>
+              <h3>{o.current?.label || today.label}</h3>
               <p className="wx-today-range">
                 <strong>{unit(today.max, "°")}</strong> / {unit(today.min, "°")}
               </p>
@@ -222,9 +222,7 @@ export function WeatherOutlook({
                 const Icon = ALERT_ICON[a.type] || CloudLightning;
                 return (
                   <li key={a.type} className={`is-${a.level}`}>
-                    <span className="wx-alert-icon">
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
+                    <Icon className="wx-alert-icon" size={18} aria-hidden="true" />
                     <div>
                       <strong>{a.title}</strong>
                       <p>{a.text}</p>
@@ -249,7 +247,7 @@ export function WeatherOutlook({
                   <li key={d.date}>
                     <button type="button" className={`wx-card tone-${d.icon}`} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
                       <span className="wx-day-name">{dayName(d.date, i)}</span>
-                      <WeatherArt weather={d} size={60} />
+                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={60} />
                       <span className="wx-day-label">{d.label}</span>
                       <span className="wx-day-temp">
                         <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
@@ -373,7 +371,18 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
   });
   return (
     <div className="wx-panel wx-hazard-panel">
-      <h3>Siklon &amp; gempa di sekitar Indonesia</h3>
+      <div className="wx-hazard-head">
+        <h3>Siklon &amp; gempa di sekitar Indonesia</h3>
+        <img
+          className="wx-hazard-art"
+          src={conditionArtUrl("earthquake")}
+          alt=""
+          width={40}
+          height={40}
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
       <ul className="wx-hazards">
         {hazards.cyclones === null ? (
           <li className="is-muted">

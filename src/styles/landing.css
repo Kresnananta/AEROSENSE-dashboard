@@ -4,11 +4,11 @@
 .landing-page {
   --landing-gap: clamp(20px, 3vw, 32px);
   --landing-section-gap: clamp(52px, 6vw, 80px);
-  --landing-ink: #17364d;
-  --landing-muted: #36536b;
-  --landing-blue: #075fc4;
+  --landing-ink: #102436;
+  --landing-muted: #3f566a;
+  --landing-blue: #0a58ca;
   color: var(--landing-ink);
-  background: radial-gradient(ellipse at 88% 18rem, #d1ebff, transparent 56rem), #f2f8ff;
+  background: #f5f6f2;
   min-height: 100dvh;
 }
 .landing-container {
@@ -166,9 +166,21 @@
 .landing-hero-art {
   position: relative;
   isolation: isolate;
-  height: 500px;
-  border-radius: 46% 34% 42% 30% / 38% 43% 32% 46%;
-  background: linear-gradient(135deg, #d4f5fb 8%, #eaf7fd 48%, #bce7fa 100%);
+  height: 460px;
+  border-radius: 20px;
+  border: 1px solid #d7e0da;
+  background: var(--aero-sky-day);
+  overflow: hidden;
+}
+.landing-hero-art[data-day-period="morning"] {
+  background: var(--aero-sky-morning);
+}
+.landing-hero-art[data-day-period="afternoon"] {
+  background: var(--aero-sky-afternoon);
+}
+.landing-hero-art[data-day-period="night"] {
+  background: var(--aero-sky-night);
+  border-color: #264362;
 }
 
 .landing-page .landing-hero-mascot {
@@ -420,32 +432,25 @@
 .landing-workflow-steps li {
   position: relative;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 20px;
-  padding-bottom: 30px;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 16px;
+  padding-block: 22px;
+  border-top: 1px solid #d7e0da;
+}
+.landing-workflow-steps li:first-child {
+  padding-top: 4px;
+  border-top: 0;
 }
 .landing-workflow-steps li:last-child {
   padding-bottom: 0;
 }
-.landing-workflow-steps li:not(:last-child)::after {
-  content: "";
-  position: absolute;
-  left: 15px;
-  top: 39px;
-  bottom: 8px;
-  width: 1px;
-  background: #bbccdb;
-}
 .landing-step-number {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #e5eff8;
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
   color: var(--landing-blue);
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
 }
 
 .landing-workflow-steps h3 {
