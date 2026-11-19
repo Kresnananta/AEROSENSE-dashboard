@@ -32,9 +32,12 @@ export type Scene =
   | "storm"
   | "storm-night"
   | "air"
+  | "air-night"
   | "haze"
+  | "haze-night"
   | "soil"
   | "fire"
+  | "fire-night"
   | "flood"
   | "earthquake"
   | "sensor";
@@ -94,13 +97,16 @@ export function conditionScene(
       hot: /terasa panas/i.test(title),
     }) as Scene;
   }
+  const night = currentDayPeriod(now) === "night";
   if (insight.category === "air_quality") {
-    return insight.available && ["notice", "warning", "danger"].includes(insight.tone)
-      ? "haze"
-      : "air";
+    const hazy = insight.available && ["notice", "warning", "danger"].includes(insight.tone);
+    return hazy ? (night ? "haze-night" : "haze") : night ? "air-night" : "air";
+  }
+  if (insight.category === "fire") {
+    return night ? "fire-night" : "fire";
   }
   return (
-    ["soil", "fire", "flood", "earthquake"].includes(insight.category) ? insight.category : "cloudy"
+    ["soil", "flood", "earthquake"].includes(insight.category) ? insight.category : night ? "cloudy-night" : "cloudy"
   ) as Scene;
 }
 

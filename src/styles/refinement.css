@@ -939,34 +939,30 @@ input {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 9px;
+  padding: 5px 10px;
   width: fit-content;
-  border-radius: 6px;
-  border: 1px solid transparent;
+  border-radius: 8px;
+  border: 0;
   font-size: 11px;
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: 650;
   white-space: nowrap;
 }
 .node-status.status-calm {
-  color: #16593f;
-  background: #eef7f2;
-  border-color: #c8e3d5;
+  color: #155e42;
+  background: #e3f5ec;
 }
 .node-status.status-warning {
-  color: #7c4406;
-  background: #fdf6e8;
-  border-color: #ebd3a7;
+  color: #844e0a;
+  background: #fff0d1;
 }
 .node-status.status-danger {
-  color: #98222f;
-  background: #fceef0;
-  border-color: #efc4ca;
+  color: #9e2a35;
+  background: #fdebef;
 }
 .node-status.status-pending {
-  color: #384f63;
-  background: #f2f5f7;
-  border-color: #d3dde4;
+  color: #466078;
+  background: #e8f1fa;
 }
 .app-shell .node-strip button {
   min-width: 175px;

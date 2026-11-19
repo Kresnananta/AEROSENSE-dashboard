@@ -2,20 +2,20 @@
   <defs>
     <radialGradient id="botAura" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(210 315) rotate(90) scale(170)">
       <stop offset="0" stop-color="#FFFFFF" stop-opacity=".86"/>
-      <stop offset=".6" stop-color="#ECF4F0" stop-opacity=".44"/>
-      <stop offset="1" stop-color="#DCECE5" stop-opacity="0"/>
+      <stop offset=".6" stop-color="#EAF4FF" stop-opacity=".44"/>
+      <stop offset="1" stop-color="#D8ECFF" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="botFar" x1="210" y1="382" x2="210" y2="560" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#B9D7CE"/>
-      <stop offset="1" stop-color="#E1EFEA"/>
+      <stop stop-color="#B0D6F8"/>
+      <stop offset="1" stop-color="#DEF0FF"/>
     </linearGradient>
     <linearGradient id="botNear" x1="210" y1="442" x2="210" y2="560" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9FC5BA"/>
-      <stop offset="1" stop-color="#D4E7E0"/>
+      <stop stop-color="#96C6F3"/>
+      <stop offset="1" stop-color="#CFE8FF"/>
     </linearGradient>
   </defs>
   <circle cx="210" cy="315" r="170" fill="url(#botAura)"/>
-  <g fill="#FFFFFF" opacity=".72">
+  <g fill="#FFFFFF" opacity=".74">
     <path d="M46 168c0-8 8-14 17-14 6 0 11 2 14 5 4-11 14-19 26-19 12 0 22 7 26 18 3-2 7-3 10-3 9 0 16 5 17 13H46Z"/>
     <path d="M276 126c0-7 7-12 15-12 4 0 8 1 11 3a23 23 0 0 1 39 1c4-3 8-4 13-4 9 0 17 5 18 12h-96Z"/>
     <path d="M294 268c0-6 6-11 13-11 4 0 7 1 10 3 3-9 11-15 21-15 9 0 17 6 20 14 3-1 6-2 9-2 7 0 13 4 14 11h-87Z" opacity=".75"/>
@@ -27,6 +27,6 @@
   </g>
   <path d="M0 442c54-26 108-18 164-32 62-15 104-48 166-42 36 3 64 20 90 36v156H0V442Z" fill="url(#botFar)"/>
   <path d="M0 478c68 12 126-16 196-30 64-13 128 8 224-22v134H0V478Z" fill="url(#botNear)"/>
-  <path d="M0 518c94-18 178-4 262-22 56-12 108-26 158-22v86H0v-42Z" fill="#D8EAE3"/>
-  <path d="M0 538c112-8 214-14 316-30 38-6 72-8 104-6v58H0v-22Z" fill="#ECF5F1"/>
+  <path d="M0 518c94-18 178-4 262-22 56-12 108-26 158-22v86H0v-42Z" fill="#D2EAFF"/>
+  <path d="M0 538c112-8 214-14 316-30 38-6 72-8 104-6v58H0v-22Z" fill="#E9F5FF"/>
 </svg>

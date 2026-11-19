@@ -165,7 +165,7 @@ export function SensorOverview() {
                   })}
                 </dl>
               )}
-              {(fresh || node) && (
+              {(fresh || (node && nodes.length === 0)) && (
                 <footer className="sensor-panel-footer">
                   {fresh && (
                     <span>

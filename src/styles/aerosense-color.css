@@ -1,41 +1,51 @@
 body {
-  --aero-canvas-soft: #f5f6f2;
-  --aero-ink: #102436;
-  --aero-muted: #3f566a;
-  --aero-blue: #0a58ca;
-  --aero-blue-hover: #0847a6;
-  --aero-control-radius: 10px;
+  --aero-canvas-soft: #eaf5ff;
+  --aero-ink: #102a47;
+  --aero-muted: #3f5f79;
+  --aero-blue: #0868dc;
+  --aero-blue-hover: #0758be;
+  --aero-control-radius: 14px;
   --aero-inset: clamp(16px, 2.5vw, 28px);
   --aero-display: clamp(2rem, 2.7vw, 2.625rem);
   --aero-ease: cubic-bezier(.2,.7,.25,1);
-  --aero-glass: #ffffff;
+  --aero-glass: #eef8ffe8;
   --aero-surface: #ffffff;
-  --aero-sky: linear-gradient(108deg, #f3fafd, #d5edf9 58%, #aedaf2);
+  --aero-sky: linear-gradient(106deg, #eff9ff, #c5e9ff 58%, #93d3ff);
   --aero-landscape: url("../assets/images/skyline.svg");
   --aero-illustration: var(--aero-landscape) right bottom / cover no-repeat, var(--aero-sky);
   --aero-sensor-landscape: url("../assets/images/skyline-sun.svg");
   --aero-sensor-illustration: var(--aero-sensor-landscape) right bottom / cover no-repeat, var(--aero-sky);
-  --aero-sky-morning: url("../assets/images/skyline-morning.svg") right bottom / cover no-repeat,
-    linear-gradient(112deg, #fffaf0 0%, #f9ebd2 46%, #d9edf2 100%);
-  --aero-sky-day: url("../assets/images/skyline-sun.svg") right bottom / cover no-repeat,
-    linear-gradient(108deg, #f3fafd 0%, #d5edf9 58%, #aedaf2 100%);
-  --aero-sky-afternoon: url("../assets/images/skyline-afternoon.svg") right bottom / cover no-repeat,
-    linear-gradient(112deg, #fdf7ec 0%, #f6dec0 52%, #cedde8 100%);
+  /* Sunless/moonless sky backdrops for cards whose foreground 2D art already has a sun or moon */
+  --aero-sky-morning: url("../assets/images/skyline.svg") right bottom / cover no-repeat,
+    linear-gradient(110deg, #fff9ef 0%, #fcebd2 44%, #c6e8ff 100%);
+  --aero-sky-day: url("../assets/images/skyline.svg") right bottom / cover no-repeat,
+    linear-gradient(106deg, #eff9ff 0%, #c5e9ff 58%, #93d3ff 100%);
+  --aero-sky-afternoon: url("../assets/images/skyline.svg") right bottom / cover no-repeat,
+    linear-gradient(110deg, #fff6e8 0%, #f7ddc0 48%, #bcdaf2 100%);
   --aero-sky-night: url("../assets/images/skyline-night.svg") right bottom / cover no-repeat,
-    linear-gradient(118deg, #132539 0%, #1d3957 58%, #284b70 100%);
+    linear-gradient(118deg, #11243a 0%, #1b3656 58%, #25486e 100%);
+  /* Sky backdrops WITH sun/moon for sensor-hero, landing-hero, login, and ground-only scenes (soil, flood, earthquake) */
+  --aero-sensor-sky-morning: url("../assets/images/skyline-morning.svg") right 45% / cover no-repeat,
+    linear-gradient(110deg, #fff9ef 0%, #fcebd2 44%, #c6e8ff 100%);
+  --aero-sensor-sky-day: url("../assets/images/skyline-sun.svg") right bottom / cover no-repeat,
+    linear-gradient(106deg, #eff9ff 0%, #c5e9ff 58%, #93d3ff 100%);
+  --aero-sensor-sky-afternoon: url("../assets/images/skyline-afternoon.svg") right 45% / cover no-repeat,
+    linear-gradient(110deg, #fff6e8 0%, #f7ddc0 48%, #bcdaf2 100%);
+  --aero-sensor-sky-night: url("../assets/images/skyline-night-moon.svg") right 38% / cover no-repeat,
+    linear-gradient(118deg, #11243a 0%, #1b3656 58%, #25486e 100%);
   --aero-bot-landscape: url("../assets/images/aerobot-sky.svg");
-  --aero-bot-sky: linear-gradient(155deg, #f5f9f6, #e5f0eb 58%, #d1e4dc);
+  --aero-bot-sky: linear-gradient(153deg, #eff8ff, #d9ecff 58%, #bddbff);
   --aero-bot-illustration: var(--aero-bot-landscape) center bottom / cover no-repeat, var(--aero-bot-sky);
-  --aero-panel-radius: 16px;
-  --aero-hero-radius: 20px;
-  --aero-card-radius: 10px;
-  --aero-segment-radius: 8px;
-  --aero-rim: #d7e0da;
+  --aero-panel-radius: 22px;
+  --aero-hero-radius: 32px;
+  --aero-card-radius: 16px;
+  --aero-segment-radius: calc(var(--aero-card-radius) - 5px);
+  --aero-rim: #cddff0;
 }
 
 .landing-page {
-  --landing-ink: #102436;
-  --landing-blue: #0a58ca;
+  --landing-ink: #102a42;
+  --landing-blue: #0755c9;
 }
 
 .landing-page .landing-header {
@@ -62,22 +72,22 @@ body {
 }
 
 .landing-page .landing-feature-options button[aria-pressed="true"] {
-  background: #e8f1fc;
-  color: #0847a6;
+  background: #e4eeff;
+  color: #104da7;
 }
 
 .landing-page .landing-management {
-  background: #ffffff;
+  background: #e5efff;
 }
 
 .app-shell {
-  --ui-surface-gradient: #edf2ee;
+  --ui-surface-gradient: #deeeff;
   background: var(--aero-canvas-soft);
 }
 
 .app-shell .app-sidebar {
-  background: #fbfcf9;
-  border-color: var(--aero-rim);
+  background: #f8fcff;
+  border-color: #c5def2;
 }
 
 .app-shell .app-navigation {
@@ -227,8 +237,7 @@ body {
 .app-shell .chat-source-panel :is(h2, ul) { color: #25405f; }
 
 .app-shell .live-chat > header {
-  background: #f4f7f5;
-  border-bottom: 1px solid var(--aero-rim);
+  background: #eaf5ff;
 }
 
 .app-shell .live-chat > header :is(strong, small) {
@@ -236,26 +245,26 @@ body {
 }
 
 .app-shell .live-message.user {
-  background: #e8f1fc;
-  border-color: #c9ddf5;
+  background: #dbeeff;
+  border-color: #c7dff5;
   color: var(--aero-ink);
 }
 
 .app-shell :is(.map-controls, .sensor-toolbar, .nearby-location) {
   background: #ffffff;
-  border: 1px solid var(--aero-rim);
-  border-radius: var(--aero-panel-radius);
+  border: 1px solid #dce8f5;
+  border-radius: 16px;
 }
 
 .app-shell :is(.page-heading, .live-heading, .insights-heading) > div:first-child > p {
-  color: var(--aero-muted);
+  color: #405b76;
   font-size: 14px;
   line-height: 1.5;
   max-width: 62ch;
 }
 
 .app-shell .nearby-location-icon {
-  background: #e8f1fc;
+  background: #eaf2ff;
 }
 
 .app-shell .environment-hub .condition-scene :is(.scene-ring, .scene-spark, .scene-halo) {
@@ -986,6 +995,7 @@ body:has(.login-page),
 
 .landing-page .landing-hero-art {
   background: none;
+  border: 0;
   border-radius: 0;
   height: auto;
   min-height: 0;
@@ -1062,8 +1072,8 @@ body:has(.login-page),
 }
 
 .app-shell .live-chat .chat-guest {
-  background: #f4f7f5;
-  border: 1px solid var(--aero-rim);
+  background: #edf6ff;
+  border: 0;
   color: var(--aero-muted);
 }
 
@@ -1072,51 +1082,73 @@ body:has(.login-page),
 }
 
 .app-shell :is(.wx-today-stats > div, .wx-card, .insight-glance, .sensor-values article, .esg-report-tiles > div, .esg-report-quality > div) {
-  background: #fbfcfa;
-  border: 1px solid var(--aero-rim);
+  background: #f8fcff;
+  border: 1px solid #cce1f3;
   box-shadow: none;
 }
 
 /* Time-of-day 2D illustrated sky backdrops (WIB) */
-:is(.app-shell .sensor-overview .sensor-hero,
-  .app-shell .environment-hub .insight-lead,
-  .app-shell .weather-outlook .wx-today,
-  .landing-page .landing-hero)[data-day-period="morning"],
-body:has(.login-story[data-day-period="morning"]) {
+/* 1. Cards whose foreground 2D art already has a sun or moon (weather & air/fire scenes) */
+:is(.app-shell .environment-hub .insight-lead,
+  .app-shell .weather-outlook .wx-today)[data-day-period="morning"] {
   background: var(--aero-sky-morning);
 }
 
-:is(.app-shell .sensor-overview .sensor-hero,
-  .app-shell .environment-hub .insight-lead,
-  .app-shell .weather-outlook .wx-today,
-  .landing-page .landing-hero)[data-day-period="day"],
-body:has(.login-story[data-day-period="day"]) {
+:is(.app-shell .environment-hub .insight-lead,
+  .app-shell .weather-outlook .wx-today)[data-day-period="day"] {
   background: var(--aero-sky-day);
 }
 
-:is(.app-shell .sensor-overview .sensor-hero,
-  .app-shell .environment-hub .insight-lead,
-  .app-shell .weather-outlook .wx-today,
-  .landing-page .landing-hero)[data-day-period="afternoon"],
-body:has(.login-story[data-day-period="afternoon"]) {
+:is(.app-shell .environment-hub .insight-lead,
+  .app-shell .weather-outlook .wx-today)[data-day-period="afternoon"] {
   background: var(--aero-sky-afternoon);
 }
 
+:is(.app-shell .environment-hub .insight-lead,
+  .app-shell .weather-outlook .wx-today)[data-day-period="night"] {
+  background: var(--aero-sky-night);
+}
+
+/* 2. Cards whose foreground art has NO sun or moon (sensor-hero, landing-hero, login, soil, flood, earthquake, storm-night) */
+:is(.app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake),
+  .landing-page .landing-hero)[data-day-period="morning"],
+body:has(.login-story[data-day-period="morning"]) {
+  background: var(--aero-sensor-sky-morning);
+}
+
+:is(.app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake),
+  .landing-page .landing-hero)[data-day-period="day"],
+body:has(.login-story[data-day-period="day"]) {
+  background: var(--aero-sensor-sky-day);
+}
+
+:is(.app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake),
+  .landing-page .landing-hero)[data-day-period="afternoon"],
+body:has(.login-story[data-day-period="afternoon"]) {
+  background: var(--aero-sensor-sky-afternoon);
+}
+
+:is(.app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake, .panel-storm-night),
+  .landing-page .landing-hero)[data-day-period="night"],
+body:has(.login-story[data-day-period="night"]) {
+  background: var(--aero-sensor-sky-night);
+}
+
+/* Night polarity for all hero sky panels */
 :is(.app-shell .sensor-overview .sensor-hero,
   .app-shell .environment-hub .insight-lead,
   .app-shell .weather-outlook .wx-today,
   .landing-page .landing-hero)[data-day-period="night"] {
-  background: var(--aero-sky-night);
   border-color: #29496b;
   color: #f4f8fb;
   --panel-light: #f4f8fb;
   --panel-muted: #c6d9ea;
   --panel-accent: #8dc5ff;
   --panel-alert: #ffd089;
-}
-
-body:has(.login-story[data-day-period="night"]) {
-  background: var(--aero-sky-night);
 }
 
 body:has(.login-story[data-day-period="night"]) .login-story,
@@ -1138,9 +1170,18 @@ body:has(.login-story[data-day-period="night"]) .login-story .login-brand {
   .app-shell .weather-outlook .wx-today,
   .landing-page .landing-hero)[data-day-period="night"]
   :is(p, .wx-dateline, .wx-today-range, .wx-today-tip, .wx-next-rain, .sensor-recommendation,
-    .sensor-reading-time, .insight-status, .insight-date, .wx-today-stats dt, .panel-metrics dt,
+    .sensor-reading-time, .insight-date, .wx-today-stats dt, .panel-metrics dt,
     .panel-metrics dd small) {
   color: #cddfeb;
+}
+
+.app-shell .sensor-overview .sensor-hero[data-day-period="night"] .insight-status {
+  background: rgba(255, 255, 255, 0.14);
+  color: #f4f8fb;
+}
+
+.app-shell .environment-hub .insight-lead[data-day-period="night"] .insight-status {
+  color: #9ed0ff;
 }
 
 :is(.app-shell .sensor-overview .sensor-hero,
@@ -1182,11 +1223,11 @@ body:has(.login-story[data-day-period="night"]) .login-story .login-brand {
 .app-shell .sensor-overview .sensor-hero[data-day-period="night"] .monitoring-select[data-slot="select-trigger"] {
   background: #ffffff;
   border-color: #34567a;
-  color: #102436;
+  color: #102a47;
 }
 
 .app-shell .sensor-overview .sensor-hero[data-day-period="night"] .sensor-node-controls .sensor-select > svg {
-  color: #0a58ca;
+  color: #0868dc;
 }
 
 .app-shell .esg-report-tiles > div {

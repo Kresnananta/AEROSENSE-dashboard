@@ -293,11 +293,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           <article
             key={selected.category}
             className={`insight-lead panel-${scene} tone-${selected.tone}`}
-            data-day-period={
-              selected.category === "weather" || selected.category === "air_quality"
-                ? dayPeriod
-                : undefined
-            }
+            data-day-period={dayPeriod}
           >
             <Atmosphere />
             <div className="insight-message">

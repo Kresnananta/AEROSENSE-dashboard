@@ -127,14 +127,22 @@ test("weather illustrations use both the condition and the reading's time in WIB
   );
 });
 test("moderate regional air quality uses the haze illustration", () => {
+  const dayTime = Date.parse("2026-11-06T05:00:00Z"); // 12:00 WIB
+  const nightTime = Date.parse("2026-11-06T13:00:00Z"); // 20:00 WIB
   const ispu = fact({
     category: "air_quality",
     label: "Estimasi ISPU PM2.5 (24 jam)",
     value: 85,
+    valid_at: new Date(dayTime - 60000).toISOString(),
+    fresh_until: new Date(nightTime + 3600000).toISOString(),
   });
-  const insight = summarizeEnvironment([ispu], now).find((item) => item.category === "air_quality");
-  assert.equal(conditionScene(insight, [ispu], now), "haze");
-  assert.equal(conditionScene({ ...insight, available: false }, [], now), "air");
+  const insight = summarizeEnvironment([ispu], dayTime).find((item) => item.category === "air_quality");
+  assert.equal(conditionScene(insight, [ispu], dayTime), "haze");
+  assert.equal(conditionScene({ ...insight, available: false }, [], dayTime), "air");
+  assert.equal(conditionScene(insight, [ispu], nightTime), "haze-night");
+  assert.equal(conditionScene({ ...insight, available: false }, [], nightTime), "air-night");
+  assert.equal(conditionScene({ category: "fire", available: true, tone: "calm" }, [], dayTime), "fire");
+  assert.equal(conditionScene({ category: "fire", available: true, tone: "calm" }, [], nightTime), "fire-night");
 });
 test("sensor summary respects hysteresis, validation and missing readings", () => {
   const rule = {

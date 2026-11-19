@@ -1176,14 +1176,13 @@ select,
 .app-shell .live-chat > header .live-tag {
   display: inline-flex;
   align-items: center;
-  border-radius: 6px;
-  padding: 4px 10px;
+  border-radius: 999px;
+  padding: 4px 12px;
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  background: #eaf5ef;
-  color: #16593f;
-  border: 1px solid #c9e1d4;
+  font-weight: 650;
+  background: #d8ebff;
+  color: #0752ad;
+  border: 0;
 }
 .live-state-art {
   display: block;

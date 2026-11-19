@@ -4,11 +4,11 @@
 .landing-page {
   --landing-gap: clamp(20px, 3vw, 32px);
   --landing-section-gap: clamp(52px, 6vw, 80px);
-  --landing-ink: #102436;
-  --landing-muted: #3f566a;
-  --landing-blue: #0a58ca;
+  --landing-ink: #102a47;
+  --landing-muted: #3f5f79;
+  --landing-blue: #0868dc;
   color: var(--landing-ink);
-  background: #f5f6f2;
+  background: #eaf5ff;
   min-height: 100dvh;
 }
 .landing-container {
@@ -167,20 +167,8 @@
   position: relative;
   isolation: isolate;
   height: 460px;
-  border-radius: 20px;
-  border: 1px solid #d7e0da;
-  background: var(--aero-sky-day);
-  overflow: hidden;
-}
-.landing-hero-art[data-day-period="morning"] {
-  background: var(--aero-sky-morning);
-}
-.landing-hero-art[data-day-period="afternoon"] {
-  background: var(--aero-sky-afternoon);
-}
-.landing-hero-art[data-day-period="night"] {
-  background: var(--aero-sky-night);
-  border-color: #264362;
+  border: 0;
+  background: none;
 }
 
 .landing-page .landing-hero-mascot {

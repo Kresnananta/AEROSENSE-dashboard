@@ -363,6 +363,56 @@ function RainTimes({ hours }: { hours: WeatherHour[] }) {
   );
 }
 
+const REGION_EXPAND: Record<string, string> = {
+  NTT: "NTT",
+  NTB: "NTB",
+  DIY: "DIY",
+  DKI: "DKI Jakarta",
+  NAD: "Aceh",
+  SUMUT: "Sumatera Utara",
+  SUMBAR: "Sumatera Barat",
+  SUMSEL: "Sumatera Selatan",
+  JABAR: "Jawa Barat",
+  JATENG: "Jawa Tengah",
+  JATIM: "Jawa Timur",
+  KALBAR: "Kalimantan Barat",
+  KALTENG: "Kalimantan Tengah",
+  KALSEL: "Kalimantan Selatan",
+  KALTIM: "Kalimantan Timur",
+  KALTARA: "Kalimantan Utara",
+  SULUT: "Sulawesi Utara",
+  SULTENG: "Sulawesi Tengah",
+  SULSEL: "Sulawesi Selatan",
+  SULTRA: "Sulawesi Tenggara",
+  SULBAR: "Sulawesi Barat",
+  MALUT: "Maluku Utara",
+  PAPUABRT: "Papua Barat",
+  BABEL: "Bangka Belitung",
+  KEPRI: "Kepulauan Riau",
+};
+
+function formatQuakeRegion(raw: string): string {
+  return raw
+    .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
+    .replace(/\bSERAMBAGIANBARAT\b/gi, "Seram Bagian Barat")
+    .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
+    .replace(/\bPAPUABRT\b/gi, "Papua Barat")
+    .replace(/(Barat|Timur|Utara|Selatan)(Laut|Daya|Timur|Barat)\b/gi, "$1 $2")
+    .replace(/(?<=[A-Za-z]{3})(Utara|Selatan|Timur|Barat|Tengah|Tenggara)\b/gi, " $1")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s*-\s*/g, " · ")
+    .replace(/\b[A-Za-z]{2,}\b/g, (word) => {
+      const upper = word.toUpperCase();
+      if (REGION_EXPAND[upper]) return REGION_EXPAND[upper];
+      if (word.length >= 3 && word === upper) {
+        return word[0] + word.slice(1).toLowerCase();
+      }
+      return word;
+    })
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function HazardList({ hazards }: { hazards: Hazards | null }) {
   if (!hazards) return null;
   const quakes = [...(hazards.quakes || [])].sort((a, b) => b.magnitude - a.magnitude).slice(0, 3);
@@ -371,18 +421,7 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
   });
   return (
     <div className="wx-panel wx-hazard-panel">
-      <div className="wx-hazard-head">
-        <h3>Siklon &amp; gempa di sekitar Indonesia</h3>
-        <img
-          className="wx-hazard-art"
-          src={conditionArtUrl("earthquake")}
-          alt=""
-          width={40}
-          height={40}
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
+      <h3>Siklon &amp; gempa di sekitar Indonesia</h3>
       <ul className="wx-hazards">
         {hazards.cyclones === null ? (
           <li className="is-muted">
@@ -390,8 +429,7 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
           </li>
         ) : hazards.cyclones.length === 0 ? (
           <li className="is-calm">
-            <Tornado size={18} aria-hidden="true" /> Tidak ada siklon tropis aktif di sekitar
-            Indonesia.
+            <Tornado size={18} aria-hidden="true" /> <span>Tidak ada siklon tropis aktif di sekitar Indonesia.</span>
           </li>
         ) : (
           hazards.cyclones.map((c) => (
@@ -411,13 +449,7 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
         {hazards.quakes === null && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Data gempa belum tersedia.</span></li>}
         {hazards.quakes?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ dalam data terbaru BMKG.</span></li>}
         {quakes.map((q) => {
-          const location = q.region
-            .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
-            .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
-            .replace(/\bPAPUABRT\b/gi, "Papua Barat")
-            .replace(/(Barat|Timur|Utara|Selatan)(Laut|Daya|Timur|Barat)\b/gi, "$1 $2")
-            .replace(/([a-z])([A-Z])/g, "$1 $2").replace(/-/g, " · ")
-            .replace(/\b[A-Z]{3,}\b/g, (word) => word[0] + word.slice(1).toLowerCase());
+          const location = formatQuakeRegion(q.region || "");
           return (
             <li key={q.id} className="wx-quake">
               <Waves className="wx-quake-icon" size={18} aria-hidden="true" />
@@ -429,8 +461,8 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
                 <div className="wx-quake-meta">
                   <time dateTime={q.time}>{quakeDate.format(new Date(q.time))} WIB</time>
                   {q.depth && <span>Kedalaman {q.depth}</span>}
+                  {q.potential && <span>{q.potential}</span>}
                 </div>
-                {q.potential && <p className="wx-quake-note">{q.potential}</p>}
               </div>
             </li>
           );
