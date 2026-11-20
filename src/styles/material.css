@@ -299,3 +299,50 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   color: var(--muted-foreground);
 }
 .app-shell .live-map .heat-legend-head strong { color: var(--foreground); }
+
+.landing-page .landing-hero-stage {
+  position: relative;
+  isolation: isolate;
+}
+.landing-hero-stage::before,
+.landing-hero-stage::after,
+.landing-management::before {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  content: "";
+}
+.landing-hero-stage::before {
+  inset: 0 0 0 25%;
+  background: url("../assets/images/cloud-landscape.jpg") 55% 62% / cover no-repeat;
+  filter: grayscale(1) sepia(.9) hue-rotate(159deg) saturate(1.45) brightness(1.24);
+  mask-image: linear-gradient(90deg, transparent, #000 61%);
+  opacity: .67;
+}
+.landing-hero-stage::after {
+  inset: 48% 0 0 42%;
+  background: url("../assets/images/land-contours.svg") right bottom / auto 100% no-repeat;
+  mask-image: linear-gradient(125deg, transparent 5%, #000 64%);
+  opacity: .52;
+}
+.landing-hero-stage[data-day-period="night"]::before {
+  filter: grayscale(1) sepia(1) hue-rotate(164deg) saturate(2) brightness(.57);
+  opacity: .56;
+}
+.landing-hero-stage[data-day-period="night"]::after { opacity: .38; }
+.landing-management { position: relative; isolation: isolate; }
+.landing-management::before {
+  inset: 0 0 0 46%;
+  border-radius: inherit;
+  background: url("../assets/images/land-contours.svg") right center / cover no-repeat;
+  mask-image: linear-gradient(90deg, transparent, #000);
+  opacity: .16;
+}
+@media (max-width: 680px) {
+  .landing-hero-stage::before {
+    inset: 34% 0 0;
+    mask-image: linear-gradient(180deg, transparent, #000 65%);
+    background-position: 56% 73%;
+  }
+  .landing-hero-stage::after { inset: 65% 0 0 12%; }
+}
