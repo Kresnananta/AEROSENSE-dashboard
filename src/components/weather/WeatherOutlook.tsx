@@ -387,8 +387,11 @@ function RainTimes({ hours }: { hours: WeatherHour[] }) {
 function HazardList({ hazards }: { hazards: Hazards | null }) {
   if (!hazards) return null;
   const quakes = [...(hazards.quakes || [])].sort((a, b) => b.magnitude - a.magnitude).slice(0, 3);
+  const allQuakesWithoutTsunami = quakes.length > 0 && quakes.every(
+    (q) => /^tidak berpotensi tsunami[.!]?$/i.test(q.potential?.trim() ?? ""),
+  );
   const quakeDate = new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta",
+    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
   });
   return (
     <div className="wx-panel wx-hazard-panel">
@@ -399,12 +402,12 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
             <Tornado size={18} aria-hidden="true" /> <span>Data siklon belum tersedia.</span>
           </li>
         ) : hazards.cyclones.length === 0 ? (
-          <li className="is-calm">
-            <Tornado size={18} aria-hidden="true" /> <span>Tidak ada siklon tropis aktif di sekitar Indonesia.</span>
+          <li className="is-muted">
+            <Tornado size={18} aria-hidden="true" /> <span>Tidak ada siklon aktif.</span>
           </li>
         ) : (
           hazards.cyclones.map((c) => (
-            <li key={c.id} className={`is-${c.level}`}>
+            <li key={c.id} className={`wx-cyclone is-${c.level}`}>
               <Tornado size={18} aria-hidden="true" />
               <div>
                 <strong>Siklon tropis {c.name}</strong>
@@ -418,33 +421,31 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
           ))
         )}
         {hazards.quakes === null && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Data gempa belum tersedia.</span></li>}
-        {hazards.quakes?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ dalam data terbaru BMKG.</span></li>}
+        {hazards.quakes?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ di data terbaru.</span></li>}
         {quakes.map((q) => {
           const location = formatQuakeRegion(q.region || "");
           return (
             <li key={q.id} className="wx-quake">
-              <Waves className="wx-quake-icon" size={18} aria-hidden="true" />
               <div className="wx-quake-content">
-                <div className="wx-quake-title">
-                  <strong>{location || "Lokasi belum tersedia"}</strong>
-                  <span className={`wx-magnitude ${q.magnitude >= 6 ? "is-emphasis" : ""}`}>M {num(q.magnitude)}</span>
-                </div>
+                <strong>{location || "Lokasi belum tersedia"}</strong>
                 <div className="wx-quake-meta">
                   <time dateTime={q.time}>{quakeDate.format(new Date(q.time))} WIB</time>
                   {q.depth && <span>Kedalaman {q.depth}</span>}
-                  {q.potential && <span>{q.potential}</span>}
                 </div>
+                {!allQuakesWithoutTsunami && q.potential && <p>{q.potential}</p>}
               </div>
+              <span className="wx-magnitude">M {num(q.magnitude)}</span>
             </li>
           );
         })}
       </ul>
+      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Menurut BMKG, gempa di atas tidak berpotensi tsunami.</p>}
       <div className="wx-foot">
         <Link className="insight-text-link" to="/sensor-map?overlay=rain&event_type=all">
-          <MapIcon size={15} aria-hidden="true" /> Buka peta cuaca{" "}
+          <MapIcon size={15} aria-hidden="true" /> Peta cuaca{" "}
           <ArrowUpRight size={15} />
         </Link>
-        <small>Siklon dari GDACS · Gempa M5+ dari BMKG</small>
+        <small>GDACS · BMKG (M5+)</small>
       </div>
     </div>
   );

@@ -800,13 +800,6 @@ body:has(.login-page) {
   background: transparent;
 }
 
-.app-shell .wx-hazards .wx-quake-icon {
-  width: 18px;
-  height: 18px;
-  margin-top: 2px;
-  color: inherit;
-}
-
 .app-shell .wa-subscription {
   margin-top: 0;
 }

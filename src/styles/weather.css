@@ -424,8 +424,6 @@
 }
 
 .wx-hazards {
-  display: grid;
-  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -441,6 +439,9 @@
   color: #214263;
   font-size: 13px;
   line-height: 1.55;
+}
+.wx-hazards .wx-cyclone {
+  margin-bottom: 8px;
 }
 .wx-hazards li svg {
   flex: none;
@@ -461,21 +462,23 @@
 .wx-hazards li.is-orange svg {
   color: #8c4e07;
 }
-.wx-hazards li.is-green,
-.wx-hazards li.is-calm {
+.wx-hazards li.is-green {
   background: #eaf7f0;
   color: #195c3c;
 }
-.wx-hazards li.is-green svg,
-.wx-hazards li.is-calm svg {
+.wx-hazards li.is-green svg {
   color: #166547;
 }
-.wx-hazards li.is-quake {
-  background: #f1f8ff;
-  color: #214263;
-}
 .wx-hazards li.is-muted {
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 10px;
+  background: transparent;
   color: #3f5f79;
+}
+.wx-hazards li.is-muted svg {
+  margin-top: 0;
+  color: inherit;
 }
 .wx-hazards strong {
   display: block;
@@ -494,41 +497,24 @@
   margin-bottom: 14px;
 }
 .wx-hazards .wx-quake {
-  gap: 14px;
-  padding: 15px 18px;
-  background: #f1f8ff;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid rgb(16 42 71 / 12%);
+  border-radius: 0;
+  background: transparent;
   color: #102a47;
 }
-.wx-quake-content {
-  flex: 1;
-  min-width: 0;
-}
-.wx-quake-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  flex-wrap: wrap;
-}
-.wx-quake-title strong {
-  font-size: 14px;
+.wx-quake-content strong {
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
 .wx-magnitude {
-  font-size: 12.5px;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  background: #dceeff;
-  border: 0;
-  color: #0850a8;
-  padding: 3px 10px;
-  border-radius: 8px;
   white-space: nowrap;
-}
-.wx-magnitude.is-emphasis {
-  background: #ffe8cc;
-  color: #803b0e;
 }
 .wx-quake-meta {
   display: flex;
@@ -545,6 +531,11 @@
   content: "·";
   margin-inline: 8px;
   color: #7d9ab5;
+}
+.wx-quake-summary {
+  margin: 0;
+  color: #3f5f79;
+  font-size: 12.5px;
 }
 .wx-foot {
   display: flex;
