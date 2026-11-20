@@ -59,23 +59,25 @@ AEROSENSE uses a two-family pairing that combines geometric display warmth with 
 
 Every page repeats one architectural primitive: **the clean sky-bordered white panel with borderless tonal inner rows**.
 
-- **Outer panels**: `#FFFFFF` background, `1px solid var(--aero-rim)` (`#CDDFF0`) border, `22px` radius (`--aero-panel-radius`), zero drop shadows, zero frosted-glass blur.
+- **Outer panels**: `#FFFFFF` background, `1px solid var(--aero-rim)` (`#CDDFF0`) border, `22px` radius (`--aero-panel-radius`), no raised shadows or blur. The sticky top bar can use a lightly frosted surface with an opaque fallback.
 - **Illustrated hero frames**: `32px` radius (`--aero-hero-radius`) with time-matched 2D sky backdrops.
 - **Inner cards & controls**: `16px` card radius (`--aero-card-radius`), `14px` control radius (`--aero-control-radius`).
 - **Borderless tonal rows**: Items inside a panel (hazard lists, earthquake logs, weather alerts, status chips) use soft borderless tonal fills (`#F1F8FF`, `#EAF7F0`, `#FFF4DF`) without outer colored border outlines.
 
 ## 5. Time-of-Day 2D Artwork System (WIB / `Asia/Jakarta`)
 
-All environmental scenes (`public/assets/environment/pearl/*.webp`) and illustrated sky backdrops (`src/assets/images/skyline*.svg`) correspond to local Indonesian Western Time (`Asia/Jakarta`) across all 6 Hub Lingkungan topics (`Cuaca`, `Udara`, `Tanah`, `Titik panas`, `Sungai`, `Gempa`), `Kondisi udara di titik sensor`, `Prakiraan cuaca`, `Landing`, and `Login`:
+Environment and weather artwork use the same vector shapes, small gradients, and soft outlines as AERO-BOT. Weather artwork changes with the forecast and the local time in WIB. Keep sky backgrounds quiet where text or data appears.
 
-| Period | WIB Hours | Foreground 2D Art (Weather / Air / Fire) | Sky Backdrop Rule | Text Polarity |
-| :--- | :--- | :--- | :--- | :--- |
-| Morning (`morning`) | `05:00 – 10:59` | `sunny-morning.webp`, `air.webp`, `haze.webp`, `fire.webp` | Sunless `skyline.svg` if foreground has sun; `skyline-morning.svg` otherwise | Dark maritime ink (`#102A47`) |
-| Midday (`day`) | `11:00 – 14:59` | `sunny.webp`, `partly-cloudy.webp`, `air.webp`, `haze.webp`, `fire.webp` | Sunless `skyline.svg` if foreground has sun; `skyline-sun.svg` otherwise | Dark maritime ink (`#102A47`) |
-| Afternoon (`afternoon`) | `15:00 – 17:59` | `sunny-dusk.webp`, `air.webp`, `haze.webp`, `fire.webp` | Sunless `skyline.svg` if foreground has sun; `skyline-afternoon.svg` otherwise | Dark maritime ink (`#102A47`) |
-| Night (`night`) | `18:00 – 04:59` | `*-night.webp` (`sunny-night`, `cloudy-night`, `air-night`, `haze-night`, `fire-night`, etc.) | Moonless `skyline-night.svg` if foreground has moon; `skyline-night-moon.svg` otherwise | Light mist ink (`#F4F8FB`) |
+| Period | WIB | Sky | Text |
+| --- | --- | --- | --- |
+| Morning | 05.00–10.59 | Pale gold and blue | Maritime ink |
+| Midday | 11.00–14.59 | Clear blue | Maritime ink |
+| Afternoon | 15.00–17.59 | Warm horizon | Maritime ink |
+| Night | 18.00–04.59 | Deep blue | Light mist |
 
-**Single-Moon / Single-Sun Rule**: Never render a background SVG moon or sun behind a foreground 2D illustration that already contains its own moon or sun. Cards whose foreground illustration has no celestial body (`sensor-hero`, `landing-hero`, `login-story`, `soil`, `flood`, `earthquake`, `storm-night`) use `skyline-night-moon.svg` with the crescent moon positioned below the top crop safe zone.
+Show one sun or moon per composition. If the foreground artwork already has one, use a sky without a second one.
+
+The AERO-BOT illustration uses separate shapes for the head, eyes, wings, and body. Idle motion is quiet; hover and greeting use short, distinct gestures. The mood card shows the sensor location and time alongside the expression and practical advice. An old or invalid reading gets a neutral expression.
 
 ## 6. Uniform Icon System
 
@@ -97,5 +99,5 @@ All environmental scenes (`public/assets/environment/pearl/*.webp`) and illustra
 2. No lavender, violet, or purple backgrounds, pills, gradients, or chart colors.
 3. No colored boxes with darker colored `1px` outer border outlines on badges, tags, or alerts.
 4. No duplicate moons or cropped moons in night sky headers.
-5. No `backdrop-filter: blur(...)` glassmorphism on navigation bars, dialogs, or cards.
+5. Keep dialogs, cards, and reading surfaces opaque. Reserve blur for the sticky top bar.
 6. No glowing status dots, pulsing badges, or floating eyebrow pills above headings.

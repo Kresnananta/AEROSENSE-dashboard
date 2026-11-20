@@ -1,7 +1,11 @@
 node_modules
 **/node_modules
 motion
-server
+server/*
+!server/api/
+server/api/*
+!server/api/robot-condition.mjs
+!server/api/robot-condition.d.mts
 n8n
 docs
 dist

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -17,13 +17,10 @@ import { AeroMascot } from "@/components/environment/AeroMascot";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
-import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
 import { weatherSceneForPeriod } from "@/lib/time-of-day";
 import type { Scene } from "@/lib/environment-presentation";
 import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
-
-const heroPoses = ["welcome", "guide", "talk", "watch", "success"] as const;
 
 const features = [
   {
@@ -71,18 +68,8 @@ const features = [
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState(0);
-  const [poseIndex, setPoseIndex] = useState(0);
   const { user } = useAuth();
   const dayPeriod = useDayPeriod();
-  const { ref: heroArtRef, playing: heroPlaying } = useIllustrationMotion<HTMLDivElement>();
-
-  useEffect(() => {
-    if (!heroPlaying) return;
-    const timer = window.setInterval(() => {
-      setPoseIndex((prev) => (prev + 1) % heroPoses.length);
-    }, 3600);
-    return () => window.clearInterval(timer);
-  }, [heroPlaying]);
 
   const feature = features[active];
   const weatherScene = weatherSceneForPeriod({ icon: "partly", period: dayPeriod }) as Scene;
@@ -141,19 +128,8 @@ export function LandingPage() {
               </Link>
             </div>
           </div>
-          <div
-            ref={heroArtRef}
-            className="landing-hero-art"
-            role="img"
-            aria-label="Maskot AERO-BOT menyambut Anda"
-          >
-            {heroPoses.map((pose, idx) => (
-              <AeroMascot
-                key={pose}
-                pose={pose}
-                className={`landing-hero-mascot ${idx === poseIndex ? "is-active" : ""}`}
-              />
-            ))}
+          <div className="landing-hero-art">
+            <AeroMascot pose="welcome" className="landing-hero-mascot" />
           </div>
         </section>
       </div>

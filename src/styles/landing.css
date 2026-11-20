@@ -182,30 +182,6 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  opacity: 0;
-  transform: translate3d(0, 10px, 0) scale(0.95);
-  transition:
-    opacity 0.45s cubic-bezier(0.23, 1, 0.32, 1),
-    transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
-  pointer-events: none;
-}
-.landing-page .landing-hero-mascot.is-active {
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  animation: landing-mascot-breathe 6s ease-in-out infinite;
-}
-.landing-page .landing-hero-mascot.motion-paused {
-  animation-play-state: paused;
-}
-@keyframes landing-mascot-breathe {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(0, -10px, 0) scale(1);
-  }
 }
 .landing-section-heading {
   margin-bottom: var(--landing-gap);
@@ -315,7 +291,7 @@
   place-items: center;
   pointer-events: none;
 }
-.landing-feature-illustration .condition-scene img {
+.landing-feature-illustration .condition-scene .scene-art {
   position: absolute;
   inset: 18px;
   width: calc(100% - 36px);
@@ -326,7 +302,7 @@
   filter: drop-shadow(0 8px 10px rgb(17 35 50 / 10%));
   animation: sensor-robot-float 6.4s ease-in-out infinite;
 }
-.landing-feature-illustration .scene-offscreen img {
+.landing-feature-illustration .scene-offscreen .scene-art {
   animation-play-state: paused;
 }
 .landing-feature-illustration .aero-mascot {
@@ -403,13 +379,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .landing-trend.is-playing :is(.landing-trend-line, .landing-trend-pulse),
-  .landing-feature-illustration .condition-scene img,
-  .landing-page .landing-hero-mascot.is-active {
+  .landing-feature-illustration .condition-scene .scene-art {
     animation: none;
-  }
-  .landing-page .landing-hero-mascot {
-    transform: none;
-    transition: opacity 0.2s ease;
   }
 }
 .landing-workflow {

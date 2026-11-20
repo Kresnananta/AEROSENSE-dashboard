@@ -1,7 +1,7 @@
 import { AuthStory } from "./AuthStory";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, Lock, Mail, MapPin, Phone, Search, User } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, Lock, Mail, MapPin, Phone, Search, User } from "lucide-react";
 import { MapContainer, TileLayer, CircleMarker, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { ROUTES } from "@/lib/constants";
@@ -38,6 +38,7 @@ export function RegisterPage() {
     requested_role: "",
     note: "",
   });
+  const [profileOpen, setProfileOpen] = useState(false);
   const [point, setPoint] = useState<[number, number] | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [searching, setSearching] = useState(false);
@@ -103,20 +104,18 @@ export function RegisterPage() {
           </Link>
           {sentTo ? (
             <div className="register-sent" role="status">
-              <Mail size={28} aria-hidden="true" />
+              <span className="auth-status-icon"><Mail size={24} aria-hidden="true" /></span>
               <h1 id="register-heading">Periksa email Anda</h1>
               <p>
-                Kami mengirim tautan konfirmasi ke <strong>{sentTo}</strong>. Buka tautan itu untuk mengaktifkan
-                akun. Tidak ada di kotak masuk? Periksa folder spam.
+                Buka tautan konfirmasi yang dikirim ke <strong>{sentTo}</strong>. Periksa folder spam jika email belum terlihat.
               </p>
               {form.requested_role && (
                 <p>
-                  Permintaan peran <strong>{role.label}</strong> akan diverifikasi tim AEROSENSE setelah email
-                  terkonfirmasi. Sampai disetujui, akun Anda aktif sebagai warga.
+                  Permintaan peran <strong>{role.label}</strong> ditinjau setelah email dikonfirmasi.
                 </p>
               )}
               <Link to={ROUTES.DASHBOARD} className="login-submit">
-                Lihat kondisi udara sekarang <ArrowRight size={18} />
+                Lihat kondisi udara <ArrowRight size={18} />
               </Link>
             </div>
           ) : (
@@ -151,74 +150,6 @@ export function RegisterPage() {
                 </fieldset>
 
                 <fieldset>
-                  <legend>
-                    Profil <span>opsional</span>
-                  </legend>
-                  <label htmlFor="reg-org">Instansi atau organisasi</label>
-                  <div className="login-input">
-                    <Building2 size={18} />
-                    <input id="reg-org" autoComplete="organization" maxLength={120}
-                      value={form.organization} onChange={set("organization")} placeholder="Contoh: Kelurahan Keputih" />
-                  </div>
-                  <label htmlFor="reg-phone">Nomor telepon</label>
-                  <div className="login-input">
-                    <Phone size={18} />
-                    <input id="reg-phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={20}
-                      value={form.phone} onChange={set("phone")} placeholder="0812 3456 7890" />
-                  </div>
-                  <label htmlFor="reg-address">Alamat</label>
-                  <div className="register-address">
-                    <div className="login-input">
-                      <MapPin size={18} />
-                      <input id="reg-address" autoComplete="street-address" maxLength={240}
-                        value={form.address}
-                        onChange={(e) => {
-                          set("address")(e);
-                          setPlaces([]);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            void searchAddress();
-                          }
-                        }}
-                        placeholder="Jalan, kelurahan, kota" />
-                    </div>
-                    <button type="button" className="register-search" onClick={searchAddress} disabled={searching}>
-                      <Search size={16} /> {searching ? "Mencari…" : "Cari"}
-                    </button>
-                  </div>
-                  {places.length > 1 && (
-                    <ul className="register-places" aria-label="Pilihan alamat">
-                      {places.map((p) => (
-                        <li key={p.label}>
-                          <button type="button" onClick={() => setPoint([p.latitude, p.longitude])}>
-                            {p.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="register-map">
-                    <MapContainer center={point || SURABAYA} zoom={point ? 15 : 11} className="h-full w-full"
-                      scrollWheelZoom={false}>
-                      <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution="&copy; OpenStreetMap" />
-                      {point && (
-                        <>
-                          <Recenter point={point} />
-                          <CircleMarker center={point} radius={9} pathOptions={{ color: "#0a63e8", fillOpacity: 0.6 }} />
-                        </>
-                      )}
-                    </MapContainer>
-                  </div>
-                  <p className="register-hint">
-                    Alamat hanya untuk mengarahkan peta ke sekitar Anda. Anda tetap bisa melihat kondisi udara dan
-                    node publik di tempat lain.
-                  </p>
-                </fieldset>
-
-                <fieldset>
                   <legend>Peran</legend>
                   <label htmlFor="reg-role">Daftar sebagai</label>
                   <select id="reg-role" className="register-select" value={form.requested_role}
@@ -233,8 +164,7 @@ export function RegisterPage() {
                   {form.requested_role && (
                     <>
                       <p className="register-verify">
-                        Peran ini diverifikasi tim AEROSENSE terlebih dahulu. Sampai disetujui, akun Anda aktif
-                        sebagai warga.
+                        Akses sebagai warga berlaku sampai peran disetujui.
                       </p>
                       <label htmlFor="reg-note">Keterangan untuk verifikasi</label>
                       <textarea id="reg-note" className="register-note" maxLength={500} rows={3}
@@ -243,6 +173,73 @@ export function RegisterPage() {
                     </>
                   )}
                 </fieldset>
+
+                <details className="register-profile" onToggle={(e) => setProfileOpen(e.currentTarget.open)}>
+                  <summary>Lengkapi profil <span>(opsional)</span><ChevronDown size={16} aria-hidden="true" /></summary>
+                  {profileOpen && (
+                    <fieldset aria-label="Profil opsional">
+                      <label htmlFor="reg-org">Instansi atau organisasi</label>
+                      <div className="login-input">
+                        <Building2 size={18} />
+                        <input id="reg-org" autoComplete="organization" maxLength={120}
+                          value={form.organization} onChange={set("organization")} placeholder="Contoh: Kelurahan Keputih" />
+                      </div>
+                      <label htmlFor="reg-phone">Nomor telepon</label>
+                      <div className="login-input">
+                        <Phone size={18} />
+                        <input id="reg-phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={20}
+                          value={form.phone} onChange={set("phone")} placeholder="0812 3456 7890" />
+                      </div>
+                      <label htmlFor="reg-address">Alamat</label>
+                      <div className="register-address">
+                        <div className="login-input">
+                          <MapPin size={18} />
+                          <input id="reg-address" autoComplete="street-address" maxLength={240}
+                            value={form.address}
+                            onChange={(e) => {
+                              set("address")(e);
+                              setPlaces([]);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void searchAddress();
+                              }
+                            }}
+                            placeholder="Jalan, kelurahan, kota" />
+                        </div>
+                        <button type="button" className="register-search" onClick={searchAddress} disabled={searching}>
+                          <Search size={16} /> {searching ? "Mencari…" : "Cari"}
+                        </button>
+                      </div>
+                      {places.length > 1 && (
+                        <ul className="register-places" aria-label="Pilihan alamat">
+                          {places.map((p) => (
+                            <li key={p.label}>
+                              <button type="button" onClick={() => setPoint([p.latitude, p.longitude])}>
+                                {p.label}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="register-map">
+                        <MapContainer center={point || SURABAYA} zoom={point ? 15 : 11} className="h-full w-full"
+                          scrollWheelZoom={false}>
+                          <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution="&copy; OpenStreetMap" />
+                          {point && (
+                            <>
+                              <Recenter point={point} />
+                              <CircleMarker center={point} radius={9} pathOptions={{ color: "#0a63e8", fillOpacity: 0.6 }} />
+                            </>
+                          )}
+                        </MapContainer>
+                      </div>
+                      <p className="register-hint">Alamat membantu menampilkan peta di sekitar Anda.</p>
+                    </fieldset>
+                  )}
+                </details>
 
                 <button type="submit" className="login-submit" disabled={busy || DEMO_MODE}>
                   {busy ? "Membuat akun…" : "Daftar"}

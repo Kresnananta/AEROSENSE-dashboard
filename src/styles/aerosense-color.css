@@ -227,14 +227,7 @@ body {
   border-radius: var(--aero-segment-radius);
 }
 
-.app-shell .chat-source-panel {
-  background: var(--aero-surface);
-  border: 1px solid var(--aero-rim);
-  padding: 22px;
-  border-radius: 18px;
-}
 
-.app-shell .chat-source-panel :is(h2, ul) { color: #25405f; }
 
 .app-shell .live-chat > header {
   background: #eaf5ff;
@@ -267,15 +260,12 @@ body {
   background: #eaf2ff;
 }
 
-.app-shell .environment-hub .condition-scene :is(.scene-ring, .scene-spark, .scene-halo) {
-  display: none;
-}
 
-.app-shell .environment-hub .condition-scene img {
+.app-shell .environment-hub .condition-scene .scene-art {
   filter: none;
 }
 
-.app-shell .environment-hub .condition-scene.scene-muted img {
+.app-shell .environment-hub .condition-scene.scene-muted .scene-art {
   filter: grayscale(0.6);
 }
 
@@ -296,7 +286,7 @@ body {
 .login-page .login-form-panel,
 .confirm-card,
 .app-shell :is(.live-panel, .live-state, .live-table-wrap, .live-chat, .wx-panel, .disaster-card,
-  .map-controls, .sensor-toolbar, .nearby-location, .nearby-map-panel, .chat-source-panel,
+  .map-controls, .sensor-toolbar, .nearby-location, .nearby-map-panel,
   .recommend-card, .handsfree-card, .insight-disclosure, .sprinkler-section,
   .management-location, .management-access, .management-rules, .management-side > section,
   .aero-assist, .wa-alert-entry, .nearby-node) {
@@ -462,7 +452,7 @@ svg.lucide {
   }
 }
 
-:is(.landing-page, .app-shell, .login-page, .confirm-page) {
+:is(.landing-page, .app-shell, .login-page) {
   color: var(--aero-ink);
 }
 
@@ -565,8 +555,7 @@ svg.lucide {
   background: transparent;
 }
 
-body:has(.login-page),
-.confirm-page {
+body:has(.login-page) {
   min-height: 100dvh;
   background: var(--aero-illustration);
   background-attachment: fixed;
@@ -890,10 +879,6 @@ body:has(.login-page),
   margin-top: 10px;
 }
 
-.confirm-page .login-brand-icon {
-  padding: 0;
-  background: transparent;
-}
 
 @media (max-width: 520px) {
   .app-shell .live-heading:has(.history-export) {
@@ -1006,12 +991,6 @@ body:has(.login-page),
   height: auto;
   min-height: 0;
   aspect-ratio: 1.16;
-}
-
-.landing-page .landing-hero-mascot {
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }
 
 .landing-page :is(.landing-nav-login, .landing-button) {

@@ -3,7 +3,7 @@ import { AeroMascot } from "@/components/environment/AeroMascot";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { ROUTES } from "@/lib/constants";
 
-export function AuthStory() {
+export function AuthStory({ confirmed = false }: { confirmed?: boolean }) {
   const dayPeriod = useDayPeriod();
   return (
     <aside className="login-story" data-day-period={dayPeriod}>
@@ -12,7 +12,7 @@ export function AuthStory() {
         <span>AERO<strong>SENSE</strong></span>
       </Link>
       <p className="login-story-copy">Pahami lingkungan sekitar.</p>
-      <AeroMascot pose="welcome" className="login-scene" />
+      <AeroMascot pose={confirmed ? "success" : "welcome"} className="login-scene" />
     </aside>
   );
 }

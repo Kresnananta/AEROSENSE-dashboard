@@ -11,6 +11,7 @@ import {
   Leaf,
   Loader2,
   MapPin,
+  MessageCircle,
   Mic,
   MicOff,
   RefreshCw,
@@ -34,6 +35,8 @@ import { presenceUrl, ROBOT_GREETING, type PresenceCommand } from "@/lib/robot-p
 import { startProcessingSound } from "@/lib/processing-sound";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
+
+import { ChatSide } from "@/components/aerobot/ChatSide";
 
 const CHAT_LOCATION_RADIUS_KM = 5;
 
@@ -86,6 +89,10 @@ export function ChatPanel() {
     isLoading ? null : user ? "/v1/dashboard" : "/v1/dashboard?guest=1",
     60000,
   );
+  const robots = useLiveData<{ robots: { id: string; node_id: string }[] }>(
+    robotId && onChat ? "/v1/robots" : null,
+    300000,
+  );
   const [nodeId, setNodeId] = useState("");
   const [devicePoint, setDevicePoint] = useState<{ owner: string; point: GeoPoint } | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "locating" | "unavailable">("idle");
@@ -130,8 +137,11 @@ export function ChatPanel() {
       .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
       .sort((a, b) => a.distance - b.distance)[0];
   const manual = availableNodes.find((node) => node.id === nodeId);
-  const contextNode =
-    manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
+  const robotNodeId = robots.data?.robots.find((robot) => robot.id === robotId)?.node_id;
+  const defaultNode = !user || (!point && availableNodes.length === 1) ? availableNodes[0] : undefined;
+  const contextNode = robotId
+    ? availableNodes.find((node) => node.id === robotNodeId)
+    : manual ?? nearest?.node ?? defaultNode;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -342,9 +352,7 @@ export function ChatPanel() {
   }, [handsFreeControls]);
   async function send(text = input, fromVoice = false): Promise<string | null> {
 
-    const targetNode = robotId
-      ? undefined
-      : (contextNode?.id ?? (user ? undefined : availableNodes[0]?.id));
+    const targetNode = robotId ? undefined : contextNode?.id;
     if (!text.trim() || sending.current || pending || isLoading) return null;
     if (!user && !targetNode) {
       setError("Belum ada titik pemantauan publik untuk dijadikan acuan.");
@@ -404,13 +412,10 @@ export function ChatPanel() {
   };
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
-    <>
+    <div className="chat-workspace">
       <section className="live-chat" aria-label="Percakapan AERO-BOT">
         <header>
-          <img
-            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"}
-            alt=""
-          />
+          <span className="chat-header-icon"><MessageCircle size={21} aria-hidden="true" /></span>
           <div>
             <strong>AERO-BOT</strong>
             <small>
@@ -424,8 +429,7 @@ export function ChatPanel() {
         {!user && !isLoading && (
           <div className="chat-guest">
             <p>
-              <Link to="/login">Masuk</Link> untuk memakai mode suara
-              dan riwayat titik pantau Anda.
+              <Link to="/login">Masuk</Link> untuk memakai mode suara.
             </p>
             <WhatsAppEntry />
           </div>
@@ -483,7 +487,7 @@ export function ChatPanel() {
             )}
             {availableNodes.length > 1 && (
               <details className="w-full">
-                <summary className="cursor-pointer">Pilih titik lain</summary>
+                <summary className="cursor-pointer">Pilih titik pantau</summary>
                 <MonitoringSelect
                   label="Acuan percakapan"
                   value={nodeId || "__auto__"}
@@ -502,11 +506,7 @@ export function ChatPanel() {
         <div className="live-messages" role="log" aria-live="polite">
           {messages.length === 1 && !busy && (
             <div className="chat-welcome">
-              <img src="/assets/aerobot/falcon/welcome.webp" alt="" />
-              <h2>Hai, aku AERO-BOT!</h2>
-              <p>
-                Tanya soal udara dan cuaca di sekitarmu.
-              </p>
+              <h2>Mau tanya apa?</h2>
               <div className="chat-suggestions">
                 {suggestions.map(({ icon: Icon, text }) => (
                   <button
@@ -733,6 +733,12 @@ export function ChatPanel() {
           </p>
         )}
       </section>
+      <ChatSide
+        node={contextNode}
+        loading={isLoading || nodes.loading || (!!robotId && robots.loading)}
+        refreshFailed={!!nodes.error || (!!robotId && !!robots.error)}
+        fixedLocation={!!robotId}
+      />
       {!onChat &&
         (handsFree.active || voice.speaking) &&
         createPortal(
@@ -751,6 +757,6 @@ export function ChatPanel() {
           </div>,
           document.body,
         )}
-    </>
+    </div>
   );
 }

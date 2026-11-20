@@ -4,6 +4,7 @@ import "@/styles/globals.css";
 import App from "./App";
 import "@/styles/refinement.css";
 import "@/styles/aerosense-color.css";
+import "@/styles/site-polish.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

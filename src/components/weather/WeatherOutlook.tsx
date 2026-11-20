@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
-import { conditionArtUrl } from "@/lib/condition-art";
+import { ConditionArt } from "@/components/environment/ConditionArt";
 import { formatQuakeRegion } from "@/lib/environment-presentation";
 import {
   dayPeriodFromHour,
@@ -44,17 +44,7 @@ function WeatherArt({
   const resolvedPeriod = "time" in weather ? dayPeriodFromHour(wibHour(weather.time)) : period;
   const isDay = "is_day" in weather ? weather.is_day : null;
   const scene = weatherSceneForPeriod({ icon, code, period: resolvedPeriod, isDay });
-  return (
-    <img
-      className="wx-art"
-      src={conditionArtUrl(scene)}
-      alt=""
-      width={size}
-      height={size}
-      loading="lazy"
-      decoding="async"
-    />
-  );
+  return <ConditionArt className="wx-art" scene={scene} size={size} />;
 }
 const ALERT_ICON: Record<string, LucideIcon> = {
   thunder: CloudLightning,

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import type { Scene } from "@/lib/environment-presentation";
 import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
-import { conditionArtUrl } from "@/lib/condition-art";
+import { ConditionArt } from "./ConditionArt";
 
 export function ConditionScene({
   scene,
@@ -20,30 +20,7 @@ export function ConditionScene({
       className={`condition-scene scene-${scene} ${muted ? "scene-muted" : ""} ${small ? "scene-small" : ""} ${!playing ? "scene-offscreen" : ""}`}
       aria-hidden="true"
     >
-      <span className="scene-halo" />
-      {scene !== "sensor" && <span className="scene-ring" />}
-      {scene === "sensor" && !small && (
-        <>
-          {Array.from({ length: 7 }, (_, index) => (
-            <span key={index} className={`sensor-dust dust-${index + 1}`} />
-          ))}
-          <span className="sensor-float-object sensor-orb-one" />
-          <span className="sensor-float-object sensor-orb-two" />
-          <span className="sensor-float-object sensor-orb-three" />
-          <span className="sensor-float-object sensor-orb-four" />
-          <span className="sensor-float-object sensor-orb-five" />
-        </>
-      )}
-      <img
-        src={conditionArtUrl(scene === "sensor" ? "sensor-node-v3" : scene)}
-        alt=""
-        width="360"
-        height="360"
-        decoding="async"
-        loading={small ? "lazy" : "eager"}
-      />
-      <span className="scene-spark spark-one" />
-      <span className="scene-spark spark-two" />
+      <ConditionArt className="scene-art" scene={scene} />
     </div>
   );
 }
