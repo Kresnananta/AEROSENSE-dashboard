@@ -715,19 +715,10 @@
   }
 }
 
-.landing-workflow-intro {
-  position: sticky;
-  top: 96px;
-}
 .landing-workflow-intro p {
   margin: 14px 0 0;
   max-width: 32ch;
   color: var(--landing-muted);
   font-size: 16px;
   line-height: 1.7;
-}
-@media (max-width: 1050px) {
-  .landing-workflow-intro {
-    position: static;
-  }
 }
