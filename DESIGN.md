@@ -64,9 +64,9 @@ Every page repeats one architectural primitive: **the clean sky-bordered white p
 - **Inner cards & controls**: `16px` card radius (`--aero-card-radius`), `14px` control radius (`--aero-control-radius`).
 - **Borderless tonal rows**: Items inside a panel (hazard lists, earthquake logs, weather alerts, status chips) use soft borderless tonal fills (`#F1F8FF`, `#EAF7F0`, `#FFF4DF`) without outer colored border outlines.
 
-## 5. Time-of-Day 2D Artwork System (WIB / `Asia/Jakarta`)
+## 5. Artwork and Time of Day (WIB / `Asia/Jakarta`)
 
-Environment and weather artwork use the same vector shapes, small gradients, and soft outlines as AERO-BOT. Weather artwork changes with the forecast and the local time in WIB. Keep sky backgrounds quiet where text or data appears.
+Use the original Pearl artwork for weather and environmental conditions, the original device illustration for sensor panels, and the Falcon poses for AERO-BOT. Weather artwork follows the forecast and the local time in WIB. Keep sky backgrounds quiet where text or data appears.
 
 | Period | WIB | Sky | Text |
 | --- | --- | --- | --- |
@@ -77,7 +77,7 @@ Environment and weather artwork use the same vector shapes, small gradients, and
 
 Show one sun or moon per composition. If the foreground artwork already has one, use a sky without a second one.
 
-The AERO-BOT illustration uses separate shapes for the head, eyes, wings, and body. Idle motion is quiet; hover and greeting use short, distinct gestures. The mood card shows the sensor location and time alongside the expression and practical advice. An old or invalid reading gets a neutral expression.
+AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The greeting briefly uses the original welcome pose. The mood card shows the sensor location and time alongside the expression and practical advice. An old or invalid reading gets a neutral expression.
 
 ## 6. Uniform Icon System
 

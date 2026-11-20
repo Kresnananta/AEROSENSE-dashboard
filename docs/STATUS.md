@@ -2,7 +2,7 @@
 
 ## Tampilan web
 
-- Ilustrasi vektor cuaca, lingkungan, sensor, dan AERO-BOT memakai gaya yang sama. Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam.
+- Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
 - Panel Perasaanku mengikuti titik sensor yang digunakan chat. Panel menampilkan ekspresi, waktu pembacaan, dan saran singkat. Data yang kedaluwarsa atau tidak valid tidak menentukan ekspresi.
 - Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil.
 - Build dan 119 tes lulus. Langkah berikutnya: uji email konfirmasi sungguhan dan tampilan di perangkat setelah rilis.

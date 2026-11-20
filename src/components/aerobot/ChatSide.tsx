@@ -30,7 +30,7 @@ export function ChatSide({ node, loading, refreshFailed, fixedLocation }: { node
     <aside className="robot-mood" data-mood={band} aria-labelledby="robot-mood-heading">
       <h2 id="robot-mood-heading">Perasaanku</h2>
       <div className="robot-mood-scene">
-        <AeroMascot pose={mood.pose} className={greeting ? "mascot-greet" : ""} />
+        <AeroMascot pose={mood.pose} greeting={greeting} />
       </div>
       <div className="robot-mood-body">
         <div className="robot-mood-reading" role="status">

@@ -1,48 +1,44 @@
 .aero-mascot {
+  display: grid;
   aspect-ratio: 1;
   flex-shrink: 0;
-  line-height: 0;
-  animation: none;
 }
 
-.aero-mascot svg { width: 100%; height: 100%; overflow: visible; }
-.aero-mascot .mascot-body { transform-origin: 160px 283px; }
-.aero-mascot .mascot-head { transform-origin: 160px 199px; }
-.aero-mascot .mascot-wing-left { transform-origin: 104px 209px; }
-.aero-mascot .mascot-wing-right { transform-origin: 215px 210px; }
-.aero-mascot .mascot-eyes { transform-origin: 160px 156px; }
-.aero-mascot .mascot-ground { transform-origin: 159px 291px; }
-.aero-mascot :is(.mascot-body, .mascot-head, .mascot-wing-left, .mascot-wing-right, .mascot-eyes, .mascot-ground) { transform-box: view-box; }
-.mascot-watch .mascot-head { transform: rotate(-5deg); }
-.mascot-alert .mascot-head { transform: translateY(3px); }
-.mascot-guide .mascot-head { transform: rotate(5deg); }
-.aero-mascot:not(.mascot-welcome):not(.mascot-success) .mascot-wing-right { transform: rotate(57deg); }
+.aero-mascot > img {
+  grid-area: 1 / 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  transform-origin: 50% 86%;
+}
+
+.aero-mascot > .mascot-wave { visibility: hidden; }
+.aero-mascot.mascot-greet:has(.mascot-wave) > .mascot-pose { visibility: hidden; }
+.aero-mascot.mascot-greet > .mascot-wave { visibility: visible; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .aero-mascot .mascot-head { transition: transform 360ms cubic-bezier(.2,.75,.3,1); }
-  .aero-mascot.is-playing .mascot-body { animation: bird-breathe 4.8s ease-in-out infinite; }
-  .aero-mascot.is-playing .mascot-ground { animation: bird-shadow 4.8s ease-in-out infinite; }
-  .aero-mascot.is-playing .mascot-eyes { animation: bird-blink 6.3s linear infinite; }
-  .mascot-welcome.is-playing .mascot-wing-right, .mascot-success.is-playing .mascot-wing-right { animation: bird-wave 5.6s ease-in-out infinite; }
-  .aero-mascot.mascot-greet .mascot-body { animation: bird-greet 820ms cubic-bezier(.25,.7,.3,1); }
-  .aero-mascot.mascot-greet .mascot-wing-left { animation: bird-lift 820ms ease; }
-  .aero-mascot.mascot-greet .mascot-wing-right { animation: bird-salute 820ms ease; }
+  .aero-mascot.is-playing:not(.mascot-greet) > .mascot-pose {
+    animation: mascot-idle 5s ease-in-out infinite;
+    transition: rotate 340ms cubic-bezier(.2,.75,.3,1);
+  }
+  .aero-mascot.mascot-greet > img { animation: mascot-greeting 820ms cubic-bezier(.25,.7,.3,1); }
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .aero-mascot.is-playing:hover .mascot-head { transform: translateY(-2px) rotate(8deg); }
+  .aero-mascot.is-playing:not(.mascot-greet):hover > .mascot-pose { rotate: 5deg; }
 }
 
-@keyframes bird-breathe { 0%, 100% { transform: none; } 48% { transform: translateY(-4px) scale(.99, 1.018); } }
-@keyframes bird-shadow { 0%, 100% { transform: none; } 48% { transform: scaleX(.92); } }
-@keyframes bird-blink { 0%, 42%, 46%, 91%, 95%, 100% { transform: none; } 44%, 93% { transform: scaleY(.11); } }
-@keyframes bird-wave { 0%, 31%, 100% { transform: none; } 8%, 23% { transform: rotate(-15deg); } 15% { transform: rotate(6deg); } }
-@keyframes bird-greet {
+@keyframes mascot-idle {
   0%, 100% { transform: none; }
-  16% { transform: translateY(2px) scale(1.08,.91); }
-  42% { transform: translateY(-19px) rotate(-4deg) scale(.96,1.05); }
-  66% { transform: scale(1.05,.94); }
-  82% { transform: translateY(-3px) scale(.995,1.01); }
+  50% { transform: translateY(-4px) scale(.995, 1.015); }
 }
-@keyframes bird-lift { 0%, 100% { transform: none; } 42% { transform: rotate(27deg); } }
-@keyframes bird-salute { 0%, 100% { transform: rotate(57deg); } 33%, 62% { transform: rotate(-22deg); } 48% { transform: rotate(0deg); } }
+
+@keyframes mascot-greeting {
+  0%, 100% { transform: none; }
+  16% { transform: scale(1.06,.94); }
+  42% { transform: translateY(-16px) rotate(-4deg) scale(.97,1.04); }
+  66% { transform: scale(1.04,.96); }
+  82% { transform: translateY(-2px) scale(.995,1.01); }
+}

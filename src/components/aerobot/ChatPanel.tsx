@@ -11,7 +11,6 @@ import {
   Leaf,
   Loader2,
   MapPin,
-  MessageCircle,
   Mic,
   MicOff,
   RefreshCw,
@@ -415,7 +414,8 @@ export function ChatPanel() {
     <div className="chat-workspace">
       <section className="live-chat" aria-label="Percakapan AERO-BOT">
         <header>
-          <span className="chat-header-icon"><MessageCircle size={21} aria-hidden="true" /></span>
+          <img className="chat-header-icon" alt="" width={44} height={44}
+            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"} />
           <div>
             <strong>AERO-BOT</strong>
             <small>

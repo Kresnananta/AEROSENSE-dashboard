@@ -32,7 +32,6 @@
   border-radius: var(--aero-panel-radius);
   box-shadow: none;
 }
-.chat-header-icon,
 .auth-status-icon {
   display: grid;
   flex: 0 0 auto;
@@ -43,6 +42,7 @@
   background: #dceeff;
   color: #095cbf;
 }
+.app-shell .chat-workspace .chat-header-icon { width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; border-radius: var(--aero-control-radius); background: #dceeff; }
 .app-shell .chat-workspace .live-messages { min-height: 0; }
 .chat-workspace .chat-welcome { padding-block: clamp(16px, 3vw, 40px); }
 .chat-workspace .chat-welcome h2 { font-size: clamp(1.25rem, 2vw, 1.7rem); }
@@ -154,7 +154,6 @@
 .register-profile summary svg { margin-inline-start: auto; flex: none; }
 .register-profile[open] summary svg { transform: rotate(180deg); }
 .register-profile fieldset { min-inline-size: 0; margin-top: 0; }
-.app-shell .condition-scene .scene-art, .wx-art { filter: none; }
 
 @media (max-width: 680px) {
   .app-shell .chat-workspace .live-chat { min-height: 0; }
