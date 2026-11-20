@@ -234,13 +234,30 @@
   height: 100%;
   min-block-size: clamp(260px, 23vw, 326px);
   padding: 16px 8px;
-  border: 0;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  color: #173654;
-  background: #f1f8ff;
+  color: var(--foreground);
+  background:
+    radial-gradient(ellipse 110% 28% at 84% 73%, var(--wx-horizon), transparent),
+    radial-gradient(ellipse 95% 46% at 28% 42%, var(--wx-light), transparent),
+    linear-gradient(168deg, var(--wx-sky), var(--wx-ground) 76%);
+  --wx-sky: oklch(89% 0.068 225);
+  --wx-light: oklch(98% 0.022 198);
+  --wx-horizon: oklch(89% 0.052 192 / 55%);
+  --wx-ground: oklch(96% 0.025 217);
   cursor: pointer;
   text-align: center;
-  transition: translate 160ms ease, background-color 160ms ease;
+  transition: translate 160ms ease, border-color 160ms ease;
+}
+.wx-card[data-day-period="morning"], .wx-card[data-day-period="afternoon"] {
+  --wx-light: oklch(95% 0.067 78);
+  --wx-horizon: oklch(92% 0.052 63 / 60%);
+}
+.wx-card[data-day-period="night"] {
+  --wx-sky: oklch(78% 0.09 242);
+  --wx-light: oklch(92% 0.043 222);
+  --wx-horizon: oklch(83% 0.071 228 / 65%);
+  --wx-ground: oklch(93% 0.042 232);
 }
 .wx-card .wx-art {
   width: min(100%, clamp(96px, 10vw, 136px));
@@ -255,7 +272,7 @@
   color: #375e86;
 }
 .wx-card:hover {
-  background: #e3f1ff;
+  border-color: var(--aero-blue);
   translate: 0 -2px;
 }
 .wx-today-link:focus-visible,

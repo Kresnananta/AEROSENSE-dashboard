@@ -125,14 +125,14 @@ dialog.role-dialog {
 .app-shell .chat-workspace .live-chat > header :is(strong, small), .app-shell .wx-panel h3 { color: var(--foreground); }
 .app-shell .chat-workspace .chat-welcome .chat-suggestions button,
 .app-shell .chat-workspace .chat-guest, .app-shell .chat-workspace .chat-scope,
-.app-shell .wx-panel .wx-card, .app-shell .robot-mood-greet,
+.app-shell .robot-mood-greet,
 .login-page :is(.login-input, .register-profile summary) {
   background: var(--muted);
   border-color: var(--border);
   color: var(--foreground);
 }
 .app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled),
-.app-shell .wx-panel .wx-card:hover, .app-shell .robot-mood-greet:hover { background: var(--accent); }
+.app-shell .robot-mood-greet:hover { background: var(--accent); }
 .app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
 .app-shell :is(.nav-group > p, .sidebar-account small, .chat-scope summary, .robot-mood-reading),
 .login-page :is(label, legend, .register-hint, .login-register) { color: var(--muted-foreground); }
@@ -232,7 +232,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   :root { --border: oklch(44% .05 244); }
 }
 
-.app-shell .wx-panel :is(.wx-card, .wx-alerts li) { border: 1px solid var(--border); }
+.app-shell .wx-panel .wx-alerts li { border: 1px solid var(--border); }
 .app-shell :is(.disaster-filters, .nearby-radius > div) {
   --frame-radius: 18px;
   --frame-inset: 4px;

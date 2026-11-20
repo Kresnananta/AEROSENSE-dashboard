@@ -31,6 +31,13 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from "@/types/weather.types";
 import "@/styles/weather.css";
 
+function weatherPeriod(weather: WeatherDay | WeatherHour | Outlook["current"], fallback: DayPeriod): DayPeriod {
+  if (!("time" in weather)) return fallback;
+  const period = dayPeriodFromHour(wibHour(weather.time));
+  if (weather.is_day === false) return "night";
+  return weather.is_day === true && period === "night" ? "day" : period;
+}
+
 function WeatherArt({
   weather,
   size,
@@ -41,7 +48,7 @@ function WeatherArt({
   period?: DayPeriod;
 }) {
   const { icon, code } = weather;
-  const resolvedPeriod = "time" in weather ? dayPeriodFromHour(wibHour(weather.time)) : period;
+  const resolvedPeriod = weatherPeriod(weather, period);
   const isDay = "is_day" in weather ? weather.is_day : null;
   const scene = weatherSceneForPeriod({ icon, code, period: resolvedPeriod, isDay });
   return (
@@ -246,7 +253,8 @@ export function WeatherOutlook({
               <ol className="wx-days">
                 {o.daily.map((d, i) => (
                   <li key={d.date}>
-                    <button type="button" className={`wx-card tone-${d.icon}`} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
+                    <button type="button" className={`wx-card tone-${d.icon}`}
+                      data-day-period={i === 0 ? weatherPeriod(o.current ?? d, dayPeriod) : "day"} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
                       <span className="wx-day-name">{dayName(d.date, i)}</span>
                       <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={128} />
                       <span className="wx-day-label">{d.label}</span>
@@ -324,7 +332,8 @@ function HourCards({ hours, onSelect }: {
       <ol ref={rail} className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
         {hours.map((h, i) => (
           <li key={h.time}>
-            <button type="button" className={`wx-card tone-${h.icon}`} aria-haspopup="dialog"
+            <button type="button" className={`wx-card tone-${h.icon}`}
+              data-day-period={weatherPeriod(h, "day")} aria-haspopup="dialog"
               aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
               onClick={(e) => onSelect(h.time, e.currentTarget)}>
               <span className="wx-card-when">

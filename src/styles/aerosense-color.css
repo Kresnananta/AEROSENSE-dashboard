@@ -993,13 +993,8 @@ body:has(.login-page) {
   border: 1px solid var(--aero-rim);
 }
 
-.app-shell :is(.wx-today-stats > div, .wx-card) {
+.app-shell .wx-today-stats > div {
   background-color: #f1f8ff;
-}
-
-.app-shell .wx-card[aria-pressed="true"] {
-  background-color: #dceeff;
-  border-color: #71acee;
 }
 
 @media (max-width: 420px) {
@@ -1051,7 +1046,7 @@ body:has(.login-page) {
   background: var(--aero-sky-day);
 }
 
-.app-shell :is(.wx-today-stats > div, .wx-card) {
+.app-shell .wx-today-stats > div {
   background: #f1f8ff;
   border: 0;
   box-shadow: none;
