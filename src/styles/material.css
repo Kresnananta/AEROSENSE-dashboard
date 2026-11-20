@@ -271,3 +271,51 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   opacity: 1;
 }
 .wx-detail-head { color-scheme: light; }
+
+.app-shell .map-controls {
+  --frame-radius: var(--aero-frame);
+  --frame-inset: 10px;
+  padding: var(--frame-inset);
+}
+.app-shell .map-controls :is(.map-reference, .monitoring-select[data-slot="select-trigger"]) {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+  background: var(--muted);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.app-shell .map-controls .monitoring-select[data-state="open"] { border-color: var(--ring); }
+.app-shell .map-controls .map-reference { background: var(--card); }
+.app-shell .map-controls-meta,
+.app-shell .map-info-content :is(p, .map-event-legend > span),
+.app-shell .map-event-notice { color: var(--muted-foreground); }
+.app-shell .map-info summary { color: var(--aero-link); }
+.app-shell .map-info-content {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: var(--aero-depth);
+}
+.monitoring-options [data-slot="select-item"][data-highlighted] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.monitoring-options [data-slot="select-item"][data-state="checked"]:not([data-highlighted]) {
+  color: var(--aero-link);
+}
+.app-shell .live-heading .live-icon-button,
+.app-shell .live-map .map-location-control button {
+  background: var(--popover);
+  color: var(--aero-link);
+  border-color: var(--border);
+}
+.app-shell .live-heading .live-icon-button:hover:not(:disabled),
+.app-shell .live-map .map-location-control button:hover:not(:disabled) { background: var(--accent); }
+.app-shell .live-map .map-location-control button:disabled { color: var(--muted-foreground); }
+.app-shell .live-map :is(.map-location-message, .heat-legend) {
+  background: var(--popover);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+.app-shell .live-map .heat-legend-head strong { color: var(--foreground); }
