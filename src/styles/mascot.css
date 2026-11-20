@@ -4,41 +4,92 @@
   flex-shrink: 0;
 }
 
-.aero-mascot > img {
+.aero-mascot > :is(.mascot-frame, .mascot-wave) {
   grid-area: 1 / 1;
-  display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
-  object-fit: contain;
-  transform-origin: 50% 86%;
 }
 
-.aero-mascot > .mascot-wave { visibility: hidden; }
-.aero-mascot.mascot-greet:has(.mascot-wave) > .mascot-pose { visibility: hidden; }
-.aero-mascot.mascot-greet > .mascot-wave { visibility: visible; }
+.mascot-frame { transform-origin: 50% 88%; }
+.mascot-pose { display: block; width: 100%; height: 100%; object-fit: contain; transform-origin: 50% 88%; }
+.mascot-wave { overflow: visible; visibility: hidden; }
+.mascot-wave-move, .mascot-wave-arm, .mascot-wave-rays { transform-box: view-box; }
+.mascot-wave-move { transform-origin: 361px 650px; }
+.mascot-wave-arm { transform-origin: 563px 414px; }
+.mascot-wave-rays { transform-origin: 550px 204px; }
+.mascot-greet .mascot-wave { visibility: visible; }
+.mascot-greet .mascot-frame { visibility: hidden; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .aero-mascot.is-playing:not(.mascot-greet) > .mascot-pose {
-    animation: mascot-idle 5s ease-in-out infinite;
-    transition: rotate 340ms cubic-bezier(.2,.75,.3,1);
+  .aero-mascot .mascot-frame { transition: rotate 420ms cubic-bezier(.18,.8,.24,1), translate 420ms cubic-bezier(.18,.8,.24,1); }
+  .aero-mascot.is-playing:not(.mascot-greet) .mascot-frame { animation: mascot-idle 6.2s ease-in-out infinite; }
+  .robot-mood .mascot-pose { animation: mascot-pose-in 300ms ease-out both; }
+  .mascot-greet .mascot-wave-move { animation: mascot-salute var(--greeting-time) cubic-bezier(.36,0,.32,1) both; }
+  .mascot-greet .mascot-wave-arm { animation: mascot-hand-wave var(--greeting-time) ease-in-out both; }
+  .mascot-greet .mascot-wave-rays { animation: mascot-wave-lines var(--greeting-time) ease-out both; }
+  .mascot-greet .mascot-wave { animation: mascot-wave-show var(--greeting-time) linear both; }
+  .mascot-greet .mascot-frame {
+    visibility: visible;
+    animation: mascot-base-show var(--greeting-time) linear both;
   }
-  .aero-mascot.mascot-greet > img { animation: mascot-greeting 820ms cubic-bezier(.25,.7,.3,1); }
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .aero-mascot.is-playing:not(.mascot-greet):hover > .mascot-pose { rotate: 5deg; }
+  .aero-mascot.is-playing:not(.mascot-greet):hover .mascot-frame { rotate: 5deg; translate: 0 -3px; }
 }
 
 @keyframes mascot-idle {
   0%, 100% { transform: none; }
-  50% { transform: translateY(-4px) scale(.995, 1.015); }
+  19% { transform: translateY(-1px) rotate(-.7deg); }
+  43% { transform: translateY(-4px) rotate(.5deg) scale(.997,1.014); }
+  63% { transform: translateY(-2px) rotate(.8deg); }
+  81% { transform: translateY(1px) rotate(-.3deg) scale(1.004,.996); }
 }
 
-@keyframes mascot-greeting {
+@keyframes mascot-pose-in {
+  from { opacity: .65; transform: scale(.982); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mascot-salute {
   0%, 100% { transform: none; }
-  16% { transform: scale(1.06,.94); }
-  42% { transform: translateY(-16px) rotate(-4deg) scale(.97,1.04); }
-  66% { transform: scale(1.04,.96); }
-  82% { transform: translateY(-2px) scale(.995,1.01); }
+  13% { transform: translateY(10px) rotate(-2deg) scale(1.045,.955); }
+  26% { transform: translateY(-30px) rotate(-4deg) scale(.98,1.035); }
+  39% { transform: translateY(-44px) rotate(-1deg); }
+  50% { transform: translateY(-31px) rotate(1.8deg); }
+  62% { transform: translateY(-18px) rotate(-.8deg); }
+  74% { transform: translateY(3px) scale(1.025,.97); }
+  86% { transform: translateY(-5px) scale(.993,1.009); }
+  94% { transform: translateY(1px); }
+}
+
+@keyframes mascot-hand-wave {
+  0%, 13%, 86%, 100% { rotate: 0deg; }
+  32% { rotate: -9deg; }
+  44% { rotate: 7deg; }
+  54% { rotate: -8deg; }
+  64% { rotate: 5deg; }
+  73% { rotate: -3deg; }
+}
+
+@keyframes mascot-wave-lines {
+  0%, 17%, 100% { opacity: 0; scale: .72; }
+  31% { opacity: 1; scale: 1.06; }
+  44% { opacity: .65; scale: .95; }
+  55% { opacity: 1; scale: 1.08; }
+  79% { opacity: .75; scale: 1; }
+  91% { opacity: 0; scale: 1.12; }
+}
+
+@keyframes mascot-wave-show {
+  0% { opacity: 0; }
+  10%, 84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes mascot-base-show {
+  0%, 100% { opacity: 1; transform: none; }
+  12% { opacity: 0; transform: translateY(3px) scale(1.025,.97); }
+  83% { opacity: 0; transform: scale(.99,1.012); }
 }

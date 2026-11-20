@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Hand, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { AeroMascot, type MascotPose } from "@/components/environment/AeroMascot";
+import { AeroMascot, GREETING_MS, type MascotPose } from "@/components/environment/AeroMascot";
 import type { LiveNode } from "@/types/live.types";
 import { robotCondition } from "../../../server/api/robot-condition.mjs";
 
 const number = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
 const time = new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const moods = {
-  calm: { pose: "calm", title: "Aku tenang", action: "Yuk, jaga udara tetap nyaman. Hindari membakar sampah." },
+  calm: { pose: "calm", title: "Aku sehat!", action: "Yuk, jaga udara tetap nyaman. Hindari membakar sampah." },
   warning: { pose: "watch", title: "Aku agak khawatir", action: "Jauhi sumber asap dan kurangi aktivitas berat di luar." },
   danger: { pose: "alert", title: "Aku kurang nyaman", action: "Tunda aktivitas berat di luar dan hindari area berasap." },
-  unknown: { pose: "guide", title: "Aku belum tahu", action: "Pilih titik sensor untuk melihat bagaimana perasaanku." },
+  unknown: { pose: "calm", title: "Aku sehat!", action: "Pilih titik sensor untuk melihat bagaimana perasaanku." },
 } satisfies Record<string, { pose: MascotPose; title: string; action: string }>;
 
 export function ChatSide({ node, loading, refreshFailed, fixedLocation }: { node?: LiveNode; loading: boolean; refreshFailed: boolean; fixedLocation: boolean }) {
@@ -25,16 +25,16 @@ export function ChatSide({ node, loading, refreshFailed, fixedLocation }: { node
   const observed = reading?.observed_at ? new Date(reading.observed_at) : null;
   const subtitle = condition
     ? `${condition.metric === "pm25_ug_m3" ? "PM2.5" : "Debu sensor"} ${number.format(condition.value)} µg/m³${refreshFailed ? " · terakhir diterima" : ""}`
-    : loading ? "Memuat pembacaan…" : refreshFailed ? "Data sensor belum dapat dimuat" : node ? "Belum ada pembacaan terbaru yang valid" : "Belum ada titik acuan";
+    : loading ? "Memuat pembacaan…" : refreshFailed ? "Data sensor belum dapat dimuat" : "Kondisi udara belum diketahui.";
+  const reply = greeting ? "Halo!" : mood.title;
   return (
-    <aside className="robot-mood" data-mood={band} aria-labelledby="robot-mood-heading">
-      <h2 id="robot-mood-heading">Perasaanku</h2>
+    <aside className="robot-mood" data-mood={band} aria-label="Kondisi AERO-BOT">
       <div className="robot-mood-scene">
+        <p className="robot-mood-bubble" role="status" key={reply}>{reply}</p>
         <AeroMascot pose={mood.pose} greeting={greeting} />
       </div>
       <div className="robot-mood-body">
-        <div className="robot-mood-reading" role="status">
-          <strong>{loading && !node ? "Aku sedang mengecek" : mood.title}</strong>
+        <div className="robot-mood-reading">
           <p>{subtitle}</p>
           {node && <span className="robot-mood-location"><MapPin size={14} aria-hidden="true" />{node.name}
             {observed && Number.isFinite(observed.getTime()) && <> · <time dateTime={reading?.observed_at ?? undefined}>{time.format(observed)} WIB</time></>}
@@ -45,7 +45,7 @@ export function ChatSide({ node, loading, refreshFailed, fixedLocation }: { node
           <button type="button" className="robot-mood-greet" aria-disabled={greeting} onClick={() => {
             if (greeting) return;
             setGreeting(true);
-            timer.current = setTimeout(() => setGreeting(false), 850);
+            timer.current = setTimeout(() => setGreeting(false), GREETING_MS);
           }}><Hand size={16} aria-hidden="true" />{greeting ? "Halo!" : "Sapa aku"}</button>
           {node && <Link to={`/nodes/${encodeURIComponent(node.id)}`}>Lihat sensor <ArrowUpRight size={15} aria-hidden="true" /></Link>}
         </div>

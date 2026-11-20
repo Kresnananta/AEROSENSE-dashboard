@@ -77,7 +77,7 @@ Use the original Pearl artwork for weather and environmental conditions, the ori
 
 Show one sun or moon per composition. If the foreground artwork already has one, use a sky without a second one.
 
-AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The greeting briefly uses the original welcome pose. The mood card shows the sensor location and time alongside the expression and practical advice. An old or invalid reading gets a neutral expression.
+AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The greeting animates the hand and accent marks in the original welcome pose, then returns to the current expression. The speech bubble conveys the mascot’s expression without implying a sensor result when data is unavailable. The mood card shows the sensor location and time alongside the expression and practical advice. An old or invalid reading gets a cheerful fallback with an explicit unknown air-quality status.
 
 ## 6. Uniform Icon System
 

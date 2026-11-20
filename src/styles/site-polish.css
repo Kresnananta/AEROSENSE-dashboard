@@ -67,29 +67,49 @@
 .robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-paper: #f0faf7; --mood-accent: #13634e; }
 .robot-mood[data-mood="warning"] { --mood-sky: #ffebba; --mood-paper: #fff9eb; --mood-accent: #7c4c10; }
 .robot-mood[data-mood="danger"] { --mood-sky: #ffded0; --mood-paper: #fff4ed; --mood-accent: #842f27; }
-.robot-mood h2 {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  z-index: 1;
-  padding: 5px 11px;
-  border-radius: var(--aero-control-radius);
-  background: #ffffffec;
-  color: var(--aero-ink);
-  font-size: .8125rem;
-  font-weight: 700;
-}
 .robot-mood-scene {
   display: grid;
-  place-items: end center;
+  justify-items: center;
+  align-content: end;
   min-height: 152px;
   background: url("../assets/images/aerobot-sky.svg") center bottom / cover no-repeat,
     linear-gradient(150deg, var(--mood-paper) 5%, var(--mood-sky) 70%);
 }
+.robot-mood-bubble {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  max-width: calc(100% - 16px);
+  margin: 17px 8px -12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--mood-accent);
+  font-size: clamp(.875rem, 1.3vw, 1.07rem);
+  font-weight: 750;
+  line-height: 1.23;
+  text-align: center;
+  text-wrap: balance;
+}
+.robot-mood-bubble::after {
+  position: absolute;
+  inset: auto 0 -4px;
+  content: "";
+  margin-inline: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  rotate: 45deg;
+  background: inherit;
+  z-index: -1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .robot-mood-bubble { animation: mood-speak 280ms cubic-bezier(.2,.75,.28,1) both; transform-origin: center bottom; }
+  @keyframes mood-speak { from { opacity: 0; transform: translateY(4px) scale(.93); } }
+}
 .robot-mood-scene .aero-mascot { width: clamp(150px, 80%, 246px); }
 .robot-mood-body { display: grid; align-content: center; gap: 12px; padding: clamp(14px, 2vw, 20px); }
 .robot-mood-reading { display: grid; gap: 4px; color: var(--aero-muted); font-size: .8125rem; }
-.robot-mood-reading strong { color: var(--mood-accent); font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.2; letter-spacing: -.015em; }
 .robot-mood-location { display: inline; overflow-wrap: anywhere; }
 .robot-mood-location svg { display: inline-block; vertical-align: -.16em; margin-right: 3px; }
 .robot-mood-tip { color: var(--aero-ink); font-size: .875rem; line-height: 1.5; }
@@ -122,12 +142,12 @@
 @media (max-width: 1100px) {
   .chat-workspace { grid-template-columns: minmax(0, 1fr); }
   .robot-mood { display: grid; grid-template-columns: minmax(118px, 34%) minmax(0, 1fr); }
-  .robot-mood h2 { top: 8px; left: 8px; }
   .robot-mood-scene .aero-mascot { width: min(100%, 226px); }
 }
 @media (max-width: 420px) {
   .robot-mood { grid-template-columns: minmax(104px, 33%) minmax(0, 1fr); }
   .robot-mood-body { padding: 12px; }
+  .robot-mood-bubble { padding: 6px 8px; font-size: .8125rem; }
 }
 
 .app-shell .chat-workspace .live-chat { min-height: 530px; }

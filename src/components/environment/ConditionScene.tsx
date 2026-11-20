@@ -20,6 +20,20 @@ export function ConditionScene({
       className={`condition-scene scene-${scene} ${muted ? "scene-muted" : ""} ${small ? "scene-small" : ""} ${!playing ? "scene-offscreen" : ""}`}
       aria-hidden="true"
     >
+      <span className="scene-halo" />
+      {scene !== "sensor" && <span className="scene-ring" />}
+      {scene === "sensor" && !small && (
+        <>
+          {Array.from({ length: 7 }, (_, index) => (
+            <span key={index} className={`sensor-dust dust-${index + 1}`} />
+          ))}
+          <span className="sensor-float-object sensor-orb-one" />
+          <span className="sensor-float-object sensor-orb-two" />
+          <span className="sensor-float-object sensor-orb-three" />
+          <span className="sensor-float-object sensor-orb-four" />
+          <span className="sensor-float-object sensor-orb-five" />
+        </>
+      )}
       <img
         className="scene-art"
         src={conditionArtUrl(scene === "sensor" ? "sensor-node-v3" : scene)}
@@ -29,6 +43,8 @@ export function ConditionScene({
         decoding="async"
         loading={small ? "lazy" : "eager"}
       />
+      <span className="scene-spark spark-one" />
+      <span className="scene-spark spark-two" />
     </div>
   );
 }

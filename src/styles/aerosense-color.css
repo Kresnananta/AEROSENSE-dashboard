@@ -261,6 +261,8 @@ body {
 }
 
 
+.app-shell .environment-hub .condition-scene :is(.scene-ring, .scene-spark, .scene-halo) { display: none; }
+
 .app-shell .environment-hub .condition-scene .scene-art {
   filter: none;
 }
