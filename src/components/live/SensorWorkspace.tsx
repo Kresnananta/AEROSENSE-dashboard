@@ -7,6 +7,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { WatersensePoint } from "./LiveMap";
+import type { Hazards } from "@/types/weather.types";
 import { HEAT_LAYERS, type HeatLayerKey } from "./heat-layers";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
@@ -113,6 +114,23 @@ export function SensorWorkspace({
   const events = (environment.data?.events || []).filter(
     (e) => eventType === "all" || e.category === eventType,
   );
+  const hazards = useLiveData<Hazards>(
+    mode === "map" && (eventType === "all" || eventType === "earthquake") ? "/v1/hazards" : null,
+    600000,
+  );
+  const extraHazardQuakes =
+    eventType === "all" || eventType === "earthquake"
+      ? (hazards.data?.quakes || []).filter(
+          (q) =>
+            !events.some(
+              (e) =>
+                e.category === "earthquake" &&
+                Math.abs((e.latitude ?? 999) - q.latitude) < 0.05 &&
+                Math.abs((e.longitude ?? 999) - q.longitude) < 0.05,
+            ),
+        ).length
+      : 0;
+  const totalEventCount = events.length + extraHazardQuakes;
   const watersense = useLiveData<{ actuators: WatersensePoint[] }>(
     user && mode === "map" ? `/v1/actuators/map?account=${encodeURIComponent(user.id)}` : null,
   );
@@ -121,8 +139,12 @@ export function SensorWorkspace({
     next.set(key, value);
     setMapParams(next);
   }
+  const hasHazardQuakes =
+    (eventType === "all" || eventType === "earthquake") &&
+    (hazards.data?.quakes?.length || 0) > 0;
   const eventWarning =
-    environment.error || (!environment.loading && !environment.data?.event_layers?.length)
+    !hasHazardQuakes &&
+    (environment.error || (!environment.loading && !environment.data?.event_layers?.length))
       ? "Lokasi kejadian dari sumber publik belum tersedia."
       : environment.data?.event_layers?.some((l) => l.last_error || !l.available)
         ? "Sebagian sumber belum berhasil diperbarui."
@@ -262,6 +284,7 @@ export function SensorWorkspace({
             history.refresh();
             alerts.refresh();
             environment.refresh();
+            hazards.refresh();
           }}
         >
           <RefreshCw size={17} />
@@ -361,9 +384,12 @@ export function SensorWorkspace({
                         <span role="status">
                           {nodes.length} node
                           {eventType !== "none"
-                            ? environment.loading && !environment.data
+                            ? (environment.loading && !environment.data) ||
+                              ((eventType === "all" || eventType === "earthquake") &&
+                                hazards.loading &&
+                                !hazards.data)
                               ? " · Memuat kejadian…"
-                              : " · " + events.length + " kejadian"
+                              : " · " + totalEventCount + " kejadian"
                             : ""}
                         </span>
                         <details className="map-info">
@@ -401,8 +427,8 @@ export function SensorWorkspace({
                               mengonfirmasi kebakaran.
                             </p>
                             <p>
-                              Gempa: daftar M5+ dalam 7 hari, radius 300 km. Tidak mencakup seluruh
-                              gempa atau menunjukkan radius dampak.
+                              Gempa: daftar BMKG M5+ dalam 7 hari terakhir di Indonesia. Tidak
+                              mencakup seluruh gempa atau menunjukkan radius dampak.
                             </p>
                             <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
                             <p>Perbesar dengan mencubit layar, klik dua kali, atau tekan +/− saat peta terfokus.</p>
@@ -432,7 +458,8 @@ export function SensorWorkspace({
                       watersense={user ? watersense.data?.actuators : undefined}
                       focusedWatersense={mapParams.get("watersense")}
                       heat={heat}
-                      showHazards={eventType === "all"}
+                      showHazards={eventType === "all" || eventType === "earthquake"}
+                      showCyclones={eventType === "all"}
                     />
                   </Suspense>
                 </>

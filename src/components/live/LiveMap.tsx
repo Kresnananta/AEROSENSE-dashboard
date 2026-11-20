@@ -1,4 +1,4 @@
-import { sensorSummary } from "@/lib/environment-presentation";
+import { formatQuakeRegion, sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
@@ -26,46 +26,89 @@ import { dateLabel, type EnvironmentEvent, type LiveNode } from "@/types/live.ty
 import "leaflet/dist/leaflet.css";
 import "@/styles/event-map.css";
 
-function HazardMarkers() {
+function HazardMarkers({
+  showCyclones = true,
+  existingQuakes = [],
+}: {
+  showCyclones?: boolean;
+  existingQuakes?: EnvironmentEvent[];
+}) {
   const { data } = useLiveData<Hazards>("/v1/hazards", 600000, false);
+  const quakes = (data?.quakes || []).filter(
+    (q) =>
+      Number.isFinite(q.latitude) &&
+      Number.isFinite(q.longitude) &&
+      !existingQuakes.some(
+        (e) =>
+          e.category === "earthquake" &&
+          Math.hypot(e.latitude - q.latitude, e.longitude - q.longitude) < 0.05,
+      ),
+  );
   return (
     <>
-      {(data?.cyclones || []).map((c) => (
-        <Circle
-          key={c.id}
-          center={[c.latitude, c.longitude]}
-          radius={250000}
-          pathOptions={{
-            color: c.level === "red" ? "#b42332" : c.level === "orange" ? "#d9731f" : "#2f7d5b",
-            weight: 2,
-            dashArray: "6 6",
-            fillOpacity: 0.08,
-          }}
-        >
-          <Tooltip direction="top">
-            Siklon tropis {c.name} · status {c.level}
-            {c.severity ? ` · ${c.severity}` : ""}
-          </Tooltip>
-        </Circle>
-      ))}
-      {(data?.quakes || []).map((q) => (
-        <CircleMarker
-          key={q.id}
-          center={[q.latitude, q.longitude]}
-          radius={Math.max(5, (q.magnitude - 4) * 6)}
-          pathOptions={{ color: "#fff", weight: 2, fillColor: "#c2410c", fillOpacity: 0.85 }}
-        >
-          <Tooltip direction="top">
-            Gempa M{q.magnitude} · {q.region} ·{" "}
-            {new Date(q.time).toLocaleString("id-ID", {
-              dateStyle: "medium",
-              timeStyle: "short",
-              timeZone: "Asia/Jakarta",
-            })}{" "}
-            WIB
-          </Tooltip>
-        </CircleMarker>
-      ))}
+      {showCyclones &&
+        (data?.cyclones || []).map((c) => (
+          <Circle
+            key={c.id}
+            center={[c.latitude, c.longitude]}
+            radius={250000}
+            pathOptions={{
+              color: c.level === "red" ? "#b42332" : c.level === "orange" ? "#d9731f" : "#2f7d5b",
+              weight: 2,
+              dashArray: "6 6",
+              fillOpacity: 0.08,
+            }}
+          >
+            <Tooltip direction="top">
+              Siklon tropis {c.name} · status {c.level}
+              {c.severity ? ` · ${c.severity}` : ""}
+            </Tooltip>
+          </Circle>
+        ))}
+      {quakes.map((q) => {
+        const region = formatQuakeRegion(q.region || "") || "Wilayah Indonesia";
+        const mag = q.magnitude.toLocaleString("id-ID", { maximumFractionDigits: 1 });
+        const timeStr =
+          new Date(q.time).toLocaleString("id-ID", {
+            dateStyle: "medium",
+            timeStyle: "short",
+            timeZone: "Asia/Jakarta",
+          }) + " WIB";
+        return (
+          <Marker
+            key={q.id}
+            position={[q.latitude, q.longitude]}
+            icon={mapIcon("earthquake")}
+            title={`Gempa M ${mag} · ${region}`}
+            alt="Episenter gempa BMKG"
+          >
+            <Tooltip direction="top" offset={[0, -18]}>
+              Gempa M {mag} · {region} · {timeStr}
+            </Tooltip>
+            <Popup minWidth={240} maxWidth={290} className="event-popup">
+              <strong>Gempa BMKG</strong>
+              <p>{region}</p>
+              <dl>
+                <dt>Magnitudo</dt>
+                <dd>M {mag}</dd>
+                {q.depth && (
+                  <>
+                    <dt>Kedalaman</dt>
+                    <dd>{q.depth}</dd>
+                  </>
+                )}
+                <dt>Waktu kejadian</dt>
+                <dd>{timeStr}</dd>
+                <dt>Koordinat</dt>
+                <dd>
+                  {q.latitude.toFixed(4)}, {q.longitude.toFixed(4)}
+                </dd>
+              </dl>
+              {q.potential && <p>{q.potential}</p>}
+            </Popup>
+          </Marker>
+        );
+      })}
     </>
   );
 }
@@ -177,6 +220,7 @@ export function LiveMap({
   focusedWatersense,
   heat = "off",
   showHazards = false,
+  showCyclones = true,
 }: {
   nodes: LiveNode[];
   selected: string;
@@ -193,6 +237,7 @@ export function LiveMap({
   focusedWatersense?: string | null;
   heat?: HeatLayerKey | "off";
   showHazards?: boolean;
+  showCyclones?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
   const [heatInfo, setHeatInfo] = useState<{
@@ -200,6 +245,10 @@ export function LiveMap({
     valid_at: string | null;
     error?: string;
   } | null>(null);
+  const hazards = useLiveData<Hazards>(showHazards ? "/v1/hazards" : null, 600000, false);
+  const hazardPoints = (hazards.data?.quakes || [])
+    .filter((q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude))
+    .map((q) => ({ latitude: q.latitude, longitude: q.longitude }) as EnvironmentEvent);
   const locationPoint = userLocation || devicePoint;
   const valid = nodes.filter(
     (n) =>
@@ -237,8 +286,8 @@ export function LiveMap({
       >
         {userLocation ? (
           <LocationFocus point={userLocation} radiusKm={radiusKm} />
-        ) : eventPoints.length ? (
-          <EventFocus nodes={valid} events={eventPoints} />
+        ) : eventPoints.length || hazardPoints.length ? (
+          <EventFocus nodes={valid} events={[...eventPoints, ...hazardPoints]} />
         ) : devicePoint ? null : (
           <Focus node={active} nodes={valid} />
         )}
@@ -316,7 +365,9 @@ export function LiveMap({
           </>
         )}
         {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
-        {showHazards && <HazardMarkers />}
+        {showHazards && (
+          <HazardMarkers showCyclones={showCyclones} existingQuakes={eventPoints} />
+        )}
         {valid.map((n) => (
           <Marker
             key={n.id}
@@ -369,58 +420,71 @@ export function LiveMap({
             </Popup>
           </Marker>
         ))}
-        {eventPoints.map((e) => (
-          <Marker
-            key={e.id}
-            position={[e.latitude, e.longitude]}
-            icon={mapIcon(e.category)}
-            title={e.title}
-            alt={e.category === "fire" ? "Titik panas satelit" : "Episenter gempa"}
-            opacity={e.stale ? 0.55 : 1}
-          >
-            <Popup minWidth={240} maxWidth={290} className="event-popup">
-              <strong>{e.category === "fire" ? "Titik panas satelit" : "Gempa BMKG"}</strong>
-              <p>
+        {eventPoints.map((e) => {
+          const formattedTitle =
+            e.category === "earthquake" ? formatQuakeRegion(e.title || "") : e.title;
+          const magLabel =
+            e.magnitude != null
+              ? e.magnitude.toLocaleString("id-ID", { maximumFractionDigits: 1 })
+              : null;
+          return (
+            <Marker
+              key={e.id}
+              position={[e.latitude, e.longitude]}
+              icon={mapIcon(e.category)}
+              title={formattedTitle}
+              alt={e.category === "fire" ? "Titik panas satelit" : "Episenter gempa"}
+              opacity={e.stale ? 0.55 : 1}
+            >
+              <Tooltip direction="top" offset={[0, -18]}>
                 {e.category === "earthquake"
-                  ? e.title
-                  : "Deteksi anomali termal; belum konfirmasi kebakaran."}
-              </p>
-              <dl>
-                {e.category === "fire" ? (
-                  <>
-                    <dt>Keyakinan deteksi</dt>
-                    <dd>
-                      {(
-                        { low: "Rendah", nominal: "Nominal", high: "Tinggi" } as Record<
-                          string,
-                          string
-                        >
-                      )[e.confidence || ""] || "Tidak tersedia"}
-                    </dd>
-                  </>
-                ) : (
-                  <>
-                    <dt>Magnitudo</dt>
-                    <dd>{e.magnitude?.toLocaleString("id-ID")}</dd>
-                    <dt>Kedalaman</dt>
-                    <dd>{e.depth_km != null ? `${e.depth_km} km` : "Tidak tersedia"}</dd>
-                  </>
-                )}
-                <dt>Waktu kejadian</dt>
-                <dd>{dateLabel(e.observed_at)}</dd>
-                <dt>Koordinat</dt>
-                <dd>
-                  {e.latitude.toFixed(4)}, {e.longitude.toFixed(4)}
-                </dd>
-              </dl>
-              {e.stale && <p className="event-stale">Pembaruan tertunda; periksa waktu data.</p>}
-              {e.felt && <p>{e.felt}</p>}
-              <a href={e.source_url} target="_blank" rel="noreferrer">
-                {e.source} <ArrowUpRight size={12} />
-              </a>
-            </Popup>
-          </Marker>
-        ))}
+                  ? `Gempa${magLabel ? ` M ${magLabel}` : ""} · ${formattedTitle} · ${dateLabel(e.observed_at)}`
+                  : `Titik panas satelit · ${dateLabel(e.observed_at)}`}
+              </Tooltip>
+              <Popup minWidth={240} maxWidth={290} className="event-popup">
+                <strong>{e.category === "fire" ? "Titik panas satelit" : "Gempa BMKG"}</strong>
+                <p>
+                  {e.category === "earthquake"
+                    ? formattedTitle
+                    : "Deteksi anomali termal; belum konfirmasi kebakaran."}
+                </p>
+                <dl>
+                  {e.category === "fire" ? (
+                    <>
+                      <dt>Keyakinan deteksi</dt>
+                      <dd>
+                        {(
+                          { low: "Rendah", nominal: "Nominal", high: "Tinggi" } as Record<
+                            string,
+                            string
+                          >
+                        )[e.confidence || ""] || "Tidak tersedia"}
+                      </dd>
+                    </>
+                  ) : (
+                    <>
+                      <dt>Magnitudo</dt>
+                      <dd>{magLabel ? `M ${magLabel}` : "Tidak tersedia"}</dd>
+                      <dt>Kedalaman</dt>
+                      <dd>{e.depth_km != null ? `${e.depth_km} km` : "Tidak tersedia"}</dd>
+                    </>
+                  )}
+                  <dt>Waktu kejadian</dt>
+                  <dd>{dateLabel(e.observed_at)}</dd>
+                  <dt>Koordinat</dt>
+                  <dd>
+                    {e.latitude.toFixed(4)}, {e.longitude.toFixed(4)}
+                  </dd>
+                </dl>
+                {e.stale && <p className="event-stale">Pembaruan tertunda; periksa waktu data.</p>}
+                {e.felt && <p>{e.felt}</p>}
+                <a href={e.source_url} target="_blank" rel="noreferrer">
+                  {e.source} <ArrowUpRight size={12} />
+                </a>
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
     </div>
   );

@@ -31,6 +31,34 @@ test("Gemini input expression is valid and sends facts without URLs", async () =
   assert.equal(result.environment[0].id, "air-1");
   assert.equal(result.environment[0].source, "Open-Meteo");
   assert.doesNotMatch(JSON.stringify(result), /https?:|source_url/);
+
+  const withStaleAndFresh = JSON.parse(
+    new Function("$json", `return (${body});`)({
+      ...input,
+      context: [
+        {
+          node_id: "node-stale",
+          name: "Node 1 ITS",
+          observed_at: "2026-11-12T08:52:00.000Z",
+          stale: true,
+          metrics: { temperature_c: 28.4, humidity_pct: 80 },
+          quality: {},
+        },
+        {
+          node_id: "node-fresh",
+          name: "Node 2 ITS",
+          observed_at: "2026-11-20T01:00:00.000Z",
+          stale: false,
+          metrics: { temperature_c: 26.1, humidity_pct: 68 },
+          quality: {},
+        },
+      ],
+    }),
+  );
+  assert.deepEqual(
+    withStaleAndFresh.sensors.map((s) => s.node_id),
+    ["node-fresh"],
+  );
 });
 
 test("worker context follows an authorized robot node and keeps national news separate", async () => {
@@ -226,6 +254,21 @@ test("air questions include current API evidence even when local sensor readings
   assert.match(answer.answer, /Sensor AEROSENSE Titik uji/);
   assert.match(answer.answer, /Open-Meteo/);
   assert.doesNotMatch(answer.answer, /https?:/);
+
+  const staleResult = {
+    ...result,
+    context: [{ ...sensor, stale: true }],
+  };
+  const staleDirectAnswer = new Function("$json", "$", validation)({}, (name) => ({
+    first: () => ({
+      json: name === "Siapkan konteks hub Web" ? staleResult : { direct_route: true },
+    }),
+    item: { json: { job: { body: {} } } },
+  })).json;
+  assert.equal(staleDirectAnswer.decision, "allow");
+  assert.match(staleDirectAnswer.answer, /Pembacaan sensor lokal belum tersedia/);
+  assert.match(staleDirectAnswer.answer, /Sumber: Open-Meteo/);
+  assert.doesNotMatch(staleDirectAnswer.answer, /Sensor AEROSENSE|data lama/);
 });
 
 test("Hub planner only polls active robot-node points and skips fresh provider caches", async () => {

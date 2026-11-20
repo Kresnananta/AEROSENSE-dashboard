@@ -47,6 +47,56 @@ const number = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits:
 const riverDay = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
 export const riverDayLabel = (at: string) => riverDay.format(new Date(at));
 
+const REGION_EXPAND: Record<string, string> = {
+  NTT: "NTT",
+  NTB: "NTB",
+  DIY: "DIY",
+  DKI: "DKI Jakarta",
+  NAD: "Aceh",
+  SUMUT: "Sumatera Utara",
+  SUMBAR: "Sumatera Barat",
+  SUMSEL: "Sumatera Selatan",
+  JABAR: "Jawa Barat",
+  JATENG: "Jawa Tengah",
+  JATIM: "Jawa Timur",
+  KALBAR: "Kalimantan Barat",
+  KALTENG: "Kalimantan Tengah",
+  KALSEL: "Kalimantan Selatan",
+  KALTIM: "Kalimantan Timur",
+  KALTARA: "Kalimantan Utara",
+  SULUT: "Sulawesi Utara",
+  SULTENG: "Sulawesi Tengah",
+  SULSEL: "Sulawesi Selatan",
+  SULTRA: "Sulawesi Tenggara",
+  SULBAR: "Sulawesi Barat",
+  MALUT: "Maluku Utara",
+  PAPUABRT: "Papua Barat",
+  BABEL: "Bangka Belitung",
+  KEPRI: "Kepulauan Riau",
+};
+
+export function formatQuakeRegion(raw: string): string {
+  return raw
+    .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
+    .replace(/\bSERAMBAGIANBARAT\b/gi, "Seram Bagian Barat")
+    .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
+    .replace(/\bPAPUABRT\b/gi, "Papua Barat")
+    .replace(/(Barat|Timur|Utara|Selatan)(Laut|Daya|Timur|Barat)\b/gi, "$1 $2")
+    .replace(/(?<=[A-Za-z]{3})(Utara|Selatan|Timur|Barat|Tengah|Tenggara)\b/gi, " $1")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s*-\s*/g, " · ")
+    .replace(/\b[A-Za-z]{2,}\b/g, (word) => {
+      const upper = word.toUpperCase();
+      if (REGION_EXPAND[upper]) return REGION_EXPAND[upper];
+      if (word.length >= 3 && word === upper) {
+        return word[0] + word.slice(1).toLowerCase();
+      }
+      return word;
+    })
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
   return facts
     .filter(

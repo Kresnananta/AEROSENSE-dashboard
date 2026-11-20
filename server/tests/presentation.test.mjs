@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   conditionScene,
   environmentHighlights,
+  formatQuakeRegion,
   sensorSummary as sensorSummaryDefault,
 } from "../../src/lib/environment-presentation.ts";
 import { visibleSensorResponse } from "../../src/lib/sensor-display.ts";
@@ -263,4 +264,19 @@ test("temporary PM2.5-only status: judged on PM2.5 estimasi, a missing dust_ug_m
   assert.equal(sensorSummary(node(null), [dust, pm25], true).label, "Data belum cukup");
   assert.equal(sensorSummary(node(41.8), [dust], true).label, "Data belum cukup");
   assert.equal(sensorSummaryDefault(node(41.8), [dust, pm25]).label, "Terpantau baik");
+});
+
+test("formatQuakeRegion formats raw BMKG earthquake region strings cleanly", () => {
+  assert.equal(
+    formatQuakeRegion("130 km BaratDaya MALUKUTENGGARA"),
+    "130 km Barat Daya Maluku Tenggara",
+  );
+  assert.equal(
+    formatQuakeRegion("49 km TimurLaut RUTENG-MANGGARAI-NTT"),
+    "49 km Timur Laut Ruteng · Manggarai · NTT",
+  );
+  assert.equal(
+    formatQuakeRegion("114 km BaratDaya NIASBARAT-SUMUT"),
+    "114 km Barat Daya Nias Barat · Sumatera Utara",
+  );
 });
