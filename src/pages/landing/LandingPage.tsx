@@ -80,6 +80,7 @@ export function LandingPage() {
         Lewati navigasi
       </a>
       <div className="landing-hero-stage" data-day-period={dayPeriod}>
+        <span className="landing-hero-fade" aria-hidden="true" />
         <header className="landing-header">
           <Link to="/" className="landing-brand" aria-label="AEROSENSE — Halaman utama">
             <img src="/assets/brand/aerosense-mark.png" alt="" width="40" height="40" />

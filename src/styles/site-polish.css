@@ -4,10 +4,6 @@
 .app-shell .app-topbar { padding-inline: clamp(12px, 3vw, 32px); }
 .app-shell .app-topbar button { width: 44px; height: 44px; }
 
-.landing-page .landing-feature-options button[aria-pressed="true"] {
-  background: #e5f1ff;
-  box-shadow: inset 3px 0 var(--aero-blue);
-}
 .landing-page .landing-management { background: #e5f5f4; }
 
 .chat-workspace {

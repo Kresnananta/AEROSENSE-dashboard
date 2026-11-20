@@ -81,7 +81,12 @@ dialog.role-dialog {
 @supports (backdrop-filter: blur(12px)) {
   @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) {
     .app-shell .app-topbar { background: var(--aero-material); backdrop-filter: blur(14px) saturate(140%); }
-    .app-shell .environment-hub > .environment-nav { background: var(--aero-material); backdrop-filter: blur(16px) saturate(135%); box-shadow: var(--aero-depth); }
+    .app-shell .environment-hub > .environment-nav {
+      background: oklch(98% .018 237 / .65);
+      border-color: oklch(65% .055 246 / .36);
+      backdrop-filter: blur(22px) saturate(155%);
+      box-shadow: inset 0 1px oklch(100% 0 0 / .8), var(--aero-depth);
+    }
     .monitoring-options[data-slot="select-content"],
     :is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
       background: var(--aero-material-raised);
@@ -155,7 +160,7 @@ dialog.role-dialog {
   .app-shell .app-topbar .account-link { padding-inline: 9px; }
   .app-shell .app-topbar .account-link svg { display: none; }
   .app-shell .app-topbar .topbar-breadcrumb strong { overflow-wrap: anywhere; }
-  .app-shell :is(.wx-hours, .wx-days):not(:focus-within),
+  .app-shell .wx-days:not(:focus-within),
   .app-shell .environment-hub .environment-nav .insight-topics:not(:focus-within) {
     padding-inline-end: 16px;
     mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent);
@@ -206,7 +211,12 @@ dialog.role-dialog {
   background: var(--background);
 }
 .landing-page :is(.landing-feature-detail, .landing-management) { background: var(--card); border-color: var(--border); }
-.landing-page .landing-feature-options button[aria-pressed="true"] { background: var(--accent); color: var(--accent-foreground); }
+.landing-page .landing-feature-options button { border: 1px solid transparent; }
+.landing-page .landing-feature-options button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--input);
+  color: var(--accent-foreground);
+}
 .landing-page .landing-feature-options button[aria-pressed="false"] { color: var(--muted-foreground); }
 .landing-page .landing-feature-options button[aria-pressed="false"]:hover { background: var(--muted); }
 .landing-page :is(.landing-feature-link, .landing-management-link, .landing-management-details svg, .landing-workflow-steps li > span) {
@@ -252,10 +262,27 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 .wx-detail-head { color-scheme: light; }
 
-.app-shell .map-controls {
-  --frame-radius: var(--aero-frame);
-  --frame-inset: 10px;
+.app-shell .sensor-workspace .map-controls {
+  --frame-radius: 28px;
+  --frame-inset: 16px;
+  margin-block-end: 16px;
   padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+}
+.app-shell .map-controls-main { gap: 12px 16px; }
+.app-shell .map-filter { gap: 7px; }
+.app-shell .map-controls-meta {
+  margin-block-start: 12px;
+  padding-block-start: 2px;
+  min-height: 40px;
+  border-top: 1px solid var(--border);
+  font-size: .8125rem;
+}
+.app-shell .map-info summary { min-height: 40px; }
+@media (max-width: 620px) {
+  .app-shell .sensor-workspace .map-controls { --frame-radius: 24px; --frame-inset: 12px; }
+  .app-shell .map-controls-main { gap: 10px; }
+  .app-shell .map-controls-meta { margin-block-start: 10px; gap: 8px; }
 }
 .app-shell .map-controls :is(.map-reference, .monitoring-select[data-slot="select-trigger"]) {
   min-height: 48px;
@@ -303,6 +330,19 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 .landing-page .landing-hero-stage {
   position: relative;
   isolation: isolate;
+  border-bottom: 0;
+}
+.landing-page .landing-hero-stage[data-day-period="day"] {
+  background: url("../assets/images/skyline-landing-sun.svg") right bottom / cover no-repeat, var(--aero-sky);
+}
+.landing-hero-stage .landing-hero { position: relative; z-index: 1; }
+.landing-hero-fade {
+  position: absolute;
+  inset: auto 0 0;
+  height: clamp(60px, 10vw, 146px);
+  z-index: 0;
+  background: linear-gradient(to bottom, transparent, var(--background));
+  pointer-events: none;
 }
 .landing-hero-stage::before,
 .landing-hero-stage::after,
@@ -324,6 +364,15 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   background: url("../assets/images/land-contours.svg") right bottom / auto 100% no-repeat;
   mask-image: linear-gradient(125deg, transparent 5%, #000 64%);
   opacity: .52;
+}
+@supports (mask-composite: intersect) {
+  @media (min-width: 681px) {
+    .landing-hero-stage[data-day-period="day"]::before {
+      mask-image: linear-gradient(90deg, transparent, #000 61%),
+        linear-gradient(to bottom, transparent clamp(148px, 16vw, 245px), #000 56%);
+      mask-composite: intersect;
+    }
+  }
 }
 .landing-hero-stage[data-day-period="night"]::before {
   filter: grayscale(1) sepia(1) hue-rotate(164deg) saturate(2) brightness(.57);

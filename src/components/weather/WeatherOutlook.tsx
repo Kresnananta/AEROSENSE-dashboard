@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -302,29 +302,47 @@ function HourCards({ hours, onSelect }: {
   hours: WeatherHour[];
   onSelect: (time: string, button: HTMLButtonElement) => void;
 }) {
+  const rail = useRef<HTMLOListElement>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
+  useEffect(() => {
+    const list = rail.current;
+    if (!list) return;
+    const measure = () => {
+      const start = list.scrollLeft > 1;
+      const end = list.scrollWidth - list.clientWidth - list.scrollLeft > 1;
+      setEdges((current) => current.start === start && current.end === end ? current : { start, end });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    list.addEventListener("scroll", measure, { passive: true });
+    measure();
+    return () => { observer.disconnect(); list.removeEventListener("scroll", measure); };
+  }, [hours.length]);
   if (!hours.length) return <p className="wx-muted">Prakiraan per jam belum tersedia.</p>;
   return (
-    <ol className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
-      {hours.map((h, i) => (
-        <li key={h.time}>
-          <button type="button" className={`wx-card tone-${h.icon}`} aria-haspopup="dialog"
-            aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
-            onClick={(e) => onSelect(h.time, e.currentTarget)}>
-            <span className="wx-day-name">{clock(h.time)}</span>
-            {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
-              <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
-            )}
-            <WeatherArt weather={h} size={48} />
-            <span className="wx-day-label">{h.label}</span>
-            <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
-            <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
-              <Droplets size={12} aria-hidden="true" /> {unit(h.rain_chance, "%")}
-            </span>
-            <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
-          </button>
-        </li>
-      ))}
-    </ol>
+    <div className="wx-hour-rail" data-edge-start={edges.start} data-edge-end={edges.end}>
+      <ol ref={rail} className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
+        {hours.map((h, i) => (
+          <li key={h.time}>
+            <button type="button" className={`wx-card tone-${h.icon}`} aria-haspopup="dialog"
+              aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
+              onClick={(e) => onSelect(h.time, e.currentTarget)}>
+              <span className="wx-day-name">{clock(h.time)}</span>
+              {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
+                <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
+              )}
+              <WeatherArt weather={h} size={48} />
+              <span className="wx-day-label">{h.label}</span>
+              <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
+              <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
+                <Droplets size={12} aria-hidden="true" /> {unit(h.rain_chance, "%")}
+              </span>
+              <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

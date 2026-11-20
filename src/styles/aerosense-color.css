@@ -1101,8 +1101,7 @@ body:has(.login-story[data-day-period="morning"]) {
 }
 
 :is(.app-shell .sensor-overview .sensor-hero,
-  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake),
-  .landing-page .landing-hero-stage)[data-day-period="day"],
+  .app-shell .environment-hub .insight-lead:is(.panel-soil, .panel-flood, .panel-earthquake))[data-day-period="day"],
 body:has(.login-story[data-day-period="day"]) {
   background: var(--aero-sensor-sky-day);
 }
