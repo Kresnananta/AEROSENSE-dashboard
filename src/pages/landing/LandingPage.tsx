@@ -271,13 +271,6 @@ export function LandingPage() {
             </p>
           </div>
         </section>
-        <aside id="tentang-data" className="landing-data-note landing-container">
-          <strong>Tentang data</strong>
-          <p>
-            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah. Ambang pengelola digunakan
-            untuk pemantauan operasional.
-          </p>
-        </aside>
       </main>
       <footer className="landing-footer landing-container">
         <Link to="/" className="landing-brand">

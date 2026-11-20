@@ -517,28 +517,12 @@
   font-size: 16px;
   margin-bottom: 5px;
 }
-.landing-data-note {
-  padding-block: 38px;
-  display: grid;
-  grid-template-columns: 1fr 2.4fr;
-  gap: 40px;
-  border-bottom: 1px solid #d9e9f6;
-}
-.landing-data-note strong {
-  font-size: 14px;
-}
-.landing-data-note p {
-  max-width: 75ch;
-  margin: 0;
-  font-size: 14px;
-  color: var(--landing-muted);
-  line-height: 1.8;
-}
 .landing-footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 24px;
+  margin-top: 32px;
   padding-block: 30px;
 }
 .landing-footer .landing-brand {
@@ -699,11 +683,6 @@
   }
   .landing-management-details p {
     padding: 17px 0;
-  }
-  .landing-data-note {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding-block: 30px;
   }
   .landing-footer {
     gap: 15px;
