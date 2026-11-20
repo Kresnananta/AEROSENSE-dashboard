@@ -417,14 +417,14 @@ export function ChatPanel() {
           <img className="chat-header-icon" alt="" width={44} height={44}
             src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"} />
           <div>
-            <strong>AERO-BOT</strong>
+            <strong>Percakapan</strong>
             <small>
-              {robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}
+              {robotId ? "Layar robot · " + robotId : ""}
               {cameraEnabled &&
                 " · kamera " + (presenceLink === "connected" ? "tersambung" : "belum tersambung")}
             </small>
           </div>
-          <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
+          {busy && <span className="live-tag" role="status">Menyiapkan jawaban</span>}
         </header>
         {!user && !isLoading && (
           <div className="chat-guest">

@@ -55,25 +55,22 @@
 
 .robot-mood {
   --mood-sky: #c3e8ff;
-  --mood-paper: #f4faff;
   --mood-accent: #15539e;
   position: relative;
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--aero-rim);
   border-radius: var(--aero-panel-radius);
-  background: var(--mood-paper);
+  background: #fff;
 }
-.robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-paper: #f0faf7; --mood-accent: #13634e; }
+.robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-accent: #13634e; }
 .robot-mood[data-mood="warning"] {
   --mood-sky: #ffebba;
-  --mood-paper: #fff9eb;
   --mood-accent: #7c4c10;
   --mood-mascot: hue-rotate(183deg) brightness(1.14);
 }
 .robot-mood[data-mood="danger"] {
   --mood-sky: #ffded0;
-  --mood-paper: #fff4ed;
   --mood-accent: #842f27;
   --mood-mascot: hue-rotate(138deg) brightness(1.03);
 }
@@ -83,7 +80,7 @@
   align-content: end;
   min-height: 152px;
   background: url("../assets/images/aerobot-sky.svg") center bottom / cover no-repeat,
-    linear-gradient(150deg, var(--mood-paper) 5%, var(--mood-sky) 70%);
+    var(--mood-sky);
 }
 .robot-mood-bubble {
   position: relative;
