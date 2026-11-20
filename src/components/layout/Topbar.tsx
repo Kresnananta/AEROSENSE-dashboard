@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
 import type { Ref } from "react";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -38,14 +39,14 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
           aria-label="Buka menu navigasi"
           aria-controls="mobile-navigation"
           aria-expanded={menuOpen}
-          className="md:hidden w-8 h-8 rounded-lg bg-[#e8f1fc] text-[#0a58ca] grid place-items-center hover:bg-[#d8e7fa] transition-colors cursor-pointer"
+          className="topbar-icon md:hidden w-8 h-8 rounded-lg bg-[#e8f1fc] text-[#0a58ca] grid place-items-center hover:bg-[#d8e7fa] transition-colors cursor-pointer"
         >
           <Menu size={18} />
         </button>
 
         <nav
           aria-label="Lokasi halaman"
-          className="flex items-center gap-2 text-[#3f566a] text-xs font-semibold"
+          className="topbar-breadcrumb flex items-center gap-2 text-xs font-semibold"
         >
           <span className="hidden sm:inline">AEROSENSE</span>
           <ChevronRight size={14} className="hidden sm:block text-[#3f566a]" />
@@ -53,12 +54,13 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
         </nav>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="topbar-actions flex items-center gap-3 sm:gap-4">
+        <ThemeToggle />
         <button
           type="button"
           onClick={() => navigate(ROUTES.ALERTS)}
           aria-label="Lihat peringatan"
-          className="relative w-8 h-8 rounded-lg text-[#3f566a] hover:bg-[#edf2ee] hover:text-[#0a58ca] grid place-items-center transition-colors cursor-pointer"
+          className="topbar-icon relative w-8 h-8 rounded-lg text-[#3f566a] hover:bg-[#edf2ee] hover:text-[#0a58ca] grid place-items-center transition-colors cursor-pointer"
         >
           <Bell size={18} />
         </button>

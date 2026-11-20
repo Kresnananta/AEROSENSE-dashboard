@@ -1,0 +1,273 @@
+:root {
+  color-scheme: light dark;
+  --background: light-dark(oklch(96% .022 242), oklch(17% .031 249));
+  --foreground: light-dark(oklch(28% .062 251), oklch(94% .014 239));
+  --card: light-dark(oklch(99.5% .004 243), oklch(22.5% .035 248));
+  --card-foreground: var(--foreground);
+  --popover: light-dark(oklch(99.5% .004 243), oklch(27% .04 248));
+  --popover-foreground: var(--foreground);
+  --muted: light-dark(oklch(95.5% .024 246), oklch(26% .042 250));
+  --muted-foreground: light-dark(oklch(44% .059 244), oklch(77% .036 241));
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --primary: oklch(52% .194 255);
+  --ring: light-dark(oklch(53% .196 255), oklch(78% .128 249));
+  --accent: light-dark(oklch(93% .041 248), oklch(32% .073 250));
+  --accent-foreground: light-dark(oklch(42% .149 254), oklch(87% .073 245));
+  --border: light-dark(oklch(37% .077 247 / .17), oklch(87% .062 244 / .19));
+  --input: light-dark(oklch(37% .077 247 / .25), oklch(87% .062 244 / .29));
+  --sidebar: light-dark(oklch(98.5% .011 241), oklch(20% .033 248));
+  --sidebar-foreground: var(--muted-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --aero-link: light-dark(oklch(44% .161 254), oklch(81% .105 247));
+  --aero-material: light-dark(oklch(99.5% .007 240 / .83), oklch(25% .04 248 / .84));
+  --aero-material-raised: light-dark(oklch(99.5% .007 240 / .91), oklch(29% .044 248 / .90));
+  --aero-depth: 0 8px 24px light-dark(oklch(33% .05 248 / .07), oklch(10% .03 249 / .38));
+  --aero-frame: 24px;
+  --aero-frame-hero: 32px;
+  --aero-frame-control: 14px;
+  --aero-frame-inset: 12px;
+  accent-color: var(--ring);
+  scrollbar-color: var(--muted-foreground) var(--muted);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  --aero-canvas-soft: var(--background);
+  --aero-surface: var(--card);
+  --aero-ink: var(--foreground);
+  --aero-muted: var(--muted-foreground);
+  --aero-rim: var(--border);
+  --aero-blue: var(--primary);
+  --aero-blue-hover: oklch(46% .171 255);
+  --aero-panel-radius: var(--aero-frame);
+  --aero-hero-radius: var(--aero-frame-hero);
+  --aero-card-radius: 16px;
+  --aero-control-radius: var(--aero-frame-control);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+#root, .app-shell, .login-page, .landing-page { min-block-size: 100vh; min-block-size: 100dvh; }
+#mobile-navigation, .app-shell .app-sidebar { block-size: 100vh; block-size: 100dvh; }
+.app-shell .app-sidebar { background: var(--sidebar); border-color: var(--border); }
+#mobile-navigation { overscroll-behavior: contain; }
+#mobile-navigation .app-sidebar { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.app-shell .app-content { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+
+.app-shell .app-topbar,
+.app-shell .environment-hub > .environment-nav,
+.monitoring-options[data-slot="select-content"],
+:is(.wx-detail, .wa-start-dialog, .role-dialog)[data-slot="dialog-content"],
+dialog.role-dialog {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.app-shell .app-topbar { padding-top: env(safe-area-inset-top); }
+.app-shell .environment-hub > .environment-nav {
+  --frame-radius: 20px;
+  --frame-inset: 6px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+}
+.app-shell .environment-hub .environment-nav .insight-topics button,
+.app-shell .environment-nav .monitoring-select[data-slot="select-trigger"],
+.app-shell .environment-nav .live-icon-button {
+  border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset)));
+}
+
+@supports (backdrop-filter: blur(12px)) {
+  @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) {
+    .app-shell .app-topbar { background: var(--aero-material); backdrop-filter: blur(14px) saturate(140%); }
+    .app-shell .environment-hub > .environment-nav { background: var(--aero-material); backdrop-filter: blur(16px) saturate(135%); box-shadow: var(--aero-depth); }
+    .monitoring-options[data-slot="select-content"],
+    :is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+      background: var(--aero-material-raised);
+      backdrop-filter: blur(20px) saturate(125%);
+      box-shadow: var(--aero-depth);
+    }
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+  .monitoring-options[data-slot="select-content"], .wa-start-dialog, .wx-detail, dialog.role-dialog {
+    background: var(--popover);
+    backdrop-filter: none;
+  }
+}
+
+.app-shell :is(.wx-panel, .live-panel, .live-table-wrap, .insight-disclosure, .disaster-card,
+  .nearby-location, .nearby-map-panel, .management-location, .management-access,
+  .management-rules, .sprinkler-section, .management-side > section, .wa-alert-entry) {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.app-shell :is(.wx-panel, .robot-mood, .live-chat, .map-controls, .sensor-toolbar),
+.login-page .login-form-panel {
+  --frame-radius: var(--aero-frame);
+  border-radius: var(--frame-radius);
+  background: var(--card);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.app-shell .wx-panel { --frame-inset: 16px; padding: var(--frame-inset); }
+.app-shell .wx-panel :is(.wx-card, .disaster-card) { border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset))); }
+.app-shell .chat-workspace .live-chat > header { background: var(--muted); border-color: var(--border); }
+.app-shell .chat-workspace .live-chat > header :is(strong, small), .app-shell .wx-panel h3 { color: var(--foreground); }
+.app-shell .chat-workspace .chat-welcome .chat-suggestions button,
+.app-shell .chat-workspace .chat-guest, .app-shell .chat-workspace .chat-scope,
+.app-shell .wx-panel .wx-card, .app-shell .robot-mood-greet,
+.login-page :is(.login-input, .register-profile summary) {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled),
+.app-shell .wx-panel .wx-card:hover, .app-shell .robot-mood-greet:hover { background: var(--accent); }
+.app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
+.app-shell :is(.nav-group > p, .sidebar-account small, .chat-scope summary, .robot-mood-reading),
+.login-page :is(label, legend, .register-hint, .login-register) { color: var(--muted-foreground); }
+.app-shell .wx-panel .wx-day-temp strong,
+.app-shell :is(.sidebar-account strong, .chat-welcome h2, .live-heading h1, .insights-heading h1),
+.login-page :is(.login-form-inner h1, .login-input input, .register-select, .register-note) { color: var(--foreground); }
+.app-shell :is(.chat-guest, .robot-mood-actions) a,
+.login-page :is(.login-back, .login-register a) { color: var(--aero-link); }
+.app-shell .nav-entry { color: var(--muted-foreground); }
+.app-shell .nav-entry.active { color: var(--accent-foreground); background: var(--accent); }
+.app-shell .nav-entry.active svg { color: currentColor; }
+.app-shell .app-topbar :is(.topbar-breadcrumb, .topbar-icon) { color: var(--muted-foreground); }
+.app-shell .app-topbar .topbar-breadcrumb strong { color: var(--foreground); }
+.app-shell .app-topbar :is(.account-link, .topbar-icon:hover) { color: var(--aero-link); background: var(--muted); border-color: var(--border); }
+.app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
+.landing-hero-stage, .login-story { color-scheme: light; }
+.app-shell .wx-panel :is(.wx-hours, .wx-days),
+.app-shell .environment-hub .environment-nav .insight-topics { scrollbar-color: var(--muted-foreground) var(--muted); }
+
+:is(.app-topbar, .landing-header, .app-navigation, .live-panel, .live-chat, .robot-mood, .login-page, .wx-panel) svg.lucide { stroke-width: 1.65; }
+:is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close, .theme-toggle) svg.lucide { stroke-width: 2; }
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--aero-control-radius);
+  background: var(--muted);
+  color: var(--foreground);
+  cursor: pointer;
+}
+.theme-toggle svg { grid-area: 1 / 1; }
+.theme-toggle .theme-icon-sun, .theme-toggle[aria-pressed="true"] .theme-icon-moon { opacity: 0; }
+.theme-toggle[aria-pressed="true"] .theme-icon-sun { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .theme-toggle svg { transition: opacity 150ms ease, filter 180ms ease, scale 180ms ease; }
+  .theme-toggle .theme-icon-sun, .theme-toggle[aria-pressed="true"] .theme-icon-moon { filter: blur(3px); scale: .84; }
+  .theme-toggle[aria-pressed="true"] .theme-icon-sun { filter: none; scale: 1; }
+}
+@media (max-width: 680px) {
+  .app-shell .app-topbar .topbar-actions { gap: 4px; }
+  .app-shell .app-topbar .account-link { padding-inline: 9px; }
+  .app-shell .app-topbar .account-link svg { display: none; }
+  .app-shell .app-topbar .topbar-breadcrumb strong { overflow-wrap: anywhere; }
+  .app-shell :is(.wx-hours, .wx-days):not(:focus-within),
+  .app-shell .environment-hub .environment-nav .insight-topics:not(:focus-within) {
+    padding-inline-end: 16px;
+    mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent);
+  }
+}
+
+
+:root {
+  --ui-ink: var(--foreground);
+  --ui-muted: var(--muted-foreground);
+  --ui-line: var(--border);
+  --aero-panel-depth: 0 8px 24px light-dark(transparent, oklch(9% .03 248 / .30));
+}
+.app-shell { background: var(--background); color: var(--foreground); --ui-surface-gradient: var(--muted); }
+.app-shell :is(.robot-mood, .wx-panel), .app-shell .chat-workspace .live-chat {
+  box-shadow: var(--aero-panel-depth);
+}
+.app-shell .app-navigation .nav-group + .nav-group { border-color: var(--border); }
+.app-shell .environment-nav .insight-topics button[aria-pressed="false"] { color: var(--muted-foreground); }
+.app-shell .environment-nav .insight-topics button[aria-pressed="false"]:hover { background: var(--muted); color: var(--foreground); }
+.app-shell .environment-nav :is(.monitoring-select, .live-icon-button) {
+  background: var(--card);
+  color: var(--aero-link);
+  border-color: var(--border);
+}
+.app-shell .chat-workspace .live-chat > form {
+  --frame-radius: 20px;
+  --frame-inset: 6px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+  background: var(--muted);
+  border-color: var(--input);
+}
+.app-shell .chat-workspace .live-chat > form:focus-within { border-color: var(--ring); background: var(--card); }
+.app-shell .chat-workspace .live-chat > form button {
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+}
+.app-shell .chat-workspace .live-chat > form input { color: var(--foreground); }
+.app-shell .chat-workspace .live-message:not(.user) { background: var(--muted); color: var(--foreground); }
+.app-shell .chat-workspace :is(.chat-progress, .chat-note) { color: var(--muted-foreground); }
+.login-page :is(.register-select, .register-note) { background: var(--card); border-color: var(--input); }
+.login-page :is(.auth-result, .login-form-panel) p { color: var(--muted-foreground); }
+
+.landing-page {
+  --landing-ink: var(--foreground);
+  --landing-muted: var(--muted-foreground);
+  --landing-blue: var(--primary);
+  background: var(--background);
+}
+.landing-page :is(.landing-feature-detail, .landing-management) { background: var(--card); border-color: var(--border); }
+.landing-page .landing-feature-options button[aria-pressed="true"] { background: var(--accent); color: var(--accent-foreground); }
+.landing-page .landing-feature-options button[aria-pressed="false"] { color: var(--muted-foreground); }
+.landing-page .landing-feature-options button[aria-pressed="false"]:hover { background: var(--muted); }
+.landing-page :is(.landing-feature-link, .landing-management-link, .landing-management-details svg, .landing-workflow-steps li > span) {
+  color: var(--aero-link);
+}
+:is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+  max-block-size: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  border-radius: var(--aero-frame);
+  overflow-y: auto;
+}
+dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-description) { color: var(--foreground); }
+@media (prefers-contrast: more) {
+  :root { --border: light-dark(oklch(44% .05 244), oklch(71% .04 244)); }
+}
+
+.app-shell .wx-panel :is(.wx-card, .wx-alerts li) { border: 1px solid var(--border); }
+.app-shell :is(.disaster-filters, .nearby-radius > div) {
+  --frame-radius: 18px;
+  --frame-inset: 4px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+  background: var(--muted);
+  border-color: var(--border);
+}
+.app-shell :is(.disaster-filters, .nearby-radius > div) button {
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+}
+.app-shell .environment-nav .insight-topics button[aria-pressed="true"] svg.lucide { stroke-width: 2; }
+
+.app-shell :is(.page-heading h1, .disaster-heading h2, .live-state strong, .disaster-card h3) { color: var(--foreground); }
+.app-shell :is(.page-heading p, .disaster-heading p, .live-state p) { color: var(--muted-foreground); }
+.app-shell :is(.disaster-filters button[aria-pressed="false"], .disaster-card a, .disaster-heading a) { color: var(--aero-link); }
+.app-shell .disaster-section, .app-shell .sidebar-account { border-color: var(--border); }
+.app-shell :is(.wx-skeleton, .live-state), .app-shell .live-panel > .live-state {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+.login-page .login-story:not([data-day-period="night"]) .login-story-copy { color: oklch(28% .062 251); }
+.login-page .login-input input::placeholder, .app-shell .chat-workspace .live-chat > form input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+.wx-detail-head { color-scheme: light; }

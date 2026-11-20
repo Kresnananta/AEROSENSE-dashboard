@@ -509,11 +509,7 @@ svg.lucide {
   background-color: var(--aero-blue-hover);
 }
 
-:is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
-  .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
-  background: #ffffff;
-  box-shadow: none;
-}
+.robot-screen-controls { background: #fff; box-shadow: none; }
 
 .app-shell .app-topbar {
   border-bottom: 1px solid var(--aero-rim);
@@ -524,13 +520,7 @@ svg.lucide {
   border: 1px solid var(--aero-rim);
 }
 
-@media (prefers-contrast: more) {
-  :is(.app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
-    .monitoring-options[data-slot="select-content"], .wa-start-dialog, .robot-screen-controls) {
-    background: #ffffff;
-    border-color: #4b6174;
-  }
-}
+
 
 @media (prefers-reduced-motion: no-preference) {
   :is(.live-button, .assist-link, .landing-button, .login-submit,

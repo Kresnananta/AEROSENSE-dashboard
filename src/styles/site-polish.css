@@ -3,15 +3,6 @@
 
 .app-shell .app-topbar { padding-inline: clamp(12px, 3vw, 32px); }
 .app-shell .app-topbar button { width: 44px; height: 44px; }
-@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
-  @media (prefers-contrast: no-preference) and (prefers-reduced-transparency: no-preference) {
-    .app-shell .app-topbar {
-      background: #f8fcffec;
-      -webkit-backdrop-filter: blur(12px);
-      backdrop-filter: blur(12px);
-    }
-  }
-}
 
 .landing-page .landing-feature-options button[aria-pressed="true"] {
   background: #e5f1ff;
