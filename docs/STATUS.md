@@ -7,12 +7,14 @@
 - Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor selalu menggunakan tema terang. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor memakai jarak yang konsisten; jumlah node dan legenda dikelompokkan di bawah filter. Toolbar Hub Lingkungan memakai kaca saat menggulir dan kembali solid pada preferensi aksesibilitas.
 
 - Kartu prakiraan per jam dan tujuh hari lebih tinggi, dengan ilustrasi kondisi cuaca sebagai elemen utama. Prakiraan per jam menampilkan lebih sedikit kartu sekaligus. Tepi daftar memudar hanya jika masih ada kartu di arah tersebut.
+- Latar kartu prakiraan mengikuti waktu WIB. Kartu siang memakai rona langit cerah, dan kartu malam memakai biru laut yang lebih dalam.
+- Kabar Bencana menampilkan peta pantauan GDACS untuk lampiran gempa dan banjir yang tersedia. Kartu ANTARA membuka artikel sumber untuk melihat dokumentasi. Rilis membutuhkan pembaruan API dan web.
 - Ringkasan siklon dan gempa memakai daftar ringkas dengan magnitudo polos. Status tsunami diringkas hanya jika BMKG menyatakan semua gempa yang ditampilkan tidak berpotensi tsunami.
 - Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
 - Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.
 - Header chat menampilkan status saat jawaban sedang disiapkan. Warna kondisi tetap pada ilustrasi dan balon dialog.
 - Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil.
-- Build dan 119 tes lulus. Langkah berikutnya: uji email konfirmasi sungguhan dan tampilan di perangkat setelah rilis.
+- Build dan 121 tes lulus. Kartu prakiraan dan peta GDACS diperiksa di Chrome pada lebar 390 dan 1440 px. Langkah berikutnya: uji email konfirmasi sungguhan dan tampilan di perangkat setelah rilis.
 
 ## AERO-BOT (status terbaru)
 

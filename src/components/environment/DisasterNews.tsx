@@ -23,6 +23,7 @@ interface DisasterItem {
   published_at: string;
   stale: boolean;
   event_started_at?: string | null;
+  map_url?: string | null;
   metrics: { value: number; unit: string; label: string }[];
 }
 interface DisasterResponse {
@@ -44,7 +45,13 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   );
   const [filter, setFilter] = useState("Semua");
   const [expanded, setExpanded] = useState(false);
-  const items = (data?.items || []).filter((i) => filter === "Semua" || i.type === filter);
+  const entries = data?.items ?? [];
+  const availableFilters = entries.some((item) => item.kind === "monitoring") || filter === "monitoring"
+    ? [...filters, { value: "monitoring", label: "Pantauan GDACS" }]
+    : filters;
+  const items = entries.filter((item) =>
+    filter === "Semua" || item.type === filter || item.kind === filter,
+  );
   const shown = items.slice(0, expanded ? 24 : compact ? 2 : 3);
   return (
     <section className="disaster-section" id="kabar-bencana" aria-labelledby="disaster-heading">
@@ -64,7 +71,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
       </header>
       <div className="disaster-toolbar">
         <div className="disaster-filters" role="group" aria-label="Jenis bencana">
-          {filters.map(({ value, label }) => (
+          {availableFilters.map(({ value, label }) => (
             <button
               type="button"
               key={value}
@@ -127,6 +134,24 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                         <ArrowUpRight size={17} />
                       </a>
                     </h3>
+                    {item.map_url && item.kind === "monitoring" && (
+                      <figure className="disaster-map" key={item.map_url}>
+                        <a href={item.map_url} target="_blank" rel="noreferrer">
+                          <img
+                            src={item.map_url}
+                            alt={"Buka peta pantauan " + item.type.toLowerCase() + " GDACS"}
+                            loading="lazy"
+                            decoding="async"
+                            referrerPolicy="no-referrer"
+                            onError={(event) => event.currentTarget.closest("figure")?.setAttribute("hidden", "")}
+                          />
+                        </a>
+                        <figcaption>
+                          © Uni Eropa · EC-JRC/GDACS ·{" "}
+                          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>
+                        </figcaption>
+                      </figure>
+                    )}
                     {item.event_started_at && (
                       <small className="disaster-note disaster-event-date">
                         Mulai dipantau{" "}
@@ -149,7 +174,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                     )}
                     <footer>
                       <a href={item.url} target="_blank" rel="noreferrer">
-                        {item.source}
+                        {item.source === "ANTARA" ? "Lihat di ANTARA" : item.source}
                         <ArrowUpRight size={12} />
                       </a>
                       <time dateTime={item.published_at}>{dateLabel(item.published_at)}</time>
@@ -172,7 +197,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                 ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti."
                 : filter === "Semua"
                   ? "Belum ada kabar dari sumber yang dipantau."
-                  : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dari sumber yang dipantau.`}
+                  : `Belum ada kabar ${availableFilters.find(({ value }) => value === filter)?.label.toLowerCase()} dari sumber yang dipantau.`}
             </p>
           )}
           {items.length > shown.length && (

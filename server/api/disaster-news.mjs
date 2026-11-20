@@ -48,12 +48,20 @@ function safeLink(value, provider) {
       provider === "gdacs"
         ? ["www.gdacs.org", "gdacs.org"]
         : ["www.antaranews.com", "antaranews.com"];
-    return u.protocol === "https:" && hosts.includes(u.hostname) && !u.username && !u.password
-      ? u.href
-      : null;
+    if (!hosts.includes(u.hostname) || u.username || u.password || u.port) return null;
+    if (provider === "gdacs" && u.protocol === "http:") u.protocol = "https:";
+    return u.protocol === "https:" ? u.href : null;
   } catch {
     return null;
   }
+}
+function gdacsMapUrl(enclosures) {
+  for (const enclosure of array(enclosures)) {
+    if (enclosure?.["@_type"] !== "image/png") continue;
+    const url = safeLink(enclosure["@_url"], "gdacs");
+    if (url && /^\/contentdata\/resources\/imgtemp\/gdacs\/(?:eq\/eq\d+_\d+|fl\/dfo\d+_\d+)\.png$/i.test(new URL(url).pathname)) return url;
+  }
+  return null;
 }
 const domestic =
   /\b(indonesia|aceh|sumat(?:e)?ra|sumut|sumbar|sumsel|riau|jambi|bengkulu|lampung|bangka|belitung|jakarta|banten|jawa|jatim|jateng|jabar|yogyakarta|kalimantan|kaltim|kalteng|kalbar|kalsel|kaltara|sulawesi|sulsel|sulteng|sulut|sultra|sulbar|gorontalo|bali|nusa tenggara|ntb|ntt|maluku|papua|surabaya|semarang|bandung|bogor|bekasi|depok|tangerang|medan|padang|palembang|pekanbaru|pontianak|palangkaraya|palangka raya|samarinda|balikpapan|banjarmasin|makassar|manado|palu|kendari|denpasar|mataram|kupang|ambon|ternate|jayapura|merauke|banda aceh|solok|agam|lumajang|malang|jember|banyuwangi|banyumas|cilacap|garut|sukabumi|cianjur|buleleng|lombok|sumbawa|flores|sikka|pesisir selatan|tanah datar|kapuas|ketapang|kubu raya|mempawah|sambas|sintang|sanggau|kotawaringin|seruyan|pulang pisau|barito|berau|kutai|penajam|bengkalis|pelalawan|siak|indragiri|rokan|dumai|hulu sungai selatan|hulu sungai tengah|hulu sungai utara|lawu|merapi|bromo)\b/i;
@@ -138,6 +146,7 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
           location,
           country_code: "IDN",
           metrics,
+          ...(source.id === "gdacs" ? { map_url: gdacsMapUrl(item.enclosure) } : {}),
         },
       ];
     })
@@ -240,15 +249,12 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
           });
       }
     }
+    const sorted = [...byUrl.values()].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+    const monitoring = sorted.filter((item) => item.kind === "monitoring");
+    const headlines = sorted.filter((item) => item.kind !== "monitoring").slice(0, 24 - Math.min(monitoring.length, 3));
     return {
       scope: "Indonesia",
-      items: [...byUrl.values()]
-        .sort(
-          (a, b) =>
-            Number(a.kind === "monitoring") - Number(b.kind === "monitoring") ||
-            Date.parse(b.published_at) - Date.parse(a.published_at),
-        )
-        .slice(0, 24),
+      items: headlines.concat(monitoring).slice(0, 24),
       status: byUrl.size
         ? "available"
         : rows.some((r) => r.last_success_at && !r.last_error)

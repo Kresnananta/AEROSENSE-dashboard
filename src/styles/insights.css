@@ -132,6 +132,20 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.disaster-map { margin: 0 0 16px; }
+.disaster-map img {
+  width: 100%;
+  height: clamp(132px, 16vw, 200px);
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--muted);
+}
+.disaster-map figcaption {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.disaster-map figcaption a { text-decoration: underline; }
 .disaster-metric {
   margin: 0 0 23px;
   display: flex;
