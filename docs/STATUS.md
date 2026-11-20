@@ -2,7 +2,7 @@
 
 ## Tampilan web
 
-- Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor mengikuti tema sistem dan bisa diganti dari toolbar. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor menggunakan warna tema yang sama untuk titik acuan, pilihan lapisan, dan legenda.
+- Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor selalu menggunakan tema terang. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor menggunakan warna tema yang sama untuk titik acuan, pilihan lapisan, dan legenda.
 
 - Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
 - Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.

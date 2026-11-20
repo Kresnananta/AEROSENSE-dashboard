@@ -5,7 +5,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
 import type { Ref } from "react";
-import { ThemeToggle } from "./ThemeToggle";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -55,7 +54,6 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
       </div>
 
       <div className="topbar-actions flex items-center gap-3 sm:gap-4">
-        <ThemeToggle />
         <button
           type="button"
           onClick={() => navigate(ROUTES.ALERTS)}

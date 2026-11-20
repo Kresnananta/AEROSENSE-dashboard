@@ -1,30 +1,30 @@
 :root {
-  color-scheme: light dark;
-  --background: light-dark(oklch(96% .022 242), oklch(17% .031 249));
-  --foreground: light-dark(oklch(28% .062 251), oklch(94% .014 239));
-  --card: light-dark(oklch(99.5% .004 243), oklch(22.5% .035 248));
+  color-scheme: only light;
+  --background: oklch(96% .022 242);
+  --foreground: oklch(28% .062 251);
+  --card: oklch(99.5% .004 243);
   --card-foreground: var(--foreground);
-  --popover: light-dark(oklch(99.5% .004 243), oklch(27% .04 248));
+  --popover: oklch(99.5% .004 243);
   --popover-foreground: var(--foreground);
-  --muted: light-dark(oklch(95.5% .024 246), oklch(26% .042 250));
-  --muted-foreground: light-dark(oklch(44% .059 244), oklch(77% .036 241));
+  --muted: oklch(95.5% .024 246);
+  --muted-foreground: oklch(44% .059 244);
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
   --primary: oklch(52% .194 255);
-  --ring: light-dark(oklch(53% .196 255), oklch(78% .128 249));
-  --accent: light-dark(oklch(93% .041 248), oklch(32% .073 250));
-  --accent-foreground: light-dark(oklch(42% .149 254), oklch(87% .073 245));
-  --border: light-dark(oklch(37% .077 247 / .17), oklch(87% .062 244 / .19));
-  --input: light-dark(oklch(37% .077 247 / .25), oklch(87% .062 244 / .29));
-  --sidebar: light-dark(oklch(98.5% .011 241), oklch(20% .033 248));
+  --ring: oklch(53% .196 255);
+  --accent: oklch(93% .041 248);
+  --accent-foreground: oklch(42% .149 254);
+  --border: oklch(37% .077 247 / .17);
+  --input: oklch(37% .077 247 / .25);
+  --sidebar: oklch(98.5% .011 241);
   --sidebar-foreground: var(--muted-foreground);
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
-  --aero-link: light-dark(oklch(44% .161 254), oklch(81% .105 247));
-  --aero-material: light-dark(oklch(99.5% .007 240 / .83), oklch(25% .04 248 / .84));
-  --aero-material-raised: light-dark(oklch(99.5% .007 240 / .91), oklch(29% .044 248 / .90));
-  --aero-depth: 0 8px 24px light-dark(oklch(33% .05 248 / .07), oklch(10% .03 249 / .38));
+  --aero-link: oklch(44% .161 254);
+  --aero-material: oklch(99.5% .007 240 / .83);
+  --aero-material-raised: oklch(99.5% .007 240 / .91);
+  --aero-depth: 0 8px 24px oklch(33% .05 248 / .07);
   --aero-frame: 24px;
   --aero-frame-hero: 32px;
   --aero-frame-control: 14px;
@@ -32,8 +32,6 @@
   accent-color: var(--ring);
   scrollbar-color: var(--muted-foreground) var(--muted);
 }
-:root[data-theme="light"] { color-scheme: light; }
-:root[data-theme="dark"] { color-scheme: dark; }
 
 body {
   --aero-canvas-soft: var(--background);
@@ -150,26 +148,8 @@ dialog.role-dialog {
 .app-shell .environment-hub .environment-nav .insight-topics { scrollbar-color: var(--muted-foreground) var(--muted); }
 
 :is(.app-topbar, .landing-header, .app-navigation, .live-panel, .live-chat, .robot-mood, .login-page, .wx-panel) svg.lucide { stroke-width: 1.65; }
-:is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close, .theme-toggle) svg.lucide { stroke-width: 2; }
+:is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close) svg.lucide { stroke-width: 2; }
 
-.theme-toggle {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  border: 1px solid var(--border);
-  border-radius: var(--aero-control-radius);
-  background: var(--muted);
-  color: var(--foreground);
-  cursor: pointer;
-}
-.theme-toggle svg { grid-area: 1 / 1; }
-.theme-toggle .theme-icon-sun, .theme-toggle[aria-pressed="true"] .theme-icon-moon { opacity: 0; }
-.theme-toggle[aria-pressed="true"] .theme-icon-sun { opacity: 1; }
-@media (prefers-reduced-motion: no-preference) {
-  .theme-toggle svg { transition: opacity 150ms ease, filter 180ms ease, scale 180ms ease; }
-  .theme-toggle .theme-icon-sun, .theme-toggle[aria-pressed="true"] .theme-icon-moon { filter: blur(3px); scale: .84; }
-  .theme-toggle[aria-pressed="true"] .theme-icon-sun { filter: none; scale: 1; }
-}
 @media (max-width: 680px) {
   .app-shell .app-topbar .topbar-actions { gap: 4px; }
   .app-shell .app-topbar .account-link { padding-inline: 9px; }
@@ -187,7 +167,7 @@ dialog.role-dialog {
   --ui-ink: var(--foreground);
   --ui-muted: var(--muted-foreground);
   --ui-line: var(--border);
-  --aero-panel-depth: 0 8px 24px light-dark(transparent, oklch(9% .03 248 / .30));
+  --aero-panel-depth: 0 8px 24px transparent;
 }
 .app-shell { background: var(--background); color: var(--foreground); --ui-surface-gradient: var(--muted); }
 .app-shell :is(.robot-mood, .wx-panel), .app-shell .chat-workspace .live-chat {
@@ -239,7 +219,7 @@ dialog.role-dialog {
 }
 dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-description) { color: var(--foreground); }
 @media (prefers-contrast: more) {
-  :root { --border: light-dark(oklch(44% .05 244), oklch(71% .04 244)); }
+  :root { --border: oklch(44% .05 244); }
 }
 
 .app-shell .wx-panel :is(.wx-card, .wx-alerts li) { border: 1px solid var(--border); }

@@ -7,10 +7,6 @@ import "@/styles/aerosense-color.css";
 import "@/styles/site-polish.css";
 import "@/styles/material.css";
 
-try {
-  const theme = localStorage.getItem("aerosense-theme");
-  if (theme === "dark" || theme === "light") document.documentElement.dataset.theme = theme;
-} catch {}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
