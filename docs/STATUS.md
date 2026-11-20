@@ -3,7 +3,7 @@
 ## Tampilan web
 
 - Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
-- Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama.
+- Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.
 - Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil.
 - Build dan 119 tes lulus. Langkah berikutnya: uji email konfirmasi sungguhan dan tampilan di perangkat setelah rilis.
 

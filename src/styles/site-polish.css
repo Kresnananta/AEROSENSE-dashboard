@@ -65,8 +65,18 @@
   background: var(--mood-paper);
 }
 .robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-paper: #f0faf7; --mood-accent: #13634e; }
-.robot-mood[data-mood="warning"] { --mood-sky: #ffebba; --mood-paper: #fff9eb; --mood-accent: #7c4c10; }
-.robot-mood[data-mood="danger"] { --mood-sky: #ffded0; --mood-paper: #fff4ed; --mood-accent: #842f27; }
+.robot-mood[data-mood="warning"] {
+  --mood-sky: #ffebba;
+  --mood-paper: #fff9eb;
+  --mood-accent: #7c4c10;
+  --mood-mascot: hue-rotate(183deg) brightness(1.14);
+}
+.robot-mood[data-mood="danger"] {
+  --mood-sky: #ffded0;
+  --mood-paper: #fff4ed;
+  --mood-accent: #842f27;
+  --mood-mascot: hue-rotate(138deg) brightness(1.03);
+}
 .robot-mood-scene {
   display: grid;
   justify-items: center;
@@ -107,7 +117,13 @@
   .robot-mood-bubble { animation: mood-speak 280ms cubic-bezier(.2,.75,.28,1) both; transform-origin: center bottom; }
   @keyframes mood-speak { from { opacity: 0; transform: translateY(4px) scale(.93); } }
 }
-.robot-mood-scene .aero-mascot { width: clamp(150px, 80%, 246px); }
+.robot-mood-scene .aero-mascot {
+  width: clamp(150px, 80%, 246px);
+  filter: var(--mood-mascot, none);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .robot-mood-scene .aero-mascot { transition: filter 260ms ease-out; }
+}
 .robot-mood-body { display: grid; align-content: center; gap: 12px; padding: clamp(14px, 2vw, 20px); }
 .robot-mood-reading { display: grid; gap: 4px; color: var(--aero-muted); font-size: .8125rem; }
 .robot-mood-location { display: inline; overflow-wrap: anywhere; }
