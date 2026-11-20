@@ -248,7 +248,7 @@ export function WeatherOutlook({
                   <li key={d.date}>
                     <button type="button" className={`wx-card tone-${d.icon}`} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
                       <span className="wx-day-name">{dayName(d.date, i)}</span>
-                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={60} />
+                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={128} />
                       <span className="wx-day-label">{d.label}</span>
                       <span className="wx-day-temp">
                         <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
@@ -327,11 +327,13 @@ function HourCards({ hours, onSelect }: {
             <button type="button" className={`wx-card tone-${h.icon}`} aria-haspopup="dialog"
               aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
               onClick={(e) => onSelect(h.time, e.currentTarget)}>
-              <span className="wx-day-name">{clock(h.time)}</span>
-              {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
-                <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
-              )}
-              <WeatherArt weather={h} size={48} />
+              <span className="wx-card-when">
+                <span className="wx-day-name">{clock(h.time)}</span>
+                {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
+                  <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
+                )}
+              </span>
+              <WeatherArt weather={h} size={128} />
               <span className="wx-day-label">{h.label}</span>
               <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
               <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
