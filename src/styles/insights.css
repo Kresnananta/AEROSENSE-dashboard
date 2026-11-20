@@ -78,25 +78,14 @@
 }
 .disaster-card {
   padding: 23px;
-  border: 1px solid #d7e5f3;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #fff 50%, #edf5fd);
+  border: 1px solid var(--aero-rim, #cddff0);
+  border-radius: var(--aero-panel-radius, 22px);
+  background: var(--aero-surface, #ffffff);
   min-width: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-}
-.disaster-card::before {
-  content: "";
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  border: 1px solid #dfebf7;
-  border-radius: 50%;
-  right: -45px;
-  top: -45px;
-  pointer-events: none;
 }
 .disaster-card-top {
   display: flex;
@@ -879,6 +868,9 @@
   width: 82px;
   height: 82px;
 }
+.insight-glance .condition-scene img {
+  animation: none;
+}
 .insight-glance h3 {
   font-size: 14px;
   font-weight: 700;
@@ -899,12 +891,12 @@
   letter-spacing: -0.025em;
 }
 .glance-number span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insight-muted);
 }
 .insight-glance > small {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insight-muted);
   margin-top: 9px;
 }

@@ -216,7 +216,6 @@ export function SensorOverview() {
                     setParams(next);
                   }}
                 >
-                  <span className={`node-dot dot-${sensorSummary(n).tone}`} />
                   <strong>{n.name}</strong>
                   <NodeStatus node={n} />
                 </button>

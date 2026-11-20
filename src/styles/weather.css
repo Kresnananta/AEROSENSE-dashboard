@@ -233,13 +233,13 @@
   width: 100%;
   height: 100%;
   padding: 12px 8px;
-  border: 1px solid #dbe8f5;
-  border-radius: 14px;
+  border: 0;
+  border-radius: 16px;
   color: #173654;
-  background: #eef6ff;
+  background: #f1f8ff;
   cursor: pointer;
   text-align: center;
-  transition: translate 160ms ease, border-color 160ms ease;
+  transition: translate 160ms ease, background-color 160ms ease;
 }
 .wx-card-arrow {
   position: absolute;
@@ -247,24 +247,23 @@
   color: #375e86;
 }
 .wx-card:hover {
-  border-color: #689acf;
+  background: #e3f1ff;
   translate: 0 -2px;
 }
 .wx-today-link:focus-visible,
 .wx-close:focus-visible {
-  outline: 2px solid #0759bc;
+  outline: 2px solid #0868dc;
   outline-offset: 2px;
 }
 .wx-card:focus-visible {
-  outline: 2px solid #0759bc;
-  outline-offset: -3px;
+  outline: 2px solid #0868dc;
+  outline-offset: -2px;
 }
-.wx-card.tone-clear, .wx-card.tone-partly,
 .wx-detail-head.tone-clear, .wx-detail-head.tone-partly { background: #fbf4e6; }
-.wx-card.tone-fog, .wx-detail-head.tone-fog { background: #eef2f3; }
-.wx-card.tone-drizzle, .wx-detail-head.tone-drizzle { background: #e8f4f3; }
-.wx-card.tone-thunder, .wx-detail-head.tone-thunder,
-.wx-card.tone-heavy-rain, .wx-detail-head.tone-heavy-rain { background: #e9eff4; }
+.wx-detail-head.tone-fog { background: #eef2f3; }
+.wx-detail-head.tone-drizzle { background: #e8f4f3; }
+.wx-detail-head.tone-thunder,
+.wx-detail-head.tone-heavy-rain { background: #e9eff4; }
 .wx-day-name {
   font-size: 14px;
   font-weight: 750;
@@ -272,10 +271,11 @@
 }
 .wx-hour-date {
   position: absolute;
-  right: 6px;
-  top: 4px;
-  font-size: 9px;
-  color: #45627b;
+  right: 8px;
+  top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #3f5f79;
 }
 .wx-day-label {
   font-size: 12px;
@@ -284,12 +284,12 @@
 }
 .wx-day-temp {
   font-size: 13px;
-  color: #45627b;
+  color: #3f5f79;
   font-variant-numeric: tabular-nums;
 }
 .wx-day-temp strong {
   font-size: 17px;
-  color: #11223d;
+  color: #102a47;
 }
 .wx-chip {
   display: inline-flex;
@@ -297,8 +297,8 @@
   gap: 4px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #fff;
-  font-size: 11px;
+  background: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
   font-weight: 650;
   color: #37546e;
 }
