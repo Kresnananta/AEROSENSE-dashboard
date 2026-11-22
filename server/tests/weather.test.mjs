@@ -66,6 +66,7 @@ test("expired hourly forecast does not reuse past hours", () => {
   const o = parseForecast(forecast, Date.parse("2026-11-15T03:20:00Z"));
   assert.deepEqual(o.hourly, []);
   assert.deepEqual(o.day_hours, []);
+  assert.equal(o.daily[0].date, "2026-11-15");
 });
 
 test("labels cover thunderstorm codes", () => {
@@ -115,7 +116,7 @@ test("AERO-BOT gets forecast, coming days and warnings as facts", () => {
   assert.deepEqual(weatherFacts(null, { cyclones: null, quakes: null }, area, now), []);
 });
 
-test("service caches by ~5 km and survives a failed hazard source", async () => {
+test("service shares rounded coordinates and survives a failed hazard source", async () => {
   let calls = 0;
   const svc = weatherService({
     now: () => now,
@@ -132,4 +133,45 @@ test("service caches by ~5 km and survives a failed hazard source", async () => 
   const hz = await svc.hazards();
   assert.equal(hz.cyclones, null);
   assert.deepEqual(hz.quakes, []);
+});
+
+test("forecast coalesces requests and serves fresh-time slices during provider limits", async () => {
+  let clock = now;
+  let calls = 0;
+  let limited = false;
+  const service = weatherService({
+    now: () => clock,
+    request: async () => {
+      calls++;
+      if (limited) throw Object.assign(new Error("Upstream HTTP 429"), { status: 429, retryAfter: "120" });
+      return forecast;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    service.outlook(-7.25, 112.75),
+    service.outlook(-7.251, 112.749),
+  ]);
+  assert.deepEqual(first, second);
+  assert.equal(calls, 1);
+
+  limited = true;
+  clock += 60 * 60_000;
+  const stale = await service.outlook(-7.25, 112.75);
+  assert.equal(stale.stale, true);
+  assert.equal(stale.valid_at, first.valid_at);
+  assert.equal(stale.hourly[0].time, "2026-11-13T11:00");
+  assert.deepEqual(weatherFacts(stale, null, { name: "ITS" }, clock), []);
+  await assert.rejects(service.outlook(-7.30, 112.75), { status: 503, message: /Prakiraan cuaca/ });
+  assert.equal(calls, 2);
+
+  limited = false;
+  clock += 120_000;
+  assert.equal((await service.outlook(-7.25, 112.75)).stale, undefined);
+  assert.equal(calls, 3);
+
+  limited = true;
+  clock += 6 * 60 * 60_000;
+  await assert.rejects(service.outlook(-7.25, 112.75), { status: 503, message: /Prakiraan cuaca/ });
+  assert.equal(calls, 4);
 });

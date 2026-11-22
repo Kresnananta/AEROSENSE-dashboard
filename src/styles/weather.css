@@ -135,6 +135,30 @@
   line-height: 1.3;
 }
 
+.wx-forecast-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-block-end: 12px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: var(--aero-amber-soft);
+  color: var(--aero-amber-ink);
+}
+.wx-forecast-notice p {
+  flex: 1 1 14rem;
+  margin: 0;
+  font-size: .875rem;
+}
+.wx-forecast-notice button {
+  min-height: 44px;
+  padding-inline: 8px;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .wx-alerts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
@@ -150,22 +174,19 @@
   padding: 15px 18px;
   border-radius: 16px;
   border: 0;
-  background: #fff4df;
-  color: #694708;
+  background: var(--aero-amber-soft);
+  color: var(--aero-amber-ink);
   font-size: 13px;
   line-height: 1.55;
 }
 .wx-alerts li.is-danger {
-  background: #fdeef0;
-  color: #8c1d2b;
+  background: var(--aero-red-soft);
+  color: var(--aero-red-ink);
 }
 .wx-alert-icon {
   flex: none;
   margin-top: 2px;
-  color: #8c4e07;
-}
-.wx-alerts li.is-danger .wx-alert-icon {
-  color: #a12633;
+  color: inherit;
 }
 .wx-alerts strong {
   display: block;

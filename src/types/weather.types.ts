@@ -33,6 +33,7 @@ export interface WeatherOutlook {
   longitude: number;
   source: string;
   valid_at: string | null;
+  stale?: boolean;
   current: {
     temperature: number | null;
     feels_like: number | null;

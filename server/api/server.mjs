@@ -66,6 +66,7 @@ async function request(url, options = {}) {
   if (!r.ok) {
     const err = new Error("Upstream HTTP " + r.status);
     err.status = r.status;
+    if (r.status === 429) err.retryAfter = r.headers.get("retry-after");
     throw err;
   }
   if (r.status === 204) return null;

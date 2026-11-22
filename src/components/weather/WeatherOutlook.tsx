@@ -5,6 +5,8 @@ import {
   CloudLightning,
   CloudRainWind,
   CloudSnow,
+  CloudOff,
+  Clock3,
   ChevronRight,
   Droplets,
   Map as MapIcon,
@@ -145,6 +147,8 @@ export function WeatherOutlook({
   const { ref: dailyRail, edges: dailyEdges } = useScrollEdges(o?.daily.length ?? 0);
   if (!point) return null;
   const today = o?.daily[0];
+  const current = o?.stale ? undefined : o?.current;
+  const displayWeather = current ?? today;
 
   const allHours = (o?.day_hours ?? o?.hourly ?? []).slice(1);
   const hours = allHours.slice(0, compact ? 12 : 24);
@@ -170,9 +174,7 @@ export function WeatherOutlook({
           <h2 id="wx-title">Prakiraan cuaca</h2>
           <p>
             {place ? `Sekitar ${place}` : "Sekitar lokasi acuan"} · model Open-Meteo
-            {o?.valid_at
-              ? ` · ${new Date(o.valid_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })} WIB`
-              : ""}
+            {o?.valid_at && !o.stale ? ` · ${clock(o.valid_at)} WIB` : ""}
           </p>
         </div>
         <Link
@@ -186,19 +188,31 @@ export function WeatherOutlook({
           {compact ? "Prakiraan lengkap" : "Tanya AERO-BOT"} <ArrowUpRight size={15} />
         </Link>
       </header>
-      {wx.error && !o && <p className="live-notice">{wx.error} <button type="button" onClick={wx.refresh}>Coba lagi</button></p>}
+      {wx.error && !o && (
+        <div className="wx-forecast-notice" role="status">
+          <CloudOff size={18} aria-hidden="true" />
+          <p>Prakiraan cuaca sedang tidak tersedia.</p>
+          <button type="button" onClick={wx.refresh}>Coba lagi</button>
+        </div>
+      )}
+      {o?.stale && (
+        <div className="wx-forecast-notice" role="status">
+          <Clock3 size={18} aria-hidden="true" />
+          <p>Menampilkan prakiraan tersimpan{o.valid_at ? ` dari ${dateLabel(o.valid_at)}, ${clock(o.valid_at)} WIB` : ""}. Pembaruan belum tersedia.</p>
+        </div>
+      )}
       {!o && !wx.error && <div className="wx-skeleton" role="status" aria-label="Memuat prakiraan cuaca" />}
       {o && !today && <p className="live-notice">Prakiraan harian belum tersedia.</p>}
-      {o && today && (
+      {o && today && displayWeather && (
         <div className="wx-body">
-          <article className={`wx-today tone-${o.current?.icon || today.icon}`} data-day-period={weatherPeriod(o.current ?? today, dayPeriod)}>
-            <WeatherArt weather={o.current ?? today} period={dayPeriod} size={compact ? 116 : 148} />
+          <article className={`wx-today tone-${displayWeather.icon}`} data-day-period={weatherPeriod(displayWeather, dayPeriod)}>
+            <WeatherArt weather={displayWeather} period={dayPeriod} size={compact ? 116 : 148} />
             <div className="wx-today-copy">
               <p className="wx-dateline">
                 Hari ini · {dayPeriodLabel(dayPeriod)}
-                {o.current?.temperature != null && <> · Saat ini {unit(o.current.temperature, "°")}</>}
+                {current?.temperature != null && <> · Saat ini {unit(current.temperature, "°")}</>}
               </p>
-              <h3>{o.current?.label || today.label}</h3>
+              <h3>{displayWeather.label}</h3>
               <p className="wx-today-range">
                 <strong>{unit(today.max, "°")}</strong> / {unit(today.min, "°")}
               </p>

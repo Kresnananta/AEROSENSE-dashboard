@@ -6,7 +6,9 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 
 - Halaman utama memakai foto lanskap [Clouds in the sky landscape](https://commons.wikimedia.org/wiki/File:Clouds_in_the_sky_landscape.jpg) oleh Aammell (CC0), dengan rona biru dan garis kontur dekoratif. Foto tidak mewakili kondisi live. Ilustrasi memudar ke latar bagian fitur; awan yang melintasi matahari dihapus hanya dari skyline landing.
 
-- Beranda menautkan pembacaan sensor, prakiraan, peringatan, dan AERO-BOT langsung dari daftar fitur. Navigasi memakai kaca bening yang mengikuti langit siang atau malam.
+- Beranda menautkan pembacaan sensor, prakiraan, peringatan, dan AERO-BOT langsung dari daftar fitur. Tautan navigasi desktop tampil langsung di atas langit. Tombol masuk berbentuk pil, dan menu ponsel terbuka di atas panel solid.
+- Ikon antarmuka dan peta memakai garis membulat dengan ketebalan yang konsisten. Beranda, navigasi, dan halaman akun memakai tanda merek yang sama. Amber menyorot cuaca dan merah menyorot peringatan.
+- Prakiraan berbagi permintaan untuk titik yang sama. Saat penyedia membatasi permintaan, API menunggu sebelum mencoba lagi dan dapat menampilkan prakiraan tersimpan hingga enam jam dengan waktu sumber yang jelas. Rilis memerlukan pembaruan API dan web.
 - Cara kerja menampilkan tiga langkah dalam satu baris di desktop dan bertumpuk di ponsel. Area pengantar fokus pada judul dan deskripsi.
 - Ringkasan menampilkan pembacaan sensor dan satu ringkasan wilayah. Prakiraan lengkap dan Kabar Bencana tersedia di Cuaca & lingkungan. Menu Data & perangkat membuka riwayat, perangkat, dan fungsi pengelolaan sesuai hak akses.
 - Amber dipakai untuk cuaca dan Waspada. Merah dipakai untuk peringatan sensor dan Bahaya. Navigasi, daftar fitur, dan Ringkasan diperiksa di Chrome pada lebar 320, 390, 768, dan 1440 px. Warna status diuji dengan data contoh.

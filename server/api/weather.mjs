@@ -79,12 +79,17 @@ export function weatherAlerts(hourly, daily) {
   return alerts;
 }
 
-export function parseForecast(data, now = Date.now()) {
+function forecastParts(data) {
   const c = data?.current,
     h = data?.hourly,
     d = data?.daily;
   if (!c || !Array.isArray(h?.time) || !Array.isArray(d?.time)) throw fail("Format prakiraan berubah.", 502);
 
+  return { c, h, d };
+}
+
+export function parseForecast(data, now = Date.now()) {
+  const { c, h, d } = forecastParts(data);
   const local = new Date(now + 7 * 3600000).toISOString().slice(0, 13);
   const start = h.time.findIndex((t) => t.slice(0, 13) >= local);
   const dayHours = start === -1 ? [] : h.time.slice(start).map((time, k) => {
@@ -112,7 +117,7 @@ export function parseForecast(data, now = Date.now()) {
     rain_chance: round(d.precipitation_probability_max?.[i]),
     gust: round(d.wind_gusts_10m_max?.[i]),
     uv: round(d.uv_index_max?.[i], 1),
-  }));
+  })).filter(({ date }) => date >= local.slice(0, 10));
   return {
     latitude: data.latitude,
     longitude: data.longitude,
@@ -220,7 +225,7 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     data_origin: "external_api",
     role: "supplementary",
   });
-  if (outlook) {
+  if (outlook && !outlook.stale) {
     const h = outlook.hourly;
     const temps = h.map((x) => x.temperature).filter(Number.isFinite);
     const wet = h.filter((x) => (x.rain_chance ?? 0) >= 50 || (x.rain ?? 0) >= 0.5);
@@ -244,7 +249,7 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     });
     if (days.length) facts.push(fact("days", "Prakiraan 3 hari berikutnya", days.join("; ") + "."));
   }
-  if (outlook) {
+  if (outlook && !outlook.stale) {
     const alerts = outlook.alerts.map((a) => a.title + ": " + a.text);
     facts.push(fact(
       "alerts",
@@ -286,23 +291,65 @@ const FORECAST =
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC";
 const BMKG_QUAKES = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json";
 
+const FORECAST_TTL = 15 * 60_000;
+const FORECAST_MAX_AGE = 6 * 60 * 60_000;
+const RATE_LIMIT_PAUSE = 5 * 60_000;
+
+function forecastUnavailable() {
+  return fail("Prakiraan cuaca belum dapat diperbarui. Coba lagi beberapa menit lagi.", 503);
+}
+
 export function weatherService({ request, now = Date.now }) {
   const cache = new Map();
+  const pending = new Map();
+  let forecastRetryAt = 0;
+
   async function cached(key, ttl, load) {
     const hit = cache.get(key);
     if (hit && hit.until > now()) return hit.value;
-    const value = await load();
-    if (cache.size > 500) cache.clear();
-    cache.set(key, { value, until: now() + ttl });
-    return value;
-  }
-  const outlook = (latitude, longitude) => {
+    if (pending.has(key)) return pending.get(key);
 
-    const lat = Math.round(latitude * 100) / 100,
-      lng = Math.round(longitude * 100) / 100;
-    return cached(`wx:${lat}:${lng}`, 900000, async () =>
-      parseForecast(await request(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 }), now()),
-    );
+    const update = Promise.resolve().then(load).then((value) => {
+      if (cache.size >= 500 && !cache.has(key)) cache.delete(cache.keys().next().value);
+      cache.set(key, { value, until: now() + ttl });
+      return value;
+    }).finally(() => pending.delete(key));
+    pending.set(key, update);
+    return update;
+  }
+
+  const outlook = async (latitude, longitude) => {
+    const lat = Math.round(latitude * 100) / 100;
+    const lng = Math.round(longitude * 100) / 100;
+    const key = `wx:${lat}:${lng}`;
+    try {
+      const data = await cached(key, FORECAST_TTL, async () => {
+        if (now() < forecastRetryAt) throw forecastUnavailable();
+        try {
+          const raw = await request(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 });
+          forecastParts(raw);
+          return raw;
+        } catch (error) {
+          if (error.status === 429) {
+            const retryAfter = error.retryAfter;
+            const delay = retryAfter && /^\d+$/.test(retryAfter)
+              ? Number(retryAfter) * 1000
+              : Date.parse(retryAfter) - now();
+            const pause = Number.isFinite(delay) ? Math.max(60_000, delay) : RATE_LIMIT_PAUSE;
+            forecastRetryAt = Math.max(forecastRetryAt, now() + pause);
+          }
+          throw error;
+        }
+      });
+      return parseForecast(data, now());
+    } catch {
+      const previous = cache.get(key);
+      if (previous && now() < previous.until - FORECAST_TTL + FORECAST_MAX_AGE) {
+        const outlook = parseForecast(previous.value, now());
+        if (outlook.hourly.length && outlook.daily.length) return { ...outlook, stale: true };
+      }
+      throw forecastUnavailable();
+    }
   };
   const hazards = () =>
     cached("hazards", 600000, async () => {
@@ -337,9 +384,7 @@ export function weatherRoutes({ service, send, rate }) {
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
         throw fail("Lokasi tidak valid.");
       rate("wx:" + ip, 40);
-      const data = await service.outlook(lat, lng).catch((err) => {
-        throw err.status ? err : fail("Prakiraan cuaca sedang tidak tersedia.", 503);
-      });
+      const data = await service.outlook(lat, lng);
       send(res, 200, data);
       return true;
     }
