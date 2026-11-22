@@ -106,6 +106,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   );
   const highlights = selected ? environmentHighlights(selected, facts) : [];
   const scene = selected ? conditionScene(selected, facts) : "cloudy";
+  const forecastSummary = selected?.category === "weather" && selected.period === "forecast";
+  const forecastSummaryDay = forecastSummary && selected.valid_at
+    ? new Date(selected.valid_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", timeZone: "Asia/Jakarta" })
+    : null;
+  const weatherUnavailable = selected?.category === "weather" && !selected.available;
   const activeCategory = categories.find((c) => c.id === selected?.category);
   function updateParams(changes: Record<string, string>) {
     const next = new URLSearchParams(params);
@@ -296,10 +301,12 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <Atmosphere />
             <div className="insight-message">
               <span className={`insight-status ${selected.available ? "" : "status-pending"}`}>
-                {selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
+                {forecastSummary ? "Ringkasan prakiraan" : selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
-              <h2>{selected.title}</h2>
-              {selected.category !== "weather" && <p>{selected.body}</p>}
+              <h2>{weatherUnavailable ? "Informasi cuaca belum tersedia" : forecastSummary ? "Perkiraan cuaca hari ini" : selected.title}</h2>
+              {(selected.category !== "weather" || forecastSummary || weatherUnavailable) && (
+                <p>{forecastSummary ? "Data cuaca saat ini belum tersedia. Ringkasan ini memakai prakiraan harian yang masih berlaku." : selected.body}</p>
+              )}
               <div className="insight-action">
                 <ArrowRight size={18} aria-hidden="true" />
                 <strong>{selected.action}</strong>
@@ -312,11 +319,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                     : selected.period === "reference"
                     ? "Catatan sumber"
                     : selected.period === "forecast"
-                      ? "Berlaku pada"
+                      ? forecastSummary ? "Prakiraan untuk" : "Berlaku pada"
                       : "Waktu data"}{" "}
                   {selected.category === "flood" && selected.period === "forecast"
                     ? `${riverDayLabel(selected.valid_at)} UTC`
-                    : dateLabel(selected.valid_at)}
+                    : forecastSummaryDay ?? dateLabel(selected.valid_at)}
                 </small>
               )}
             </div>
@@ -510,6 +517,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <>
           <WeatherOutlook
+            fallbackFacts={locationMode === "node" ? facts : undefined}
             place={locationMode === "device" && userPoint ? "lokasi Anda" : node?.name}
             point={locationMode === "device" && userPoint ? userPoint : node && validPoint(node) ? node : undefined}
           />

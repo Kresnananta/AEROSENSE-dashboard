@@ -5,6 +5,7 @@ import {
   Flame,
   Waves,
   Activity,
+  Mountain,
   HeartHandshake,
   RefreshCw,
 } from "lucide-react";
@@ -35,6 +36,8 @@ const filters = [
   { value: "Semua", label: "Semua" },
   { value: "Karhutla", label: "Kebakaran hutan & lahan" },
   { value: "Banjir", label: "Banjir" },
+  { value: "Gempa", label: "Gempa" },
+  { value: "Longsor", label: "Longsor" },
 ];
 
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
@@ -45,13 +48,10 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   );
   const [filter, setFilter] = useState("Semua");
   const [expanded, setExpanded] = useState(false);
-  const entries = (data?.items ?? []).filter((item) => item.type !== "Gempa");
-  const availableFilters = entries.some((item) => item.kind === "monitoring") || filter === "monitoring"
-    ? [...filters, { value: "monitoring", label: "Pantauan GDACS" }]
-    : filters;
-  const items = entries.filter((item) =>
-    filter === "Semua" || item.type === filter || item.kind === filter,
+  const entries = (data?.items ?? []).filter((item) =>
+    !["Gempa", "Longsor"].includes(item.type) || (item.kind === "news" && item.source === "ANTARA"),
   );
+  const items = entries.filter((item) => filter === "Semua" || item.type === filter);
   const shown = items.slice(0, expanded ? 24 : compact ? 2 : 3);
   return (
     <section className="disaster-section" id="kabar-bencana" aria-labelledby="disaster-heading">
@@ -70,8 +70,8 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
         </button>
       </header>
       <div className="disaster-toolbar">
-        <div className="disaster-filters" role="group" aria-label="Jenis bencana">
-          {availableFilters.map(({ value, label }) => (
+        <div className="disaster-filters" role="group" aria-label="Filter kabar bencana">
+          {filters.map(({ value, label }) => (
             <button
               type="button"
               key={value}
@@ -90,7 +90,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             <span className="disaster-result-count" role="status">{items.length} kabar</span>
           )}
           <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
-            Gempa resmi BMKG <ArrowUpRight size={15} aria-hidden="true" />
+            Data gempa BMKG <ArrowUpRight size={15} aria-hidden="true" />
           </a>
         </div>
       </div>
@@ -114,7 +114,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             <div className={`disaster-grid ${compact ? "disaster-compact" : ""}`}>
               {shown.map((item) => {
                 const Icon =
-                  item.type === "Karhutla" ? Flame : item.type === "Banjir" ? Waves : Activity;
+                  item.type === "Karhutla" ? Flame : item.type === "Banjir" ? Waves : item.type === "Longsor" ? Mountain : Activity;
                 const metric = item.metrics[0];
                 return (
                   <article
@@ -202,7 +202,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                 ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti."
                 : filter === "Semua"
                   ? "Belum ada kabar dari sumber yang dipantau."
-                  : `Belum ada kabar ${availableFilters.find(({ value }) => value === filter)?.label.toLowerCase()} dari sumber yang dipantau.`}
+                  : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dalam 7 hari terakhir.`}
             </p>
           )}
           {items.length > shown.length && (

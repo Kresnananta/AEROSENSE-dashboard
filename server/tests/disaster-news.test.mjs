@@ -70,11 +70,13 @@ test("the disaster list keeps GDACS visible when ANTARA fills the page limit", a
   assert.equal(response.items.at(-1).source, "GDACS");
 });
 
-test("ANTARA excludes earthquake coverage, foreign and unrelated headlines", () => {
+test("ANTARA keeps Indonesian earthquake and landslide reports", () => {
   const xml = rss(
     [
       "Banjir di Surabaya mulai surut",
       "Gempa M6,8 di Maluku Barat Daya",
+      "Warga Jawa Barat dievakuasi setelah longsor",
+      "Gempa di Jepang memicu tsunami",
       "Banjir di India memburuk",
       "Banjir meluas di sejumlah wilayah",
       "Cuaca ekstrem di Australia dan Indonesia",
@@ -87,7 +89,8 @@ test("ANTARA excludes earthquake coverage, foreign and unrelated headlines", () 
       .join(""),
   );
   const result = parseDisasterFeed(xml, NEWS_SOURCES[1], now);
-  assert.equal(result.length, 1);
+  assert.deepEqual(result.map(({ type }) => type), ["Banjir", "Gempa", "Longsor"]);
+  assert.ok(result.every(({ source, kind }) => source === "ANTARA" && kind === "news"));
   assert.equal(result[0].location, "Surabaya");
 });
 

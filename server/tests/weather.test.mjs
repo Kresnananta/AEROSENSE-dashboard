@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { savedForecast } from "../../src/lib/saved-forecast.ts";
 import { parseForecast, parseCyclones, parseQuakes, weatherFacts, weatherService, weatherLabel } from "../api/weather.mjs";
 
 const now = Date.parse("2026-11-13T03:20:00Z");
@@ -174,4 +175,29 @@ test("forecast coalesces requests and serves fresh-time slices during provider l
   clock += 6 * 60 * 60_000;
   await assert.rejects(service.outlook(-7.25, 112.75), { status: 503, message: /Prakiraan cuaca/ });
   assert.equal(calls, 4);
+});
+
+test("saved daily outlook uses only unexpired Open-Meteo forecasts at the selected node", () => {
+  const fact = (day, overrides = {}) => ({
+    label: `Prakiraan peluang presipitasi maksimum (hari WIB ${day})`,
+    category: "weather",
+    kind: "forecast",
+    value: 80,
+    unit: "%",
+    source: "Open-Meteo / model cuaca",
+    fresh_until: new Date(now + 60_000).toISOString(),
+    ...overrides,
+  });
+  const days = savedForecast([
+    fact("2026-11-12"),
+    fact("2026-11-13"),
+    fact("2026-11-14", { value: 30 }),
+    fact("2026-11-15", { stale: true }),
+    fact("2026-11-16", { fresh_until: new Date(now - 1).toISOString() }),
+    fact("2026-11-17", { source: "BMKG" }),
+  ], now);
+  assert.deepEqual(days, [
+    { date: "2026-11-13", metrics: [{ label: "Peluang hujan tertinggi", value: 80, unit: "%" }] },
+    { date: "2026-11-14", metrics: [{ label: "Peluang hujan tertinggi", value: 30, unit: "%" }] },
+  ]);
 });

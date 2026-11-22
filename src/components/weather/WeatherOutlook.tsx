@@ -23,6 +23,8 @@ import { useLiveData } from "@/hooks/useLiveData";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
+import { savedForecast } from "@/lib/saved-forecast";
+import type { EnvironmentFact } from "@/types/live.types";
 import { conditionArtUrl } from "@/lib/condition-art";
 import { formatQuakeMagnitude, formatQuakeRegion, formatQuakeTime } from "@/lib/environment-presentation";
 import {
@@ -129,10 +131,12 @@ function todayTip(d: { rain_chance: number | null; uv: number | null; max: numbe
 export function WeatherOutlook({
   point,
   place,
+  fallbackFacts,
   compact = false,
 }: {
   point?: { latitude: number; longitude: number };
   place?: string;
+  fallbackFacts?: EnvironmentFact[];
   compact?: boolean;
 }) {
   const path = point
@@ -144,6 +148,7 @@ export function WeatherOutlook({
   const [selection, setSelection] = useState<{ path: string | null; time: string } | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const o = wx.data;
+  const savedDays = wx.error && !o ? savedForecast(fallbackFacts ?? []) : [];
   const { ref: dailyRail, edges: dailyEdges } = useScrollEdges(o?.daily.length ?? 0);
   if (!point) return null;
   const today = o?.daily[0];
@@ -191,7 +196,9 @@ export function WeatherOutlook({
       {wx.error && !o && (
         <div className="wx-forecast-notice" role="status">
           <CloudOff size={18} aria-hidden="true" />
-          <p>Prakiraan cuaca sedang tidak tersedia.</p>
+          <p>{savedDays.length
+            ? "Prakiraan per jam belum bisa diperbarui. Prakiraan harian yang tersimpan ada di bawah."
+            : "Prakiraan cuaca belum tersedia untuk lokasi ini."}</p>
           <button type="button" onClick={wx.refresh}>Coba lagi</button>
         </div>
       )}
@@ -200,6 +207,26 @@ export function WeatherOutlook({
           <Clock3 size={18} aria-hidden="true" />
           <p>Menampilkan prakiraan tersimpan{o.valid_at ? ` dari ${dateLabel(o.valid_at)}, ${clock(o.valid_at)} WIB` : ""}. Pembaruan belum tersedia.</p>
         </div>
+      )}
+      {savedDays.length > 0 && (
+        <section className="wx-panel wx-saved" aria-labelledby="wx-saved-title">
+          <h3 id="wx-saved-title">Prakiraan harian tersimpan</h3>
+          <div>
+            {savedDays.map(({ date, metrics }) => (
+              <article key={date}>
+                <h4>{dateLabel(date)}</h4>
+                <dl>
+                  {metrics.map(({ label, value, unit }) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{num(value)}{unit ? ` ${unit}` : ""}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </article>
+            ))}
+          </div>
+        </section>
       )}
       {!o && !wx.error && <div className="wx-skeleton" role="status" aria-label="Memuat prakiraan cuaca" />}
       {o && !today && <p className="live-notice">Prakiraan harian belum tersedia.</p>}

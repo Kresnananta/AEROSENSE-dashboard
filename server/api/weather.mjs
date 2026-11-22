@@ -291,7 +291,7 @@ const FORECAST =
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC";
 const BMKG_QUAKES = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json";
 
-const FORECAST_TTL = 15 * 60_000;
+const FORECAST_TTL = 30 * 60_000;
 const FORECAST_MAX_AGE = 6 * 60 * 60_000;
 const RATE_LIMIT_PAUSE = 5 * 60_000;
 
@@ -299,10 +299,29 @@ function forecastUnavailable() {
   return fail("Prakiraan cuaca belum dapat diperbarui. Coba lagi beberapa menit lagi.", 503);
 }
 
-export function weatherService({ request, now = Date.now }) {
+export function openMeteoRequest({ request, now = Date.now }) {
+  let retryAt = 0;
+  return async (url, options) => {
+    if (now() < retryAt) throw Object.assign(forecastUnavailable(), { code: "open_meteo_cooldown" });
+    try {
+      return await request(url, options);
+    } catch (error) {
+      if (error.status === 429) {
+        const retryAfter = error.retryAfter;
+        const delay = retryAfter && /^\d+$/.test(retryAfter)
+          ? Number(retryAfter) * 1000
+          : Date.parse(retryAfter) - now();
+        const pause = Number.isFinite(delay) ? Math.max(60_000, delay) : RATE_LIMIT_PAUSE;
+        retryAt = Math.max(retryAt, now() + pause);
+      }
+      throw error;
+    }
+  };
+}
+
+export function weatherService({ request, now = Date.now, openMeteo = openMeteoRequest({ request, now }) }) {
   const cache = new Map();
   const pending = new Map();
-  let forecastRetryAt = 0;
 
   async function cached(key, ttl, load) {
     const hit = cache.get(key);
@@ -324,22 +343,9 @@ export function weatherService({ request, now = Date.now }) {
     const key = `wx:${lat}:${lng}`;
     try {
       const data = await cached(key, FORECAST_TTL, async () => {
-        if (now() < forecastRetryAt) throw forecastUnavailable();
-        try {
-          const raw = await request(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 });
-          forecastParts(raw);
-          return raw;
-        } catch (error) {
-          if (error.status === 429) {
-            const retryAfter = error.retryAfter;
-            const delay = retryAfter && /^\d+$/.test(retryAfter)
-              ? Number(retryAfter) * 1000
-              : Date.parse(retryAfter) - now();
-            const pause = Number.isFinite(delay) ? Math.max(60_000, delay) : RATE_LIMIT_PAUSE;
-            forecastRetryAt = Math.max(forecastRetryAt, now() + pause);
-          }
-          throw error;
-        }
+        const raw = await openMeteo(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 });
+        forecastParts(raw);
+        return raw;
       });
       return parseForecast(data, now());
     } catch {

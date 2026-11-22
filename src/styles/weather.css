@@ -159,6 +159,35 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+.wx-saved > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 12px 28px;
+}
+.wx-saved h4 {
+  margin: 0 0 8px;
+  color: var(--foreground);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.wx-saved dl {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+.wx-saved dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: .875rem;
+}
+.wx-saved dt { color: var(--muted-foreground); }
+.wx-saved dd {
+  margin: 0;
+  color: var(--foreground);
+  font-weight: 700;
+  white-space: nowrap;
+}
 .wx-alerts {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));

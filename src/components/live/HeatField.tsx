@@ -16,6 +16,7 @@ type Grid = {
   direction?: (number | null)[][];
   source: string;
   valid_at: string | null;
+  stale?: boolean;
 };
 export type HeatInfo = { source: string; valid_at: string | null; error?: string } | null;
 
@@ -736,7 +737,11 @@ export function HeatField({
       active = entry;
       failed = false;
       setSnapshot(entry);
-      info.current({ source: entry.field.g.source, valid_at: entry.field.g.valid_at });
+      info.current({
+        source: entry.field.g.source,
+        valid_at: entry.field.g.valid_at,
+        ...(entry.field.g.stale ? { error: "Pembaruan tertunda. Peta menampilkan data tersimpan." } : {}),
+      });
       relabel();
     };
     const stopPending = () => {
@@ -790,7 +795,7 @@ export function HeatField({
               ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
             },
             overlay: { url: render(map, g, v, layer), bounds },
-            expires: Date.now() + 10 * 60 * 1000,
+            expires: Date.now() + (g.stale ? 60_000 : 10 * 60_000),
           };
           const current = clip(map.getBounds());
           const coversCurrent = current && containsView(bounds, current) && map.getZoom() <= zoom + 1;

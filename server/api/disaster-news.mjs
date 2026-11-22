@@ -36,10 +36,13 @@ const recent = (t, now) =>
   Number.isFinite(Date.parse(t)) &&
   Date.parse(t) <= now + 30 * MINUTE &&
   Date.parse(t) >= now - 7 * DAY;
-const recentNews = (item, now) => item?.type !== "Gempa" && recent(item?.published_at, now);
-const retainRecent = (items, now) =>
+const recentNews = (item, now, provider) =>
+  recent(item?.published_at, now) &&
+  (!["Gempa", "Longsor"].includes(item.type) ||
+    (provider.startsWith("antara_") && item.source === "ANTARA" && item.kind === "news"));
+const retainRecent = (items, now, provider) =>
   array(items)
-    .filter((item) => recentNews(item, now))
+    .filter((item) => recentNews(item, now, provider))
     .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))
     .slice(0, 40);
 function safeLink(value, provider) {
@@ -115,7 +118,7 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
         }
       } else {
 
-        if (!type || type === "Gempa" || !domestic.test(title) || foreign.test(title)) return [];
+        if (!type || !domestic.test(title) || foreign.test(title)) return [];
         location = title.match(domestic)?.[0] || "Indonesia";
         const damage = title.match(/rumah rusak.*?(\d+)\s+unit/i);
         if (damage)
@@ -181,7 +184,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
         NEWS_SOURCES.map(async (source) => {
           const old = previous.find((x) => x.provider === source.id);
           if (Date.parse(old?.refresh_after) > clock()) return;
-          let items = retainRecent(old?.items, clock()),
+          let items = retainRecent(old?.items, clock(), source.id),
             error = null,
             success = old?.last_success_at || null;
           try {
@@ -189,6 +192,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
             items = retainRecent(
               [...new Map([...items, ...incoming].map((i) => [i.url, i])).values()],
               clock(),
+              source.id,
             );
             success = new Date(clock()).toISOString();
           } catch {
@@ -229,7 +233,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
     for (const row of rows.filter((r) => NEWS_SOURCES.some((s) => s.id === r.provider))) {
       for (const item of row.items || []) {
         if (
-          !recentNews(item, clock()) ||
+          !recentNews(item, clock(), row.provider) ||
           item.country_code !== "IDN" ||
           !safeLink(item.url, row.provider)
         )

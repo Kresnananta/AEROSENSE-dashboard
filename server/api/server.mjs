@@ -8,7 +8,7 @@ import { browserVoiceRoutes, defaultStyle, speechText } from "./browser-voice.mj
 import { accountRoutes } from "./accounts.mjs";
 import { heatmapRoutes } from "./heatmap.mjs";
 import { guestChatRoutes, publicNode } from "./guest-chat.mjs";
-import { weatherService, weatherRoutes, weatherFacts } from "./weather.mjs";
+import { openMeteoRequest, weatherService, weatherRoutes, weatherFacts } from "./weather.mjs";
 import { startRobotMood } from "./robot-mood.mjs";
 import { useWibowo, wibowoSpeech } from "./wibowo.mjs";
 import { disasterNews } from "./disaster-news.mjs";
@@ -703,7 +703,7 @@ async function nativeRefresh(j, p) {
           id: "news-" + i.id,
           area_id: "indonesia",
           fresh_until: i.fresh_until,
-          category: { Karhutla: "fire", Banjir: "flood" }[i.type] || "weather",
+          category: { Karhutla: "fire", Banjir: "flood", Gempa: "earthquake" }[i.type] || "weather",
           label: "Kabar bencana Indonesia · " + i.type,
           value: i.title,
           unit: "",
@@ -960,8 +960,9 @@ const voiceRoutes = browserVoiceRoutes({
   gemini,
 });
 const accounts = accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate, request });
-const heatmap = heatmapRoutes({ send, rate, request });
-const weather = weatherService({ request });
+const openMeteo = openMeteoRequest({ request });
+const heatmap = heatmapRoutes({ send, rate, request: openMeteo });
+const weather = weatherService({ request, openMeteo });
 const weatherApi = weatherRoutes({ service: weather, send, rate });
 const guestChat = guestChatRoutes({ one, filter, enqueue, rawBody, send, rate });
 const browserRoutes = webRoutes({
