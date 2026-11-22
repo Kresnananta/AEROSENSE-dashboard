@@ -3,7 +3,7 @@ import { formatQuakeRegion, sensorSummary } from "@/lib/environment-presentation
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
-import { HeatField, HeatLegend } from "./HeatField";
+import { HeatField, HeatLegend, type HeatInfo } from "./HeatField";
 import type { HeatLayerKey } from "./heat-layers";
 import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
@@ -129,7 +129,8 @@ function EventFocus({ nodes, events }: { nodes: LiveNode[]; events: EnvironmentE
   const signature = JSON.stringify([...nodes, ...events].map((p) => [p.latitude, p.longitude]));
   useEffect(() => {
     const points = JSON.parse(signature) as [number, number][];
-    if (points.length) map.fitBounds(points, { padding: [35, 35], maxZoom: 13 });
+    if (points.length)
+      map.fitBounds(points, { paddingTopLeft: [44, 56], paddingBottomRight: [44, 26], maxZoom: 13 });
   }, [map, signature]);
   return null;
 }
@@ -235,11 +236,7 @@ export function LiveMap({
   showCyclones?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
-  const [heatInfo, setHeatInfo] = useState<{
-    source: string;
-    valid_at: string | null;
-    error?: string;
-  } | null>(null);
+  const [heatInfo, setHeatInfo] = useState<{ layer: HeatLayerKey; data: HeatInfo } | null>(null);
   const hazardPoints = (hazards?.quakes || [])
     .filter((q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude))
     .map((q) => ({ latitude: q.latitude, longitude: q.longitude }) as EnvironmentEvent);
@@ -262,9 +259,8 @@ export function LiveMap({
   );
   if (!active && !userLocation)
     return <p className="live-notice">Koordinat node belum tersedia.</p>;
-  return (
+  const map = (
     <div className={"live-map" + (heat !== "off" ? " heat-on" : "")} data-heat={heat}>
-      {heat !== "off" && <HeatLegend layer={heat} info={heatInfo} />}
       <MapContainer
         center={
           userLocation
@@ -341,7 +337,13 @@ export function LiveMap({
             <CircleMarker
               center={[locationPoint.latitude, locationPoint.longitude]}
               radius={7}
-              pathOptions={{ color: "#fff", weight: 3, fillColor: "#076cfb", fillOpacity: 1 }}
+              pathOptions={{
+                className: "map-location-dot",
+                color: "#fff",
+                weight: 3,
+                fillColor: "#076cfb",
+                fillOpacity: 1,
+              }}
             >
               <Tooltip direction="top" offset={[0, -10]}>
                 {locationLabel}
@@ -358,7 +360,9 @@ export function LiveMap({
             </CircleMarker>
           </>
         )}
-        {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
+        {heat !== "off" && (
+          <HeatField key={heat} layer={heat} onInfo={(data) => setHeatInfo({ layer: heat, data })} />
+        )}
         {hazards && (
           <HazardMarkers data={hazards} showCyclones={showCyclones} />
         )}
@@ -376,6 +380,7 @@ export function LiveMap({
               <Tooltip
                 permanent
                 direction="top"
+                offset={[0, -3]}
                 opacity={1}
                 className="node-focus-tooltip"
               >
@@ -483,6 +488,14 @@ export function LiveMap({
           );
         })}
       </MapContainer>
+    </div>
+  );
+  return (
+    <div className="map-figure">
+      {map}
+      {heat !== "off" && (
+        <HeatLegend layer={heat} info={heatInfo?.layer === heat ? heatInfo.data : null} />
+      )}
     </div>
   );
 }

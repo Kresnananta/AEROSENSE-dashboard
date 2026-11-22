@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ImageOverlay, Marker, useMap } from "react-leaflet";
-import { divIcon } from "leaflet";
+import { ImageOverlay, Marker, Pane, useMap } from "react-leaflet";
+import { divIcon, type LayerEvent, type Map as LeafletMap } from "leaflet";
 import { apiRequest } from "@/services/api";
-import { ID_CITIES } from "@/lib/id-cities";
 import { HEAT_LAYERS, type HeatLayerKey, type Stop } from "./heat-layers";
 
 type Grid = {
@@ -65,13 +64,15 @@ function smoothstep(edge0: number, edge1: number, x: number) {
   return t * t * (3 - 2 * t);
 }
 
-function render(g: Grid, v: number[][], key: HeatLayerKey) {
-  const cfg = HEAT_LAYERS[key] as {
-    stops: readonly Stop[];
-    alphaFloor?: number;
-    alphaCeiling?: number;
-  };
-  const stops = cfg.stops;
+function coverage(g: Grid, layer: HeatLayerKey, value: number, row: number, col: number) {
+  const cfg = HEAT_LAYERS[layer];
+  const edge = Math.min(row, col, g.rows - 1 - row, g.cols - 1 - col);
+  const fade = Math.min(1, Math.max(0, edge / (Math.min(g.rows - 1, g.cols - 1) * 0.12)));
+  return "alphaFloor" in cfg ? fade * smoothstep(cfg.alphaFloor, cfg.alphaCeiling, value) : fade;
+}
+
+function render(map: LeafletMap, g: Grid, v: number[][], key: HeatLayerKey) {
+  const stops = HEAT_LAYERS[key].stops;
   const monotone = key === "rain";
   const interp = monotone ? mc : cr;
   const S = monotone ? 40 : 32;
@@ -86,12 +87,13 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
     v[Math.min(g.rows - 1, Math.max(0, i))][Math.min(g.cols - 1, Math.max(0, j))];
   const lo = stops[0][0],
     hi = stops[stops.length - 1][0];
-  const floor = cfg.alphaFloor;
-  const ceil = cfg.alphaCeiling;
   const maxAlpha = key === "cloud" ? 215 : key === "rain" ? 215 : 255;
+  const top = map.project([g.south + (g.rows - 1) * g.step, g.west], 0).y;
+  const bottom = map.project([g.south, g.west], 0).y;
 
   for (let y = 0; y < H; y++) {
-    const gy = ((H - 1 - y) / (H - 1)) * (g.rows - 1);
+    const lat = map.unproject([0, top + ((bottom - top) * y) / (H - 1)], 0).lat;
+    const gy = Math.max(0, Math.min(g.rows - 1, (lat - g.south) / g.step));
     const i = Math.min(Math.floor(gy), g.rows - 2),
       ty = gy - i;
     for (let x = 0; x < W; x++) {
@@ -100,11 +102,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
         tx = gx - j;
       const rowAt = (r: number) => interp(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx);
       const value = interp(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), ty);
-      let alphaRatio = 1;
-      if (floor !== undefined && ceil !== undefined) {
-        if (value <= floor) alphaRatio = 0;
-        else if (value < ceil) alphaRatio = smoothstep(floor, ceil, value);
-      }
+      const alphaRatio = coverage(g, key, value, gy, gx);
       const o = (y * W + x) * 4;
       if (alphaRatio <= 0.01) {
         img.data[o + 3] = 0;
@@ -114,8 +112,7 @@ function render(g: Grid, v: number[][], key: HeatLayerKey) {
       img.data[o] = r;
       img.data[o + 1] = gr;
       img.data[o + 2] = b;
-      const edge = Math.min(x, y, W - 1 - x, H - 1 - y) / (Math.min(W, H) * 0.12);
-      img.data[o + 3] = Math.round(maxAlpha * alphaRatio * Math.min(1, Math.max(0, edge)));
+      img.data[o + 3] = Math.round(maxAlpha * alphaRatio);
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -135,7 +132,7 @@ function sample(g: Grid, v: number[][], lat: number, lng: number, monotone = fal
   return interp(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), gy - i);
 }
 
-type Layer = { id: number; url: string; bounds: [[number, number], [number, number]] };
+type Overlay = { url: string; bounds: [[number, number], [number, number]] };
 type Field = {
   g: Grid;
   v: number[][];
@@ -327,8 +324,11 @@ function RainParticles({ field }: { field: Field }) {
           const py = y * CELL;
           const ll = map.containerPointToLatLng([px, py]);
           const r = Math.max(0, sample(field.g, field.v, ll.lat, ll.lng, true) ?? 0);
-          rainGrid[y * cw + x] = r;
-          if (r >= 0.25) wetCells.push({ x: px, y: py });
+          const row = (ll.lat - field.g.south) / field.g.step;
+          const col = (ll.lng - field.g.west) / field.g.step;
+          const visible = r >= 0.2 && coverage(field.g, "rain", r, row, col) >= 0.12;
+          rainGrid[y * cw + x] = visible ? r : 0;
+          if (visible && r >= 0.25) wetCells.push({ x: px, y: py });
         }
       }
       if (!wetCells.length) {
@@ -392,12 +392,10 @@ type Label = {
   key: string;
   position: [number, number];
   text: string;
-  city: boolean;
-  bg: string;
-  fg: string;
+  color: string;
 };
 
-const CITY_ZOOM = 10;
+const VALUE_PANE = "weatherValues";
 const REGION = { south: -13, west: 92, north: 8, east: 143 };
 const clip = (b: {
   getSouth(): number;
@@ -412,8 +410,89 @@ const clip = (b: {
   return s < n && w < e ? { s, w, n, e } : null;
 };
 
-const STEPS = [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5];
-const labelStep = (latSpan: number) => STEPS.find((s) => s >= latSpan / 3) ?? 5;
+function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[] {
+  const { g, v, uv } = field;
+  const size = map.getSize();
+  const container = map.getContainer();
+  const viewport = container.getBoundingClientRect();
+  const obstacles = Array.from(container.querySelectorAll(
+    ".aerosense-map-marker, .leaflet-tooltip, .leaflet-popup, .leaflet-control, .map-location-dot",
+  ), (el) => el.getBoundingClientRect());
+  const points: { lat: number; lng: number; value: number }[] = [];
+
+  const addPoint = (lat: number, lng: number, value: number | null) => {
+    if (value == null || !Number.isFinite(value)) return;
+    const numeric = layer === "temperature" ? value : Math.max(0, value);
+    const row = (lat - g.south) / g.step;
+    const col = (lng - g.west) / g.step;
+    if (coverage(g, layer, layer === "cloud" ? 100 : numeric, row, col) >= 0.12)
+      points.push({ lat, lng, value: numeric });
+  };
+
+  if (layer === "rain") {
+    g.values.forEach((row, i) =>
+      row.forEach((value, j) => addPoint(g.south + i * g.step, g.west + j * g.step, value)),
+    );
+  }
+  const maxLabels = Math.max(3, Math.min(14, Math.ceil((size.x * size.y) / 28500)));
+  const spacing = layer === "rain"
+    ? 120
+    : Math.max(120, Math.ceil(Math.sqrt((size.x * size.y) / maxLabels)));
+  const origin = map.getPixelBounds().getTopLeft();
+  const stepPixels = Math.abs(map.project([0, g.west + g.step]).x - map.project([0, g.west]).x);
+  if (layer !== "rain" || stepPixels >= spacing / 2) {
+    for (let y = (-origin.y % spacing + spacing) % spacing; y < size.y; y += spacing) {
+      for (let x = (-origin.x % spacing + spacing) % spacing; x < size.x; x += spacing) {
+        const { lat, lng } = map.containerPointToLatLng([x, y]);
+        addPoint(lat, lng, sample(g, v, lat, lng, layer === "rain"));
+      }
+    }
+  }
+  if (layer === "rain") points.sort((a, b) => b.value - a.value);
+
+  const placed: { x: number; y: number }[] = [];
+  const labels: Label[] = [];
+  const cfg = HEAT_LAYERS[layer];
+  for (const { lat, lng, value } of points) {
+    const p = map.latLngToContainerPoint([lat, lng]);
+    if (placed.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < spacing - 8)) continue;
+
+    let text = cfg.format(value);
+    let tone = colorAt(cfg.stops, value);
+    if (layer === "cloud") {
+      const u = uv ? sample(g, uv.u, lat, lng) ?? 0 : 0;
+      const vv = uv ? sample(g, uv.v, lat, lng) ?? 0 : 0;
+      const spd = Math.round(Math.hypot(u, vv));
+      const cloud = Math.max(0, Math.min(100, value));
+      const showCloud = cloud >= HEAT_LAYERS.cloud.quiet;
+      if (!showCloud && spd < 3) continue;
+      text = `${spd}${spd ? " " + arrow(u, vv) : ""}${showCloud ? " · " + cfg.format(cloud) : ""}`;
+      if (!showCloud) tone = [64, 122, 168];
+    }
+
+    const halfWidth = (text.length * 8 + 26) / 2;
+    const halfHeight = 16;
+    if (p.x < halfWidth || p.x > size.x - halfWidth || p.y < halfHeight || p.y > size.y - halfHeight)
+      continue;
+    const x = viewport.left + p.x;
+    const y = viewport.top + p.y;
+    const blocked = obstacles.some((box) =>
+      x + halfWidth > box.left && x - halfWidth < box.right &&
+      y + halfHeight > box.top && y - halfHeight < box.bottom,
+    );
+    if (blocked) continue;
+
+    placed.push(p);
+    labels.push({
+      key: `${lat.toFixed(5)},${lng.toFixed(5)}`,
+      position: [lat, lng],
+      text,
+      color: `rgb(${tone.join(" ")})`,
+    });
+    if (labels.length >= maxLabels) break;
+  }
+  return labels;
+}
 
 export function HeatField({
   layer,
@@ -423,7 +502,7 @@ export function HeatField({
   onInfo: (i: HeatInfo) => void;
 }) {
   const map = useMap();
-  const [layers, setLayers] = useState<Layer[]>([]);
+  const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
   const field = useRef<Field | null>(null);
   const [wind, setWind] = useState<Field | null>(null);
@@ -433,140 +512,23 @@ export function HeatField({
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
     let abort: AbortController | null = null;
-    let seq = 0;
     field.current = null;
     setWind(null);
     setRainField(null);
-    setLayers([]);
+    setOverlay(null);
+    info.current(null);
     setLabels([]);
 
+    let layoutFrame = 0;
     const relabel = () => {
-      const f = field.current;
-      if (!f) return setLabels([]);
-      const view = map.getBounds();
-      const size = map.getSize();
-      const zoom = map.getZoom();
-
-      const points: { lat: number; lng: number; city: boolean }[] = [];
-      if (zoom <= CITY_ZOOM) {
-        const maxRank = zoom <= 5 ? 1 : zoom <= 7 ? 2 : 3;
-        for (const [, lat, lng, rank] of [...ID_CITIES].sort((x, y) => x[3] - y[3]))
-          if (rank <= maxRank && view.contains([lat, lng])) points.push({ lat, lng, city: true });
-      } else {
-        const step = labelStep(view.getNorth() - view.getSouth());
-        const center = map.getCenter();
-        for (
-          let lat = Math.ceil(view.getSouth() / step) * step;
-          lat <= view.getNorth();
-          lat += step
-        )
-          for (
-            let lng = Math.ceil(view.getWest() / step) * step;
-            lng <= view.getEast();
-            lng += step
-          )
-            points.push({ lat, lng, city: false });
-        points.sort(
-          (a, b) =>
-            (a.lat - center.lat) ** 2 +
-            (a.lng - center.lng) ** 2 -
-            ((b.lat - center.lat) ** 2 + (b.lng - center.lng) ** 2),
-        );
-      }
-      const diffFloor: Record<HeatLayerKey, number> = {
-        temperature: 1.5,
-        pm25: 3,
-        rain: 0.5,
-        cloud: 12,
-      };
-      const out: Label[] = [];
-      const placed: { x: number; y: number; val: number; wind?: number; text: string }[] = [];
-      const sameNearby = (
-        x: number,
-        y: number,
-        val: number,
-        text: string,
-        city: boolean,
-        windSpd?: number,
-      ) => {
-        if (city) return placed.some((q) => Math.abs(q.x - x) < 72 && Math.abs(q.y - y) < 34);
-        if (placed.some((q) => Math.hypot(q.x - x, q.y - y) < 145)) return true;
-        const minDelta = diffFloor[layer];
-        return placed.some((q) => {
-          const near = Math.hypot(q.x - x, q.y - y) < 340;
-          if (!near && q.text !== text) return false;
-          if (q.text === text) return true;
-          const valSame = Math.abs(q.val - val) < minDelta;
-          const windSame =
-            windSpd === undefined || q.wind === undefined || Math.abs(q.wind - windSpd) < 4;
-          return valSame && windSame;
-        });
-      };
-      const maxLabels = zoom <= CITY_ZOOM ? 28 : 12;
-
-      for (const { lat, lng, city } of points) {
-        const p = map.latLngToContainerPoint([lat, lng]);
-        if (p.x < 68 || p.y < 38 || p.x > size.x - 68 || p.y > size.y - 38) continue;
-        if (p.x < 260 && p.y > size.y - 200) continue;
-        const rawValue = sample(f.g, f.v, lat, lng, layer === "rain");
-        if (rawValue == null) continue;
-        const value =
-          layer === "cloud"
-            ? Math.min(100, Math.max(0, rawValue))
-            : layer === "temperature"
-              ? rawValue
-              : Math.max(0, rawValue);
-
-        const quiet = (HEAT_LAYERS[layer] as { quiet?: number }).quiet;
-
-        if (layer === "cloud") {
-          const u = f.uv ? sample(f.g, f.uv.u, lat, lng) ?? 0 : 0;
-          const vv = f.uv ? sample(f.g, f.uv.v, lat, lng) ?? 0 : 0;
-          const spd = Math.max(0, Math.round(Math.hypot(u, vv)));
-          const hasCloud = value >= (quiet ?? 20);
-          if (!hasCloud && spd < 3) continue;
-          const dir = spd >= 1 ? " " + arrow(u, vv) : "";
-          const text = hasCloud ? `${spd}${dir} · ${Math.round(value)}%` : `${spd}${dir}`;
-          if (sameNearby(p.x, p.y, value, text, city, spd)) continue;
-          const stops = HEAT_LAYERS.cloud.stops;
-          const [r, gr, bl] = hasCloud
-            ? colorAt(stops, Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)))
-            : [232, 243, 255];
-          const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
-          placed.push({ x: p.x, y: p.y, val: value, wind: spd, text });
-          out.push({
-            key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
-            position: [lat, lng],
-            text,
-            city,
-            bg: `rgb(${r} ${gr} ${bl})`,
-            fg: light ? "#102a47" : "#fff",
-          });
-          if (out.length >= maxLabels) break;
-          continue;
-        }
-
-        if (quiet !== undefined && value < quiet) continue;
-        const text = HEAT_LAYERS[layer].format(value);
-        if (sameNearby(p.x, p.y, value, text, city)) continue;
-        const stops = HEAT_LAYERS[layer].stops;
-        const [r, gr, bl] = colorAt(
-          stops,
-          Math.min(stops[stops.length - 1][0], Math.max(stops[0][0], value)),
-        );
-        const light = (0.299 * r + 0.587 * gr + 0.114 * bl) / 255 > 0.62;
-        placed.push({ x: p.x, y: p.y, val: value, text });
-        out.push({
-          key: `${city ? "c" : "g"}${lat.toFixed(3)},${lng.toFixed(3)}`,
-          position: [lat, lng],
-          text,
-          city,
-          bg: `rgb(${r} ${gr} ${bl})`,
-          fg: light ? "#1d2f43" : "#fff",
-        });
-        if (out.length >= maxLabels) break;
-      }
-      setLabels(out);
+      cancelAnimationFrame(layoutFrame);
+      layoutFrame = requestAnimationFrame(() => {
+        const active = field.current;
+        setLabels(active ? fieldLabels(map, active, layer) : []);
+      });
+    };
+    const relabelOnLayer = (event: LayerEvent) => {
+      if (event.layer.options?.pane !== VALUE_PANE) relabel();
     };
 
     const needsData = () => {
@@ -585,14 +547,18 @@ export function HeatField({
     };
     const load = () => {
       relabel();
-      if (!needsData()) return;
       clearTimeout(timer);
-      timer = setTimeout(async () => {
+      if (!needsData()) {
         abort?.abort();
-        abort = new AbortController();
-        const id = ++seq;
+        return;
+      }
+      timer = setTimeout(async () => {
         const b = clip(map.getBounds().pad(0.6));
         if (!b) return;
+        const zoom = map.getZoom();
+        abort?.abort();
+        const controller = new AbortController();
+        abort = controller;
         const qs = new URLSearchParams({
           layer,
           south: b.s.toFixed(3),
@@ -601,33 +567,36 @@ export function HeatField({
           east: b.e.toFixed(3),
         });
         try {
-          const g = await apiRequest<Grid>("/v1/heatmap?" + qs, { signal: abort.signal }, false);
-          if (g.rows < 2 || g.cols < 2 || id !== seq) return;
+          const g = await apiRequest<Grid>("/v1/heatmap?" + qs, { signal: controller.signal }, false);
+          if (controller.signal.aborted) return;
+          if (g.rows < 2 || g.cols < 2) throw new Error("Data model untuk area ini belum tersedia.");
           const v = filledGrid(g.values);
           const windGrid = g.wind_speed ? filledGrid(g.wind_speed) : v;
-          const bounds: Layer["bounds"] = [
+          const bounds: Overlay["bounds"] = [
             [g.south, g.west],
             [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
           ];
+          const nextOverlay = { url: render(map, g, v, layer), bounds };
           field.current = {
             g,
             v,
-            zoom: map.getZoom(),
+            zoom,
             covers: bounds,
             ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
           };
           setWind(field.current.uv ? field.current : null);
           setRainField(layer === "rain" ? field.current : null);
 
-          setLayers((old) => [
-            ...old.slice(-1),
-            { id, url: render(g, v, layer), bounds },
-          ]);
-          setTimeout(() => setLayers((old) => old.filter((l) => l.id >= id)), 700);
+          setOverlay(nextOverlay);
           relabel();
           info.current({ source: g.source, valid_at: g.valid_at });
         } catch (e) {
-          if ((e as Error).name === "AbortError") return;
+          if (controller.signal.aborted) return;
+          field.current = null;
+          setOverlay(null);
+          setWind(null);
+          setRainField(null);
+          relabel();
           info.current({
             source: "",
             valid_at: null,
@@ -637,11 +606,16 @@ export function HeatField({
       }, 300);
     };
     load();
-    map.on("moveend", load);
+    map.on("moveend resize", load);
+    map.on("layeradd layerremove", relabelOnLayer);
+    map.on("popupopen popupclose tooltipopen tooltipclose", relabel);
     return () => {
       clearTimeout(timer);
       abort?.abort();
-      map.off("moveend", load);
+      cancelAnimationFrame(layoutFrame);
+      map.off("moveend resize", load);
+      map.off("layeradd layerremove", relabelOnLayer);
+      map.off("popupopen popupclose tooltipopen tooltipclose", relabel);
     };
   }, [map, layer]);
   const icons = useMemo(
@@ -650,8 +624,8 @@ export function HeatField({
         labels.map((l) => [
           l.key,
           divIcon({
-            className: `heat-label${l.city ? " heat-label-city" : ""}`,
-            html: `<span style="background:${l.bg};color:${l.fg}">${l.text}</span>`,
+            className: "heat-label",
+            html: `<span style="--value-color:${l.color}">${l.text}</span>`,
             iconSize: [0, 0],
           }),
         ]),
@@ -662,36 +636,31 @@ export function HeatField({
     <>
       {wind && <WindParticles field={wind} />}
       {rainField && <RainParticles field={rainField} />}
-      {layers.map((l) => (
-        <ImageOverlay
-          key={l.id}
-          url={l.url}
-          bounds={l.bounds}
-          interactive={false}
-          pane="heatPane"
-          className="heat-overlay"
-        />
-      ))}
-      {labels.map((l) => (
-        <Marker
-          key={l.key}
-          position={l.position}
-          icon={icons.get(l.key)!}
-          interactive={false}
-          keyboard={false}
-          zIndexOffset={-1000}
-        />
-      ))}
+      {overlay && (
+        <ImageOverlay url={overlay.url} bounds={overlay.bounds} interactive={false} pane="heatPane" />
+      )}
+      <Pane name={VALUE_PANE} style={{ zIndex: 500, pointerEvents: "none" }}>
+        {labels.map((l) => (
+          <Marker
+            key={l.key}
+            position={l.position}
+            icon={icons.get(l.key)!}
+            interactive={false}
+            keyboard={false}
+            pane={VALUE_PANE}
+          />
+        ))}
+      </Pane>
     </>
   );
 }
 
 export function HeatLegend({ layer, info }: { layer: HeatLayerKey; info: HeatInfo }) {
   const l = HEAT_LAYERS[layer];
+  const stopPosition = (i: number) => (i / (l.stops.length - 1)) * 100 + "%";
   const gradient = l.stops
-    .map(([, c], i) => `${c} ${(i / Math.max(1, l.stops.length - 1)) * 100}%`)
+    .map(([, c], i) => `${c} ${stopPosition(i)}`)
     .join(", ");
-  const ticks = l.stops;
   const time = info?.valid_at
     ? new Date(info.valid_at).toLocaleTimeString("id-ID", {
         timeZone: "Asia/Jakarta",
@@ -700,21 +669,23 @@ export function HeatLegend({ layer, info }: { layer: HeatLayerKey; info: HeatInf
       }) + " WIB"
     : "";
   return (
-    <div className="heat-legend">
+    <div className="heat-legend" role="group" aria-label={l.label + " · " + l.unit}>
       <div className="heat-legend-head">
         <strong>{l.label}</strong>
         <span>{l.unit}</span>
       </div>
-      <div className="heat-scale" style={{ background: `linear-gradient(90deg, ${gradient})` }} />
-      <div className="heat-ticks">
-        {ticks.map(([v]) => (
-          <span key={v}>{l.format(v)}</span>
-        ))}
+      <div>
+        <div className="heat-scale" style={{ background: `linear-gradient(90deg, ${gradient})` }} />
+        <div className="heat-ticks">
+          {l.stops.map(([v], i) => (
+            <span key={v} style={{ left: stopPosition(i) }}>{l.format(v)}</span>
+          ))}
+        </div>
       </div>
-      <p>
-        {info?.error
-          ? info.error
-          : `${info?.source || "Memuat…"}${time ? " · " + time : ""}. Estimasi model, bukan sensor.`}
+      <p role="status">
+        {info?.error || (info
+          ? `${info.source}${time ? " · " + time : ""}. Estimasi model.`
+          : "Memuat estimasi model…")}
       </p>
     </div>
   );

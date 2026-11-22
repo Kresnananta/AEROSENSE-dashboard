@@ -93,19 +93,29 @@
     transition: none;
   }
 }
-.node-focus-tooltip {
-  background: #0967e9;
-  border: 0;
-  border-radius: 8px;
+.map-pin.pin-sensor.is-active {
+  --pin-fill: var(--pin-color);
+  --pin-border: var(--pin-color);
   color: #fff;
-  padding: 7px 10px;
+}
+.map-pin.pin-sensor.is-active::before {
+  background: var(--pin-fill);
+  border-color: var(--pin-border);
+  box-shadow: 0 2px 5px rgb(15 40 80 / 0.22);
+}
+.live-map .leaflet-tooltip.node-focus-tooltip {
+  background: #f8fcff;
+  border: 1px solid rgb(34 97 158 / 0.19);
+  border-radius: 7px;
+  color: #143e68;
+  padding: 3px 7px;
   font-family: var(--font-sans);
   font-size: 11px;
   font-weight: 700;
-  box-shadow: 0 4px 9px -4px #183e6577;
+  box-shadow: none;
 }
-.leaflet-tooltip-top.node-focus-tooltip::before {
-  border-top-color: #0967e9;
+.live-map .node-focus-tooltip::before {
+  display: none;
 }
 .map-location-control {
   display: flex;
@@ -294,34 +304,42 @@
 }
 .live-map {
   position: relative;
-}.heat-legend {
-  position: absolute;
-  bottom: 28px;
-  left: 10px;
-  z-index: 500;
-  width: min(276px, calc(100% - 20px));
-  padding: 7px 9px;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 0.95);
-  color: #4b5e74;
-  font-size: 10.5px;
-  line-height: 1.35;
-  box-shadow: 0 2px 8px rgb(15 40 80 / 0.14);
-  pointer-events: none;
+}
+.live-map.heat-on {
+  margin-bottom: 0;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+.heat-legend {
+  display: grid;
+  grid-template-columns: auto minmax(140px, 280px) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 24px;
+  margin-bottom: 1rem;
+  padding: 10px 16px;
+  border: 1px solid var(--aero-rim, #cddfec);
+  border-top: 0;
+  border-radius: 0 0 16px 16px;
+  background: var(--aero-surface, #fff);
+  color: var(--aero-muted, #385976);
+  font-size: 11px;
+  line-height: 1.4;
 }
 .heat-scale {
-  height: 8px;
+  height: 5px;
   border-radius: 4px;
 }
 .heat-ticks {
-  display: flex;
-  justify-content: space-between;
-  gap: 2px;
-  margin: 3px 0 4px;
-  font-size: 9.5px;
+  position: relative;
+  min-height: 1lh;
+  margin-top: 3px;
+  font-size: 10px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.heat-ticks span { position: absolute; transform: translateX(-50%); }
+.heat-ticks span:first-child { transform: none; }
+.heat-ticks span:last-child { transform: translateX(-100%); }
 .heat-legend p {
   margin: 0;
 }
@@ -337,51 +355,52 @@
   opacity: 0.84;
 }
 
-.heat-overlay {
-  animation: heat-fade-in 0.5s ease-out;
-}
-@keyframes heat-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .heat-overlay {
-    animation: none;
-  }
-}
 .heat-label {
   background: none;
   border: 0;
 }
 .heat-label span {
   position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
   transform: translate(-50%, -50%);
-  padding: 2px 7px;
-  border-radius: 999px;
-
-  background: #fff;
-  color: #1d2f43;
-  border: 1.5px solid rgb(255 255 255 / 0.95);
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #f8fcff;
+  color: #173452;
   font-size: 11px;
-  font-weight: 750;
+  font-weight: 700;
+  line-height: 16px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  box-shadow: 0 1px 4px rgb(15 40 80 / 0.22);
+  box-shadow: 0 1px 3px rgb(15 40 80 / 0.18);
   pointer-events: none;
+}
+.heat-label span::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--value-color);
 }
 .heat-legend-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 2px 7px;
 }
 .heat-legend-head strong {
-  color: #1d2f43;
-  font-size: 12px;
+  color: var(--aero-ink, #143e68);
+  font-size: 13px;
+}
+@media (max-width: 680px) {
+  .heat-legend {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 9px 12px;
+  }
 }
 
 .wind-canvas {
@@ -389,10 +408,6 @@
   inset: 0;
   z-index: 401;
   pointer-events: none;
-}
-
-.heat-label-city span {
-  transform: translate(-50%, 9px);
 }
 
 .map-reference {
