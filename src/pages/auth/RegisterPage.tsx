@@ -10,7 +10,6 @@ import { apiRequest } from "@/services/api";
 import { DEMO_MODE } from "@/lib/demo-mode";
 
 type Place = { label: string; latitude: number; longitude: number };
-const SURABAYA: [number, number] = [-7.2575, 112.7521];
 const ROLES = [
   { value: "", label: "Warga", hint: "Melihat kondisi udara, node publik, dan menerima peringatan." },
   { value: "operator", label: "Pengelola kawasan", hint: "Mengatur ambang dan WATERSENSE di lokasi Anda." },
@@ -21,6 +20,7 @@ const ROLES = [
 function Recenter({ point }: { point: [number, number] }) {
   const map = useMap();
   useEffect(() => {
+    map.invalidateSize();
     map.setView(point, 15);
   }, [map, point]);
   return null;
@@ -41,6 +41,7 @@ export function RegisterPage() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [point, setPoint] = useState<[number, number] | null>(null);
   const [places, setPlaces] = useState<Place[]>([]);
+  const [addressNotice, setAddressNotice] = useState("");
   const [searching, setSearching] = useState(false);
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,9 +51,12 @@ export function RegisterPage() {
   const role = ROLES.find((r) => r.value === form.requested_role)!;
 
   async function searchAddress() {
-    if (form.address.trim().length < 3) return setNotice("Ketik minimal 3 huruf alamat.");
+    if (searching) return;
+    if (form.address.trim().length < 3) return setAddressNotice("Ketik minimal 3 huruf alamat.");
     setSearching(true);
-    setNotice("");
+    setPlaces([]);
+    setPoint(null);
+    setAddressNotice("");
     try {
       const { results } = await apiRequest<{ results: Place[] }>(
         "/v1/geocode?q=" + encodeURIComponent(form.address),
@@ -61,9 +65,9 @@ export function RegisterPage() {
       );
       setPlaces(results);
       if (results[0]) setPoint([results[0].latitude, results[0].longitude]);
-      else setNotice("Alamat belum ditemukan. Coba nama jalan dan kota, atau lewati bagian ini.");
+      else setAddressNotice("Alamat belum ditemukan. Coba nama jalan dan kota, atau lewati bagian ini.");
     } catch (e) {
-      setNotice(e instanceof Error ? e.message : "Pencarian alamat belum berhasil.");
+      setAddressNotice(e instanceof Error ? e.message : "Pencarian alamat belum berhasil.");
     } finally {
       setSearching(false);
     }
@@ -195,10 +199,12 @@ export function RegisterPage() {
                         <div className="login-input">
                           <MapPin size={18} />
                           <input id="reg-address" autoComplete="street-address" maxLength={240}
-                            value={form.address}
+                            value={form.address} readOnly={searching}
                             onChange={(e) => {
                               set("address")(e);
                               setPlaces([]);
+                              setPoint(null);
+                              setAddressNotice("");
                             }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
@@ -212,36 +218,40 @@ export function RegisterPage() {
                           <Search size={16} /> {searching ? "Mencari…" : "Cari"}
                         </button>
                       </div>
-                      {places.length > 1 && (
+                      {addressNotice && <p className="register-hint" role="status">{addressNotice}</p>}
+                      {places.length > 0 && (
                         <ul className="register-places" aria-label="Pilihan alamat">
                           {places.map((p) => (
-                            <li key={p.label}>
-                              <button type="button" onClick={() => setPoint([p.latitude, p.longitude])}>
+                            <li key={p.label + p.latitude + "," + p.longitude}>
+                              <button
+                                type="button"
+                                aria-pressed={point?.[0] === p.latitude && point?.[1] === p.longitude}
+                                onClick={() => {
+                                  setForm((f) => ({ ...f, address: p.label }));
+                                  setPoint([p.latitude, p.longitude]);
+                                }}
+                              >
                                 {p.label}
                               </button>
                             </li>
                           ))}
                         </ul>
                       )}
-                      <div className="register-map">
-                        <MapContainer center={point || SURABAYA} zoom={point ? 15 : 11} className="h-full w-full"
+                      {point && <div className="register-map">
+                        <MapContainer center={point} zoom={15} className="h-full w-full"
                           scrollWheelZoom={false}>
                           <TileLayer url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                             attribution="&copy; OpenStreetMap" />
-                          {point && (
-                            <>
-                              <Recenter point={point} />
-                              <CircleMarker center={point} radius={9} pathOptions={{ color: "#0a63e8", fillOpacity: 0.6 }} />
-                            </>
-                          )}
+                          <Recenter point={point} />
+                          <CircleMarker center={point} radius={9} pathOptions={{ color: "#0a63e8", fillOpacity: 0.6 }} />
                         </MapContainer>
-                      </div>
+                      </div>}
                       <p className="register-hint">Alamat membantu menampilkan peta di sekitar Anda.</p>
                     </fieldset>
                   )}
                 </details>
 
-                <button type="submit" className="login-submit" disabled={busy || DEMO_MODE}>
+                <button type="submit" className="login-submit" disabled={busy || searching || DEMO_MODE}>
                   {busy ? "Membuat akun…" : "Daftar"}
                   <ArrowRight size={18} />
                 </button>

@@ -38,7 +38,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 - Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.
 - Tombol kirim AERO-BOT memakai ikon panah dengan label aksesibel.
 - Header chat menampilkan status saat jawaban sedang disiapkan. Warna kondisi tetap pada ilustrasi dan balon dialog.
-- Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil. Template konfirmasi di `server/supabase/confirmation-email.html` menunggu pemasangan di Supabase dan uji pengiriman.
+- Formulir daftar menyimpan detail profil sebagai bagian opsional. Peta mengikuti hasil pencarian yang dipilih dan muncul setelah alamat ditemukan. Alur pemilihan dan hasil kosong diuji di Chrome dengan data uji. Halaman status email membedakan tautan kosong, gagal, dan berhasil. Template konfirmasi di `server/supabase/confirmation-email.html` menunggu pemasangan di Supabase dan uji pengiriman.
 - Build dan 128 tes lulus. Daftar nasional dan peta diuji dengan 30 kejadian dari BMKG, termasuk pilihan saat umpan cadangan digunakan. Penanda, navigasi keyboard, dan rujukan gempa diuji di Chrome pada lebar 390 dan 1440 px, termasuk saat umpan BMKG kosong atau gagal. Rilis API dan web diperlukan untuk daftar nasional. Periksa jumlah kejadian pada situs publik setelah rilis dan uji email konfirmasi.
 
 ## AERO-BOT (status terbaru)
