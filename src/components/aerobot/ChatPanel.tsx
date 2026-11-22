@@ -647,7 +647,6 @@ export function ChatPanel() {
               voice.transcribing
             }
           >
-            <span>Kirim</span>
             <ArrowUp size={18} aria-hidden="true" />
           </button>
         </form>

@@ -209,6 +209,14 @@ dialog.role-dialog {
 .login-page :is(.login-back, .login-register a) { color: var(--aero-link); }
 .app-shell .nav-entry { color: var(--muted-foreground); }
 .app-shell .nav-entry.active { color: white; background: var(--aero-cobalt); }
+@media (hover: hover) {
+  .app-shell .nav-entry:not(.active):hover,
+  .app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled),
+  .landing-page .landing-feature-link:hover {
+    background: var(--aero-focus-lime);
+    color: var(--aero-focus-ink);
+  }
+}
 .app-shell .nav-entry.active svg { color: currentColor; }
 .app-shell .app-topbar :is(.topbar-breadcrumb, .topbar-icon) { color: var(--muted-foreground); }
 .app-shell .app-topbar .topbar-breadcrumb strong { color: var(--aero-heading); }
@@ -383,7 +391,7 @@ svg.aero-icon, .map-pin-glyph {
 }
 
 .app-shell .environment-nav .insight-topics button[aria-pressed="false"] { color: var(--muted-foreground); }
-.app-shell .environment-nav .insight-topics button[aria-pressed="false"]:hover { background: var(--muted); color: var(--foreground); }
+.app-shell .environment-nav .insight-topics button[aria-pressed="false"]:hover { background: var(--aero-focus-lime); color: var(--aero-focus-ink); }
 .app-shell .environment-nav :is(.monitoring-select, .live-icon-button) {
   background: var(--card);
   color: var(--aero-link);
@@ -416,24 +424,17 @@ svg.aero-icon, .map-pin-glyph {
 .app-shell .chat-workspace .live-chat .chat-send {
   display: inline-flex;
   justify-content: center;
-  gap: 8px;
-  width: auto;
-  min-width: 44px;
+  align-items: center;
+  width: 44px;
   height: 44px;
-  padding-inline: 14px;
+  padding: 0;
   background: var(--primary);
   color: white;
-  font-size: .875rem;
-  font-weight: 700;
 }
 .app-shell .chat-workspace .live-chat .chat-send:disabled {
   background: var(--accent);
   color: var(--accent-foreground);
   cursor: default;
-}
-@media (max-width: 540px) {
-  .app-shell .chat-workspace .live-chat .chat-send { padding-inline: 10px; }
-  .chat-send span { display: none; }
 }
 .app-shell .chat-workspace .live-message:not(.user) { background: var(--muted); color: var(--foreground); }
 .app-shell .chat-workspace :is(.chat-progress, .chat-note) { color: var(--muted-foreground); }
