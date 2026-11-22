@@ -36,9 +36,12 @@ const filters = [
   { value: "Semua", label: "Semua" },
   { value: "Karhutla", label: "Kebakaran hutan & lahan" },
   { value: "Banjir", label: "Banjir" },
-  { value: "Gempa", label: "Gempa" },
-  { value: "Longsor", label: "Longsor" },
+  { value: "gempa-longsor", label: "Gempa & longsor" },
 ];
+
+function isGempaLongsor(item: DisasterItem) {
+  return item.type === "Gempa" || item.type === "Longsor";
+}
 
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const { data, error, loading, refresh } = useLiveData<DisasterResponse>(
@@ -49,9 +52,11 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const [filter, setFilter] = useState("Semua");
   const [expanded, setExpanded] = useState(false);
   const entries = (data?.items ?? []).filter((item) =>
-    !["Gempa", "Longsor"].includes(item.type) || (item.kind === "news" && item.source === "ANTARA"),
+    !isGempaLongsor(item) || (item.kind === "news" && item.source === "ANTARA"),
   );
-  const items = entries.filter((item) => filter === "Semua" || item.type === filter);
+  const items = entries.filter((item) =>
+    filter === "Semua" || item.type === filter || (filter === "gempa-longsor" && isGempaLongsor(item)),
+  );
   const shown = items.slice(0, expanded ? 24 : compact ? 2 : 3);
   return (
     <section className="disaster-section" id="kabar-bencana" aria-labelledby="disaster-heading">
@@ -202,7 +207,9 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                 ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti."
                 : filter === "Semua"
                   ? "Belum ada kabar dari sumber yang dipantau."
-                  : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dalam 7 hari terakhir.`}
+                  : filter === "gempa-longsor"
+                    ? "Belum ada kabar gempa atau longsor dalam 7 hari terakhir."
+                    : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dalam 7 hari terakhir.`}
             </p>
           )}
           {items.length > shown.length && (
