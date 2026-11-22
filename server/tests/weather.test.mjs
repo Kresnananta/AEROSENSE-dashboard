@@ -98,15 +98,21 @@ test("cyclones near Indonesia only, quakes from the last week", () => {
 test("AERO-BOT gets forecast, coming days and warnings as facts", () => {
   const o = parseForecast(forecast, now);
   const area = { id: "n1", name: "ITS", latitude: -7.28, longitude: 112.79 };
-  const facts = weatherFacts(o, { cyclones: [], quakes: [{ latitude: -8.1, longitude: 113.2, magnitude: 5.3, depth: "10 km", region: "Selatan Jawa Timur", potential: "Tidak berpotensi tsunami" }] }, area, now);
-  assert.equal(facts.length, 3);
+  const facts = weatherFacts(o, { cyclones: [{ id: "tc-1", name: "Siklon A", level: "green", latitude: -8.3, longitude: 113.4 }], quakes: [{ latitude: -8.1, longitude: 113.2, magnitude: 5.3, depth: "10 km", region: "Selatan Jawa Timur", potential: "Tidak berpotensi tsunami", time: new Date(now - 3600000).toISOString() }] }, area, now);
+  assert.equal(facts.length, 5);
   assert.match(facts[0].value, /Hujan berpeluang turun mulai 14\.00 WIB/);
   assert.match(facts[1].value, /peluang hujan 60%/);
   assert.match(facts[2].value, /Potensi hujan petir/);
-  assert.match(facts[2].value, /Gempa M5\.3/);
+  assert.equal(facts[2].source, "Open-Meteo");
+  assert.equal(facts[3].source, "GDACS");
+  assert.equal(facts[4].category, "earthquake");
+  assert.equal(facts[4].source, "BMKG");
+  assert.match(facts[4].value, /Gempa M5\.3.*Tidak berpotensi tsunami/);
+  assert.equal(facts[4].valid_at, new Date(now - 3600000).toISOString());
   for (const f of facts) assert.equal(f.data_origin, "external_api");
   const calm = weatherFacts(null, { cyclones: [], quakes: [] }, area, now);
-  assert.match(calm[0].value, /Tidak ada peringatan/);
+  assert.match(calm[0].value, /Daftar BMKG tidak mencatat/);
+  assert.deepEqual(weatherFacts(null, { cyclones: null, quakes: null }, area, now), []);
 });
 
 test("service caches by ~5 km and survives a failed hazard source", async () => {

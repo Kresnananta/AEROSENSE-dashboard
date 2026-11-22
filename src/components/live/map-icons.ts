@@ -1,16 +1,8 @@
 import { divIcon } from "leaflet";
 import { mapDrawings } from "./map-drawings";
 
-const colors: Record<string, string> = {
-  calm: "#218160",
-  warning: "#a96a05",
-  danger: "#b93943",
-  pending: "#697c90",
-  fire: "#bd4b12",
-  earthquake: "#b4342a",
-  watersense: "#087c98",
-};
 const icons = new Map<string, ReturnType<typeof divIcon>>();
+const sensorTones = new Set(["calm", "warning", "danger"]);
 export function mapIcon(kind: keyof typeof mapDrawings, tone: string = kind, active = false) {
   const key = `${kind}-${tone}-${active}`;
   if (!icons.has(key))
@@ -18,10 +10,11 @@ export function mapIcon(kind: keyof typeof mapDrawings, tone: string = kind, act
       key,
       divIcon({
         className: "aerosense-map-marker",
-        html: `<span class="map-pin pin-${kind}${active ? " is-active" : ""}" style="--pin-color:${colors[tone] || colors.pending}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${mapDrawings[kind]}</svg></span>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -18],
+        html: `<span class="map-pin pin-${kind}${sensorTones.has(tone) ? ` tone-${tone}` : ""}${active ? " is-active" : ""}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${mapDrawings[kind]}</svg></span>`,
+        iconSize: [36, 40],
+        iconAnchor: [18, 38],
+        popupAnchor: [0, -36],
+        tooltipAnchor: [0, -35],
       }),
     );
   return icons.get(key)!;

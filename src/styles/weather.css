@@ -511,6 +511,7 @@
   margin: 3px 0 0;
 }
 .wx-hazard-panel {
+  margin-top: 18px;
   scroll-margin-top: 90px;
 }
 .wx-hazard-panel h3 {
@@ -560,18 +561,20 @@
   line-height: 1.5;
 }
 .wx-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px 16px;
   margin-top: 8px;
 }
-.wx-foot .insight-text-link { min-block-size: 44px; }
-.wx-foot small {
-  font-size: 12px;
-  color: var(--muted-foreground);
+.wx-cyclone-section {
+  margin-top: 10px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
 }
+.wx-cyclone-section h4 {
+  margin: 0 0 10px;
+  color: var(--aero-heading);
+  font-size: 15px;
+  font-weight: 700;
+}
+.wx-hazard-panel .insight-text-link { min-block-size: 44px; }
 
 .weather-outlook.is-compact .wx-today {
   grid-template-columns: auto minmax(0, 1fr) minmax(220px, 0.8fr);

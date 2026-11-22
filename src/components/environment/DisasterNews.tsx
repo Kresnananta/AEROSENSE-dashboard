@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { dateLabel } from "@/types/live.types";
 
 interface DisasterItem {
@@ -34,7 +35,6 @@ const filters = [
   { value: "Semua", label: "Semua" },
   { value: "Karhutla", label: "Kebakaran hutan & lahan" },
   { value: "Banjir", label: "Banjir" },
-  { value: "Gempa", label: "Gempa" },
 ];
 
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
@@ -45,7 +45,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   );
   const [filter, setFilter] = useState("Semua");
   const [expanded, setExpanded] = useState(false);
-  const entries = data?.items ?? [];
+  const entries = (data?.items ?? []).filter((item) => item.type !== "Gempa");
   const availableFilters = entries.some((item) => item.kind === "monitoring") || filter === "monitoring"
     ? [...filters, { value: "monitoring", label: "Pantauan GDACS" }]
     : filters;
@@ -85,9 +85,14 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             </button>
           ))}
         </div>
-        {data && data.status !== "unavailable" && (
-          <span className="disaster-result-count" role="status">{items.length} kabar</span>
-        )}
+        <div className="disaster-toolbar-meta">
+          {data && data.status !== "unavailable" && (
+            <span className="disaster-result-count" role="status">{items.length} kabar</span>
+          )}
+          <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
+            Gempa resmi BMKG <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
+        </div>
       </div>
       {loading && !data ? (
         <p className="disaster-empty" role="status">

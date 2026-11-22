@@ -56,6 +56,13 @@
   color: #fff;
   background: #175fb4;
 }
+.disaster-toolbar-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.disaster-toolbar-meta a { min-block-size: 44px; }
 .disaster-result-count {
   color: #426380;
   font-size: 13px;

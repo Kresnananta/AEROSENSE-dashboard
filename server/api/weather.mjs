@@ -214,7 +214,7 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     value,
     unit: "",
     valid_at: new Date(now).toISOString(),
-    source: category === "weather" ? "Open-Meteo" : "GDACS / BMKG",
+    source: "Open-Meteo",
     kind: "forecast",
     spatial_context: `Model di sekitar titik ${area.name || "node"}, terpisah dari sensor AEROSENSE.`,
     data_origin: "external_api",
@@ -244,26 +244,37 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     });
     if (days.length) facts.push(fact("days", "Prakiraan 3 hari berikutnya", days.join("; ") + "."));
   }
-  const warn = [...(outlook?.alerts || []).map((a) => `${a.title}: ${a.text}`)];
-  for (const c of hazards?.cyclones || [])
-    warn.push(
-      `Siklon tropis ${c.name} (status ${c.level}) di ${Math.abs(c.latitude).toFixed(1)}°${c.latitude < 0 ? "LS" : "LU"} ${c.longitude.toFixed(1)}°BT, sekitar ${Math.round(distanceKm(area, c))} km dari titik ini.`,
-    );
-  const quake = (hazards?.quakes || []).find((q) => distanceKm(area, q) <= 500);
-  if (quake)
-    warn.push(
-      `Gempa M${quake.magnitude} ${quake.region}, kedalaman ${quake.depth}, sekitar ${Math.round(distanceKm(area, quake))} km dari titik ini. ${quake.potential}`,
-    );
-  facts.push(
-    fact(
+  if (outlook) {
+    const alerts = outlook.alerts.map((a) => a.title + ": " + a.text);
+    facts.push(fact(
       "alerts",
-      "Peringatan cuaca dan bencana",
-      warn.length
-        ? warn.join(" ")
-        : "Tidak ada peringatan cuaca ekstrem dalam 24 jam, tidak ada siklon tropis aktif di sekitar Indonesia, dan tidak ada gempa M5+ dalam 500 km selama 7 hari terakhir.",
-      warn.length ? "weather_alert" : "weather",
-    ),
-  );
+      "Peringatan cuaca",
+      alerts.join(" ") || "Prakiraan 24 jam ini tidak memuat peringatan cuaca ekstrem.",
+      "weather_alert",
+    ));
+  }
+  for (const cyclone of hazards?.cyclones ?? []) {
+    facts.push({
+      ...fact(cyclone.id, "Pantauan siklon tropis",
+        `Siklon tropis ${cyclone.name} (status ${cyclone.level}), sekitar ${Math.round(distanceKm(area, cyclone))} km dari titik ini.`, "weather_alert"),
+      source: "GDACS",
+      source_url: cyclone.url || "https://www.gdacs.org/",
+      spatial_context: "Siklon di sekitar Indonesia dalam pantauan GDACS.",
+    });
+  }
+  if (Array.isArray(hazards?.quakes)) {
+    const quake = hazards.quakes.find((q) => distanceKm(area, q) <= 500);
+    facts.push({
+      ...fact("bmkg-quakes", "Gempa M5+ dari BMKG", quake
+        ? `Gempa M${quake.magnitude} ${quake.region}, kedalaman ${quake.depth}, sekitar ${Math.round(distanceKm(area, quake))} km dari titik ini. ${quake.potential}`
+        : "Daftar BMKG tidak mencatat gempa M5+ dalam 500 km dari titik acuan selama 7 hari terakhir.", "earthquake"),
+      source: "BMKG",
+      source_url: "https://www.bmkg.go.id/gempabumi/gempabumi-m5",
+      kind: "event",
+      valid_at: quake?.time || new Date(now).toISOString(),
+      spatial_context: "Daftar gempa M5+ BMKG dalam radius 500 km dari titik acuan.",
+    });
+  }
   return facts;
 }
 

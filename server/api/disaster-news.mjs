@@ -36,9 +36,10 @@ const recent = (t, now) =>
   Number.isFinite(Date.parse(t)) &&
   Date.parse(t) <= now + 30 * MINUTE &&
   Date.parse(t) >= now - 7 * DAY;
+const recentNews = (item, now) => item?.type !== "Gempa" && recent(item?.published_at, now);
 const retainRecent = (items, now) =>
   array(items)
-    .filter((item) => recent(item?.published_at, now))
+    .filter((item) => recentNews(item, now))
     .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))
     .slice(0, 40);
 function safeLink(value, provider) {
@@ -59,7 +60,7 @@ function gdacsMapUrl(enclosures) {
   for (const enclosure of array(enclosures)) {
     if (enclosure?.["@_type"] !== "image/png") continue;
     const url = safeLink(enclosure["@_url"], "gdacs");
-    if (url && /^\/contentdata\/resources\/imgtemp\/gdacs\/(?:eq\/eq\d+_\d+|fl\/dfo\d+_\d+)\.png$/i.test(new URL(url).pathname)) return url;
+    if (url && /^\/contentdata\/resources\/imgtemp\/gdacs\/fl\/dfo\d+_\d+\.png$/i.test(new URL(url).pathname)) return url;
   }
   return null;
 }
@@ -68,10 +69,10 @@ const domestic =
 const foreign =
   /\b(amerika|china|tiongkok|filipina|thailand|vietnam|myanmar|jepang|australia|india|pakistan|nepal|bangladesh|turki|rusia|ukraina|portugal|spanyol|yunani|kanada|malaysia|singapura|kamboja|taiwan|korea|sri lanka)\b/i;
 function typeOf(title) {
+  if (/gempa|earthquake|tsunami/i.test(title)) return "Gempa";
   if (/karhutla|kebakaran hutan|kebakaran lahan|forest fire/i.test(title)) return "Karhutla";
   if (/banjir|flood/i.test(title)) return "Banjir";
   if (/longsor|landslide/i.test(title)) return "Longsor";
-  if (/gempa|earthquake/i.test(title)) return "Gempa";
   if (/erupsi|letusan|volcan/i.test(title)) return "Erupsi";
   if (/kekeringan|drought/i.test(title)) return "Kekeringan";
   if (/puting beliung|angin kencang|cuaca ekstrem|badai|cyclone/i.test(title))
@@ -99,7 +100,6 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
         if (text(item["gdacs:iso3"]) !== "IDN") return [];
         type = {
           WF: "Karhutla",
-          EQ: "Gempa",
           FL: "Banjir",
           VO: "Erupsi",
           TC: "Cuaca ekstrem",
@@ -112,12 +112,10 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
         if (Number.isFinite(value) && value >= 0 && value < 1e9) {
           if (type === "Karhutla" && severity?.["@_unit"] === "ha")
             metrics.push({ value, unit: "ha", label: "Estimasi area GDACS" });
-          if (type === "Gempa" && severity?.["@_unit"] === "M")
-            metrics.push({ value, unit: "M", label: "Magnitudo" });
         }
       } else {
 
-        if (!type || !domestic.test(title) || foreign.test(title)) return [];
+        if (!type || type === "Gempa" || !domestic.test(title) || foreign.test(title)) return [];
         location = title.match(domestic)?.[0] || "Indonesia";
         const damage = title.match(/rumah rusak.*?(\d+)\s+unit/i);
         if (damage)
@@ -231,7 +229,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
     for (const row of rows.filter((r) => NEWS_SOURCES.some((s) => s.id === r.provider))) {
       for (const item of row.items || []) {
         if (
-          !recent(item.published_at, clock()) ||
+          !recentNews(item, clock()) ||
           item.country_code !== "IDN" ||
           !safeLink(item.url, row.provider)
         )

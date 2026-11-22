@@ -702,7 +702,7 @@ async function nativeRefresh(j, p) {
           id: "news-" + i.id,
           area_id: "indonesia",
           fresh_until: i.fresh_until,
-          category: { Karhutla: "fire", Banjir: "flood", Gempa: "earthquake" }[i.type] || "weather",
+          category: { Karhutla: "fire", Banjir: "flood" }[i.type] || "weather",
           label: "Kabar bencana Indonesia · " + i.type,
           value: i.title,
           unit: "",

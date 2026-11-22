@@ -1,3 +1,4 @@
+import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { formatQuakeRegion, sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
@@ -9,7 +10,6 @@ import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
 import { ArrowUpRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLiveData } from "@/hooks/useLiveData";
 import type { Hazards } from "@/types/weather.types";
 import {
   MapContainer,
@@ -27,22 +27,14 @@ import "leaflet/dist/leaflet.css";
 import "@/styles/event-map.css";
 
 function HazardMarkers({
-  showCyclones = true,
-  existingQuakes = [],
+  data,
+  showCyclones,
 }: {
-  showCyclones?: boolean;
-  existingQuakes?: EnvironmentEvent[];
+  data: Hazards | null;
+  showCyclones: boolean;
 }) {
-  const { data } = useLiveData<Hazards>("/v1/hazards", 600000, false);
-  const quakes = (data?.quakes || []).filter(
-    (q) =>
-      Number.isFinite(q.latitude) &&
-      Number.isFinite(q.longitude) &&
-      !existingQuakes.some(
-        (e) =>
-          e.category === "earthquake" &&
-          Math.hypot(e.latitude - q.latitude, e.longitude - q.longitude) < 0.05,
-      ),
+  const quakes = (data?.quakes ?? []).filter(
+    (q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude),
   );
   return (
     <>
@@ -82,7 +74,7 @@ function HazardMarkers({
             title={`Gempa M ${mag} · ${region}`}
             alt="Episenter gempa BMKG"
           >
-            <Tooltip direction="top" offset={[0, -18]}>
+            <Tooltip direction="top">
               Gempa M {mag} · {region} · {timeStr}
             </Tooltip>
             <Popup minWidth={240} maxWidth={290} className="event-popup">
@@ -105,6 +97,9 @@ function HazardMarkers({
                 </dd>
               </dl>
               {q.potential && <p>{q.potential}</p>}
+              <a href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
+                Data resmi BMKG <ArrowUpRight size={12} aria-hidden="true" />
+              </a>
             </Popup>
           </Marker>
         );
@@ -219,7 +214,7 @@ export function LiveMap({
   watersense = [],
   focusedWatersense,
   heat = "off",
-  showHazards = false,
+  hazards = null,
   showCyclones = true,
 }: {
   nodes: LiveNode[];
@@ -236,7 +231,7 @@ export function LiveMap({
   watersense?: WatersensePoint[];
   focusedWatersense?: string | null;
   heat?: HeatLayerKey | "off";
-  showHazards?: boolean;
+  hazards?: Hazards | null;
   showCyclones?: boolean;
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
@@ -245,8 +240,7 @@ export function LiveMap({
     valid_at: string | null;
     error?: string;
   } | null>(null);
-  const hazards = useLiveData<Hazards>(showHazards ? "/v1/hazards" : null, 600000, false);
-  const hazardPoints = (hazards.data?.quakes || [])
+  const hazardPoints = (hazards?.quakes || [])
     .filter((q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude))
     .map((q) => ({ latitude: q.latitude, longitude: q.longitude }) as EnvironmentEvent);
   const locationPoint = userLocation || devicePoint;
@@ -365,8 +359,8 @@ export function LiveMap({
           </>
         )}
         {heat !== "off" && <HeatField layer={heat} onInfo={setHeatInfo} />}
-        {showHazards && (
-          <HazardMarkers showCyclones={showCyclones} existingQuakes={eventPoints} />
+        {hazards && (
+          <HazardMarkers data={hazards} showCyclones={showCyclones} />
         )}
         {valid.map((n) => (
           <Marker
@@ -382,7 +376,6 @@ export function LiveMap({
               <Tooltip
                 permanent
                 direction="top"
-                offset={[0, -20]}
                 opacity={1}
                 className="node-focus-tooltip"
               >
@@ -408,7 +401,7 @@ export function LiveMap({
             icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
             zIndexOffset={point.id === focusedWatersense ? 1500 : 500}
           >
-            <Tooltip direction="top" offset={[0, -18]}>
+            <Tooltip direction="top">
               {point.name}
             </Tooltip>
             <Popup className="node-reading-popup">
@@ -436,7 +429,7 @@ export function LiveMap({
               alt={e.category === "fire" ? "Titik panas satelit" : "Episenter gempa"}
               opacity={e.stale ? 0.55 : 1}
             >
-              <Tooltip direction="top" offset={[0, -18]}>
+              <Tooltip direction="top">
                 {e.category === "earthquake"
                   ? `Gempa${magLabel ? ` M ${magLabel}` : ""} · ${formattedTitle} · ${dateLabel(e.observed_at)}`
                   : `Titik panas satelit · ${dateLabel(e.observed_at)}`}
@@ -476,7 +469,11 @@ export function LiveMap({
                     {e.latitude.toFixed(4)}, {e.longitude.toFixed(4)}
                   </dd>
                 </dl>
-                {e.stale && <p className="event-stale">Pembaruan tertunda; periksa waktu data.</p>}
+                {e.category === "earthquake" ? (
+                  <p className="event-stale">Data BMKG tersimpan. Periksa situs BMKG untuk pembaruan.</p>
+                ) : (
+                  e.stale && <p className="event-stale">Pembaruan tertunda; periksa waktu data.</p>
+                )}
                 {e.felt && <p>{e.felt}</p>}
                 <a href={e.source_url} target="_blank" rel="noreferrer">
                   {e.source} <ArrowUpRight size={12} />

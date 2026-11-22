@@ -111,26 +111,15 @@ export function SensorWorkspace({
       : null,
     60000,
   );
+  const showHazards = mode === "map" && (eventType === "all" || eventType === "earthquake");
+  const hazards = useLiveData<Hazards>(showHazards ? "/v1/hazards" : null, 600000, false);
+  const hazardData = showHazards ? hazards.data : null;
+  const hasBmkgFeed = Array.isArray(hazardData?.quakes);
   const events = (environment.data?.events || []).filter(
-    (e) => eventType === "all" || e.category === eventType,
+    (e) => (eventType === "all" || e.category === eventType) &&
+      !(hasBmkgFeed && e.category === "earthquake"),
   );
-  const hazards = useLiveData<Hazards>(
-    mode === "map" && (eventType === "all" || eventType === "earthquake") ? "/v1/hazards" : null,
-    600000,
-  );
-  const extraHazardQuakes =
-    eventType === "all" || eventType === "earthquake"
-      ? (hazards.data?.quakes || []).filter(
-          (q) =>
-            !events.some(
-              (e) =>
-                e.category === "earthquake" &&
-                Math.abs((e.latitude ?? 999) - q.latitude) < 0.05 &&
-                Math.abs((e.longitude ?? 999) - q.longitude) < 0.05,
-            ),
-        ).length
-      : 0;
-  const totalEventCount = events.length + extraHazardQuakes;
+  const totalEventCount = events.length + (hazardData?.quakes?.length ?? 0);
   const watersense = useLiveData<{ actuators: WatersensePoint[] }>(
     user && mode === "map" ? `/v1/actuators/map?account=${encodeURIComponent(user.id)}` : null,
   );
@@ -139,14 +128,12 @@ export function SensorWorkspace({
     next.set(key, value);
     setMapParams(next);
   }
-  const hasHazardQuakes =
-    (eventType === "all" || eventType === "earthquake") &&
-    (hazards.data?.quakes?.length || 0) > 0;
   const eventWarning =
-    !hasHazardQuakes &&
+    !hasBmkgFeed &&
     (environment.error || (!environment.loading && !environment.data?.event_layers?.length))
       ? "Lokasi kejadian dari sumber publik belum tersedia."
-      : environment.data?.event_layers?.some((l) => l.last_error || !l.available)
+      : environment.data?.event_layers?.some((l) =>
+        !(hasBmkgFeed && l.category === "earthquake") && (l.last_error || !l.available))
         ? "Sebagian sumber belum berhasil diperbarui."
         : "";
   const title = {
@@ -458,7 +445,7 @@ export function SensorWorkspace({
                       watersense={user ? watersense.data?.actuators : undefined}
                       focusedWatersense={mapParams.get("watersense")}
                       heat={heat}
-                      showHazards={eventType === "all" || eventType === "earthquake"}
+                      hazards={hazardData}
                       showCyclones={eventType === "all"}
                     />
                   </Suspense>

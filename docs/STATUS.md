@@ -14,13 +14,15 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 - Ilustrasi prakiraan diukur dari area gambar yang terlihat. Cerah malam memakai bulan, cerah berawan memakai bulan dan awan, dan kartu harian memakai kondisi harian.
 - Area sambutan Tanya AERO-BOT memakai ilustrasi cuaca dan warna lembut sesuai topik saran.
 - Latar kartu prakiraan mengikuti waktu WIB. Kartu siang memakai rona langit cerah, dan kartu malam memakai biru laut yang lebih dalam.
-- Kabar Bencana menampilkan peta pantauan GDACS untuk lampiran gempa dan banjir yang tersedia. Kartu ANTARA membuka artikel sumber untuk melihat dokumentasi. Rilis membutuhkan pembaruan API dan web.
+- Kabar Bencana menampilkan peta pantauan banjir GDACS jika tersedia. Kartu ANTARA membuka artikel sumber untuk melihat dokumentasi. Rilis membutuhkan pembaruan API dan web.
+- BMKG menjadi rujukan parameter dan status tsunami. Kabar Bencana menautkan daftar resmi BMKG dan menyaring laporan gempa dari sumber lain, termasuk data yang masih tersimpan di cache. Peta memakai umpan BMKG yang sama dengan ringkasan jika tersedia dan beralih ke data BMKG tersimpan saat umpan gagal. Siklon tetap ditampilkan dengan atribusi GDACS.
+- Penanda AEROSENSE, WATERSENSE, gempa, dan titik panas memakai bentuk yang sama dengan simbol berbeda. Penanda terpilih punya cincin biru, dan legenda memakai ikon yang sama dengan peta.
 - Ringkasan siklon dan gempa memberi ruang terpisah untuk lokasi, waktu, kedalaman, dan catatan BMKG. Nama Maluku Barat Daya ditulis lengkap dan magnitudo tampil polos. Status tsunami diringkas hanya jika BMKG menyatakan semua gempa yang ditampilkan tidak berpotensi tsunami.
 - Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
 - Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.
 - Header chat menampilkan status saat jawaban sedang disiapkan. Warna kondisi tetap pada ilustrasi dan balon dialog.
 - Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil.
-- Build dan 121 tes lulus. Proporsi kartu prakiraan, format gempa, dan kaca diperiksa di Chrome pada lebar 390, 1440, dan 1920 px. Peta GDACS sudah diperiksa pada rilis sebelumnya. Langkah berikutnya: uji email konfirmasi sungguhan dan tampilan di perangkat setelah rilis.
+- Build dan 122 tes lulus. Penanda, navigasi keyboard, dan rujukan gempa diuji di Chrome pada lebar 390 dan 1440 px, termasuk saat umpan BMKG kosong atau gagal. Langkah berikutnya: rilis API dan web, lalu periksa data BMKG di situs publik dan uji email konfirmasi.
 
 ## AERO-BOT (status terbaru)
 

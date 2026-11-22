@@ -4,6 +4,8 @@ export const APP_CONFIG = {
   version: "0.1.0",
 } as const;
 
+export const BMKG_EARTHQUAKES_URL = "https://www.bmkg.go.id/gempabumi/gempabumi-m5";
+
 export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",

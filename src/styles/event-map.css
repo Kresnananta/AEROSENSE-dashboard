@@ -18,44 +18,78 @@
   border: 0;
 }
 .map-pin {
+  --pin-color: oklch(44% 0.12 252);
+  --pin-fill: color-mix(in oklch, var(--pin-color) 11%, white);
+  --pin-border: color-mix(in oklch, var(--pin-color) 32%, white);
+  position: relative;
   display: grid;
   place-items: center;
-  box-sizing: border-box;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--pin-color) 82%, white),
-    var(--pin-color)
-  );
-  color: #fff;
-  border: 3px solid #fff;
-  box-shadow: 0 3px 8px -2px #173a5e66;
-  transition:
-    transform 0.18s ease-out,
-    box-shadow 0.18s ease-out;
+  flex: none;
+  width: 36px;
+  height: 34px;
+  isolation: isolate;
+  color: var(--pin-color);
+}
+.map-pin::before,
+.map-pin::after {
+  position: absolute;
+  content: "";
+  border: 1px solid var(--pin-border);
+}
+.map-pin::before {
+  z-index: -1;
+  inset: 0;
+  border-radius: 12px;
+  background: linear-gradient(155deg, #fff 12%, var(--pin-fill) 88%);
+  box-shadow: 0 3px 8px oklch(28% 0.05 248 / 0.20);
+  transition: box-shadow 160ms ease;
+}
+.map-pin::after {
+  z-index: -2;
+  bottom: -3px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--pin-fill);
+  transform: rotate(45deg);
+}
+.map-pin.tone-calm {
+  --pin-color: oklch(44% 0.10 161);
+}
+.map-pin.tone-warning {
+  --pin-color: oklch(48% 0.12 68);
+}
+.map-pin.tone-danger,
+.map-pin.pin-earthquake {
+  --pin-color: oklch(46% 0.16 25);
+}
+.map-pin.pin-watersense {
+  --pin-color: oklch(46% 0.10 222);
+}
+.map-pin.pin-fire {
+  --pin-color: oklch(48% 0.14 48);
 }
 .map-pin svg {
-  width: 17px;
-  height: 17px;
-  filter: drop-shadow(0 1px 1px #12344b22);
+  width: 19px;
+  height: 19px;
 }
-.map-pin.is-active {
-  outline: 2px solid #0967e9;
-  outline-offset: 2px;
-  transform: scale(1.1);
-  box-shadow: 0 4px 10px -2px #173a5e66;
+.map-pin.is-active::before {
+  border-color: #0967e9;
+  box-shadow: 0 0 0 4px oklch(64% 0.18 251 / 0.26), 0 3px 8px oklch(28% 0.05 248 / 0.20);
+}
+.aerosense-map-marker:hover .map-pin::before {
+  border-color: var(--pin-color);
 }
 .aerosense-map-marker:focus-visible {
   outline: none;
 }
-.aerosense-map-marker:focus-visible .map-pin {
-  outline: 3px solid #0967e9;
-  outline-offset: 3px;
+.aerosense-map-marker:focus-visible .map-pin::before {
+  outline: 2px solid #0967e9;
+  outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .map-pin {
+  .map-pin::before {
     transition: none;
   }
 }
@@ -232,30 +266,17 @@
   color: #526a80;
   font-size: 11px;
 }
-.map-event-legend svg {
-  box-sizing: border-box;
-  width: 30px;
-  height: 30px;
-  padding: 5px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  flex: none;
-  box-shadow: 0 2px 5px -2px #173a5e55;
+.map-event-legend .map-pin {
+  width: 28px;
+  height: 26px;
 }
-.map-event-legend .legend-sensor svg {
-  color: #fff;
-  background: linear-gradient(145deg, #40997b, #218160);
+.map-event-legend .map-pin::before {
+  border-radius: 9px;
+  box-shadow: none;
 }
-.map-event-legend .legend-watersense svg {
-  color: #087c98;
-}
-.map-event-legend .legend-fire svg {
-  color: #fff;
-  background: linear-gradient(145deg, #d46c33, #bd4b12);
-}
-.map-event-legend .legend-earthquake svg {
-  color: #fff;
-  background: linear-gradient(145deg, #cc493d, #a82b22);
+.map-event-legend .map-pin svg {
+  width: 15px;
+  height: 15px;
 }
 .map-event-notice {
   color: #526a80;
