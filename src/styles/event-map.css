@@ -3,12 +3,13 @@
   border: 1px solid #cddfec;
 }
 .live-map .leaflet-container {
-  background: #e5edf1;
+  background: #e2ecf2;
   font-family: var(--font-sans);
 }
 .live-map-tiles {
-  filter: saturate(0.76);
+  filter: saturate(0.58) contrast(0.87) brightness(1.07);
 }
+.heat-basemap { filter: contrast(0.83) brightness(1.07); }
 .live-map .leaflet-control-attribution {
   padding: 2px 8px;
   border-radius: 8px 0 0;
@@ -38,6 +39,8 @@
   stroke-width: 1.6;
 }
 .map-pin.is-active .map-pin-shape { stroke-width: 2.3; }
+.sensor-pin-mark { filter: brightness(0) invert(1); }
+.map-pin-cut { stroke: var(--pin-color); }
 .map-pin.pin-watersense { --pin-color: #087367; }
 .map-pin.pin-fire { --pin-color: #aa4318; }
 .map-pin.pin-earthquake { --pin-color: #ac2d55; }
@@ -321,19 +324,26 @@
   inset: 0 auto auto 0;
   display: flex;
   align-items: center;
-  gap: 5px;
   transform: translate(-50%, -50%);
-  padding: 2px 6px;
+  padding: 3px 7px;
+  border: 1px solid rgb(255 255 255 / 0.58);
   border-radius: 7px;
-  background: rgb(249 253 255 / 0.95);
-  color: #173452;
-  font-size: 11px;
+  background: var(--label-fill);
+  color: var(--label-ink);
+  font-size: 12px;
   font-weight: 700;
   line-height: 16px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  box-shadow: 0 1px 3px rgb(15 40 80 / 0.18);
-  pointer-events: none;
+  box-shadow: 0 1px 4px rgb(15 40 80 / 0.25);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.heat-chip:hover,
+.heat-chip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 1px;
+  box-shadow: 0 1px 5px rgb(15 40 80 / 0.45);
 }
 .heat-leader {
   position: absolute;
@@ -353,18 +363,7 @@
   background: #315674;
 }
 .heat-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
   white-space: nowrap;
-}
-.heat-value::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  flex: none;
-  border-radius: 50%;
-  background: var(--value-color);
 }
 .heat-place {
   display: grid;
@@ -372,14 +371,33 @@
   gap: 1px;
   width: max-content;
   max-width: 138px;
-  padding: 4px 7px 3px;
+  padding: 5px 8px 4px;
   text-align: center;
 }
 .heat-place b {
+  font-size: 11px;
   white-space: normal;
   line-height: 1.16;
   overflow-wrap: anywhere;
   font-weight: 650;
+}
+.heat-inspection .leaflet-popup-content {
+  margin: 16px;
+  color: #153b61;
+  font: 12px/1.45 var(--font-sans);
+}
+.heat-inspection .leaflet-popup-content p {
+  margin: 4px 0;
+  font-size: 15px;
+  font-weight: 750;
+}
+.heat-inspection .leaflet-popup-content small {
+  display: block;
+  color: #3a5d79;
+  font-size: 11px;
+}
+.heat-legend-context .heat-inspect-hint {
+  color: #245b88;
 }
 .heat-legend-context strong {
   color: var(--aero-ink, #143e68);

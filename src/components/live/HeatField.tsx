@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ImageOverlay, Marker, Pane, useMap } from "react-leaflet";
-import { divIcon, Point, type LayerEvent, type Map as LeafletMap } from "leaflet";
+import { divIcon, Point, popup, type LayerEvent, type LeafletMouseEvent, type Map as LeafletMap } from "leaflet";
 import { apiRequest } from "@/services/api";
 import referencePoints from "@/lib/indonesia-reference-points.json";
 import { HEAT_LAYERS, type HeatLayerKey, type Stop } from "./heat-layers";
@@ -36,6 +36,23 @@ function colorAt(stops: readonly Stop[], v: number) {
     }
   }
   return rgbStops.get(stops[stops.length - 1][1])!;
+}
+
+function colorText(rgb: number[]) {
+  const linear = rgb.map((channel) => {
+    const v = channel / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  });
+  const light = 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  return light >= 0.179 ? "#000" : "#fff";
+}
+
+function modelTime(timestamp: string | null | undefined) {
+  return timestamp ? new Date(timestamp).toLocaleTimeString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+  }) + " WIB" : "";
 }
 
 function filledGrid(values: (number | null)[][]) {
@@ -396,7 +413,7 @@ type Label = {
   key: string;
   position: [number, number];
   text: string;
-  color: string;
+  color: number[];
   name?: string;
   shift: Point;
 };
@@ -611,7 +628,7 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey, scope: 
         key: position.map((coordinate) => coordinate.toFixed(6)).join(","),
         position,
         text,
-        color: `rgb(${tone.join(" ")})`,
+        color: tone,
         name,
         shift,
       });
@@ -634,6 +651,54 @@ export function HeatField({
   const map = useMap();
   const [snapshot, setSnapshot] = useState<CachedField | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
+  const readingPopup = useMemo(() => popup({ className: "heat-inspection", minWidth: 180, maxWidth: 264 }), []);
+  const inspect = useCallback((position: [number, number], name = "Titik pada peta", fromKeyboard = false) => {
+    if (!snapshot) return;
+    const { field } = snapshot;
+    const cfg = HEAT_LAYERS[layer];
+    const reading = weatherPoint(field, layer, map.latLngToContainerPoint(position), position, name);
+    const card = document.createElement("div");
+    const title = document.createElement("strong");
+    title.textContent = name;
+    card.append(title);
+
+    const value = document.createElement("p");
+    if (!reading) value.textContent = "Estimasi model belum tersedia di titik ini.";
+    else if (layer === "cloud") {
+      const [first, second] = reading.text.split(" · ");
+      value.textContent = second ? `${first} km/jam · ${second} awan` : `${first} awan`;
+    } else {
+      const unit = layer === "temperature" ? "C" : " " + cfg.unit;
+      value.textContent = cfg.label + " " + reading.text + unit;
+    }
+    card.append(value);
+
+    const detail = document.createElement("small");
+    const time = modelTime(field.g.valid_at);
+    detail.textContent = ["Estimasi model", field.g.source, time].filter(Boolean).join(" · ");
+    card.append(detail);
+    readingPopup.setLatLng(position).setContent(card).openOn(map);
+    if (fromKeyboard) readingPopup.getElement()?.querySelector<HTMLElement>(".leaflet-popup-close-button")?.focus();
+  }, [layer, map, readingPopup, snapshot]);
+  useEffect(() => () => { readingPopup.remove(); }, [readingPopup]);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const cancel = () => clearTimeout(timer);
+    const inspectMap = ({ latlng, originalEvent }: LeafletMouseEvent) => {
+      if (originalEvent.target instanceof Element &&
+          originalEvent.target.closest(".leaflet-interactive, .aerosense-map-marker, .leaflet-control, .leaflet-popup"))
+        return;
+      cancel();
+      timer = setTimeout(() => inspect([latlng.lat, latlng.lng]), 240);
+    };
+    map.on("click", inspectMap);
+    map.on("dblclick movestart", cancel);
+    return () => {
+      cancel();
+      map.off("click", inspectMap);
+      map.off("dblclick movestart", cancel);
+    };
+  }, [inspect, map]);
   const info = useRef(onInfo);
   info.current = onInfo;
   useEffect(() => {
@@ -764,8 +829,17 @@ export function HeatField({
     () =>
       new Map(
         labels.map((label) => {
-          const chip = document.createElement("div");
+          const chip = document.createElement("button");
+          chip.type = "button";
           chip.className = label.name ? "heat-chip heat-place" : "heat-chip";
+          chip.style.setProperty("--label-fill", `rgb(${label.color.join(" ")})`);
+          chip.style.setProperty("--label-ink", colorText(label.color));
+          chip.setAttribute("aria-label", [label.name, HEAT_LAYERS[layer].label, label.text].filter(Boolean).join(" · "));
+          chip.onclick = (event) => {
+            event.stopPropagation();
+            inspect(label.position, label.name, event.detail === 0);
+          };
+          chip.ondblclick = (event) => event.stopPropagation();
           if (label.name) {
             const name = document.createElement("b");
             name.textContent = label.name;
@@ -773,7 +847,6 @@ export function HeatField({
           }
           const value = document.createElement("span");
           value.className = "heat-value";
-          value.style.setProperty("--value-color", label.color);
           value.textContent = label.text;
           chip.append(value);
           const { x, y } = label.shift;
@@ -797,7 +870,7 @@ export function HeatField({
           })];
         }),
       ),
-    [labels],
+    [inspect, labels, layer],
   );
   return (
     <>
@@ -828,13 +901,7 @@ export function HeatLegend({ layer, info, scope }: { layer: HeatLayerKey; info: 
   const gradient = l.stops
     .map(([, c], i) => `${c} ${stopPosition(i)}`)
     .join(", ");
-  const time = info?.valid_at
-    ? new Date(info.valid_at).toLocaleTimeString("id-ID", {
-        timeZone: "Asia/Jakarta",
-        hour: "2-digit",
-        minute: "2-digit",
-      }) + " WIB"
-    : "";
+  const time = modelTime(info?.valid_at);
   const estimate = info?.source
     ? `${info.source}${time ? " · " + time : ""}. Estimasi model di ${scope === "detail" ? "titik label" : "titik acuan wilayah"}.`
     : "";
@@ -858,6 +925,7 @@ export function HeatLegend({ layer, info, scope }: { layer: HeatLayerKey; info: 
           {info?.error || estimate || "Memuat estimasi model…"}
         </p>
         {info?.error && estimate && <p>{estimate}</p>}
+        {info?.source && <p className="heat-inspect-hint">Pilih titik atau label untuk melihat detail.</p>}
       </div>
     </div>
   );
