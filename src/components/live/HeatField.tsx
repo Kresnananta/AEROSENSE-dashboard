@@ -20,19 +20,22 @@ type Grid = {
 export type HeatInfo = { source: string; valid_at: string | null; error?: string } | null;
 
 const hex = (c: string) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+const rgbStops = new Map(Object.values(HEAT_LAYERS).flatMap(({ stops }) =>
+  stops.map(([, color]) => [color, hex(color)] as const),
+));
 function colorAt(stops: readonly Stop[], v: number) {
-  if (v <= stops[0][0]) return hex(stops[0][1]);
+  if (v <= stops[0][0]) return rgbStops.get(stops[0][1])!;
   for (let i = 1; i < stops.length; i++) {
     const [b, cb] = stops[i];
     if (v <= b) {
       const [a, ca] = stops[i - 1];
       const t = (v - a) / (b - a),
-        x = hex(ca),
-        y = hex(cb);
+        x = rgbStops.get(ca)!,
+        y = rgbStops.get(cb)!;
       return x.map((k, j) => Math.round(k + (y[j] - k) * t));
     }
   }
-  return hex(stops[stops.length - 1][1]);
+  return rgbStops.get(stops[stops.length - 1][1])!;
 }
 
 function filledGrid(values: (number | null)[][]) {
@@ -76,9 +79,8 @@ function render(map: LeafletMap, g: Grid, v: number[][], key: HeatLayerKey) {
   const stops = HEAT_LAYERS[key].stops;
   const monotone = key === "rain";
   const interp = monotone ? mc : cr;
-  const S = monotone ? 40 : 32;
-  const W = (g.cols - 1) * S + 1,
-    H = (g.rows - 1) * S + 1;
+  const W = Math.min(720, (g.cols - 1) * 32 + 1),
+    H = Math.min(520, (g.rows - 1) * 32 + 1);
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -141,6 +143,7 @@ type Field = {
   covers: [[number, number], [number, number]];
   uv?: { u: number[][]; v: number[][] };
 };
+type CachedField = { field: Field; overlay: Overlay; expires: number };
 
 function windComponents(g: Grid, speed: number[][]) {
   const u: number[][] = [],
@@ -405,10 +408,8 @@ const scopeText = {
   district: "Titik acuan kota dan kabupaten",
   detail: "Detail warna",
 };
-const regionLabelShifts = [
-  new Point(0, 0), new Point(0, 42), new Point(0, -42),
-  new Point(-52, 0), new Point(52, 0), new Point(0, 66), new Point(0, -66),
-];
+const labelOrigin = new Point(0, 0);
+const regionLabelShifts = [labelOrigin, new Point(0, 44), new Point(0, -44)];
 const VALUE_PANE = "weatherValues";
 const REGION = { south: -13, west: 92, north: 8, east: 143 };
 const clip = (b: {
@@ -423,6 +424,11 @@ const clip = (b: {
     e = Math.min(REGION.east, b.getEast());
   return s < n && w < e ? { s, w, n, e } : null;
 };
+
+function containsView([[south, west], [north, east]]: Overlay["bounds"], view: NonNullable<ReturnType<typeof clip>>) {
+  return view.s >= south - 1e-6 && view.w >= west - 1e-6 &&
+    view.n <= north + 1e-6 && view.e <= east + 1e-6;
+}
 
 type WeatherPoint = {
   point: Point;
@@ -572,9 +578,9 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey, scope: 
     : [];
   const ordered = new Set([...priority, ...colorRegions, ...regions]);
 
-  const maxLabels = scope === "detail"
-    ? Math.max(5, Math.min(22, Math.ceil((size.x * size.y) / 21000)))
-    : referencePoints[scope].length;
+  const named = scope !== "detail";
+  const areaPerLabel = named ? 64000 : 30000;
+  const maxLabels = Math.max(2, Math.min(named ? 10 : 16, Math.round(size.x * size.y / areaPerLabel)));
   const placed: WeatherPoint[] = [];
   const labels: Label[] = [];
 
@@ -586,20 +592,21 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey, scope: 
     for (const candidate of candidates) {
       const { point, position, text, value, cloud, name, band } = candidate;
       const { halfWidth, halfHeight } = labelSize(candidate);
-      const shift = (scope === "detail" ? regionLabelShifts.slice(0, 1) : regionLabelShifts).find((offset) => {
-        const target = point.add(offset);
-        return fitsMap(candidate, target) && !placed.some((other) => {
-          if (scope === "detail" && target.distanceTo(other.point) < (other.band === band ? 108 : 50))
-            return true;
-          const otherSize = labelSize(other);
-          return Math.abs(target.x - other.point.x) < halfWidth + otherSize.halfWidth &&
-            Math.abs(target.y - other.point.y) < halfHeight + otherSize.halfHeight;
-        });
-      });
+      const shift = !named || fitsMap(candidate) ? labelOrigin
+        : regionLabelShifts.find((offset) => fitsMap(candidate, point.add(offset)));
       if (!shift) continue;
+      const target = point.add(shift);
+      const overlaps = placed.some((other) => {
+        if (target.distanceTo(other.point) < (named ? 122 : other.band === band ? 108 : 50))
+          return true;
+        const otherSize = labelSize(other);
+        return Math.abs(target.x - other.point.x) < halfWidth + otherSize.halfWidth &&
+          Math.abs(target.y - other.point.y) < halfHeight + otherSize.halfHeight;
+      });
+      if (overlaps) continue;
 
       const tone = cloud === false ? [64, 122, 168] : colorAt(HEAT_LAYERS[layer].stops, value);
-      placed.push({ ...candidate, point: point.add(shift) });
+      placed.push({ ...candidate, point: target });
       labels.push({
         key: position.map((coordinate) => coordinate.toFixed(6)).join(","),
         position,
@@ -625,20 +632,17 @@ export function HeatField({
   onScope: (scope: HeatScope) => void;
 }) {
   const map = useMap();
-  const [overlay, setOverlay] = useState<Overlay | null>(null);
+  const [snapshot, setSnapshot] = useState<CachedField | null>(null);
   const [labels, setLabels] = useState<Label[]>([]);
-  const field = useRef<Field | null>(null);
-  const [wind, setWind] = useState<Field | null>(null);
-  const [rainField, setRainField] = useState<Field | null>(null);
   const info = useRef(onInfo);
   info.current = onInfo;
   useEffect(() => {
+    const cache: CachedField[] = [];
+    let active: CachedField | null = null;
+    let failed = false;
+    let pending: { controller: AbortController; bounds: Overlay["bounds"]; zoom: number } | null = null;
     let timer: ReturnType<typeof setTimeout>;
-    let abort: AbortController | null = null;
-    field.current = null;
-    setWind(null);
-    setRainField(null);
-    setOverlay(null);
+    setSnapshot(null);
     info.current(null);
     setLabels([]);
 
@@ -646,44 +650,58 @@ export function HeatField({
     const relabel = () => {
       cancelAnimationFrame(layoutFrame);
       layoutFrame = requestAnimationFrame(() => {
-        const active = field.current;
         const scope = heatScope(map.getZoom());
         onScope(scope);
-        setLabels(active ? fieldLabels(map, active, layer, scope) : []);
+        setLabels(active ? fieldLabels(map, active.field, layer, scope) : []);
       });
     };
     const relabelOnLayer = (event: LayerEvent) => {
       if (event.layer.options?.pane !== VALUE_PANE) relabel();
     };
 
-    const needsData = () => {
-      const f = field.current;
-      if (!f) return true;
-      const v = clip(map.getBounds());
-      if (!v) return false;
-      const [[s, w], [n, e]] = f.covers;
-      return (
-        v.s < s - 1e-6 ||
-        v.w < w - 1e-6 ||
-        v.n > n + 1e-6 ||
-        v.e > e + 1e-6 ||
-        Math.abs(map.getZoom() - f.zoom) >= 2
-      );
+    const remember = (entry: CachedField) => {
+      const index = cache.indexOf(entry);
+      if (index >= 0) cache.splice(index, 1);
+      cache.unshift(entry);
+      if (cache.length > 8) cache.pop();
     };
+    const show = (entry: CachedField) => {
+      remember(entry);
+      if (active === entry && !failed) return;
+      active = entry;
+      failed = false;
+      setSnapshot(entry);
+      info.current({ source: entry.field.g.source, valid_at: entry.field.g.valid_at });
+      relabel();
+    };
+    const stopPending = () => {
+      pending?.controller.abort();
+      pending = null;
+    };
+    const stopTimer = () => clearTimeout(timer);
     const load = () => {
       relabel();
-      clearTimeout(timer);
-      if (!needsData()) {
-        abort?.abort();
+      stopTimer();
+      const view = clip(map.getBounds());
+      if (!view) return;
+      const zoom = map.getZoom();
+      const cached = cache.find((entry) =>
+        entry.expires > Date.now() && zoom <= entry.field.zoom + 1 && containsView(entry.field.covers, view),
+      );
+      if (cached) {
+        stopPending();
+        show(cached);
         return;
       }
+      if (pending && zoom <= pending.zoom + 1 && containsView(pending.bounds, view)) return;
+
       timer = setTimeout(async () => {
         const b = clip(map.getBounds().pad(0.6));
         if (!b) return;
         const zoom = map.getZoom();
-        abort?.abort();
+        stopPending();
         const controller = new AbortController();
-        abort = controller;
+        pending = { controller, zoom, bounds: [[b.s, b.w], [b.n, b.e]] };
         const qs = new URLSearchParams({
           layer,
           south: b.s.toFixed(3),
@@ -701,43 +719,42 @@ export function HeatField({
             [g.south, g.west],
             [g.south + (g.rows - 1) * g.step, g.west + (g.cols - 1) * g.step],
           ];
-          const nextOverlay = { url: render(map, g, v, layer), bounds };
-          field.current = {
-            g,
-            v,
-            zoom,
-            covers: bounds,
-            ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
+          const entry: CachedField = {
+            field: {
+              g, v, zoom, covers: bounds,
+              ...(g.direction ? { uv: windComponents(g, windGrid) } : {}),
+            },
+            overlay: { url: render(map, g, v, layer), bounds },
+            expires: Date.now() + 10 * 60 * 1000,
           };
-          setWind(field.current.uv ? field.current : null);
-          setRainField(layer === "rain" ? field.current : null);
-
-          setOverlay(nextOverlay);
-          relabel();
-          info.current({ source: g.source, valid_at: g.valid_at });
+          const current = clip(map.getBounds());
+          const coversCurrent = current && containsView(bounds, current) && map.getZoom() <= zoom + 1;
+          if (!active || coversCurrent) show(entry);
+          else remember(entry);
         } catch (e) {
           if (controller.signal.aborted) return;
-          field.current = null;
-          setOverlay(null);
-          setWind(null);
-          setRainField(null);
-          relabel();
+          failed = true;
           info.current({
-            source: "",
-            valid_at: null,
-            error: e instanceof Error ? e.message : "Heatmap belum tersedia.",
+            source: active?.field.g.source ?? "",
+            valid_at: active?.field.g.valid_at ?? null,
+            error: active ? "Pembaruan tertunda. Lapisan terakhir masih ditampilkan."
+              : e instanceof Error ? e.message : "Heatmap belum tersedia.",
           });
+        } finally {
+          if (pending?.controller === controller) pending = null;
         }
       }, 300);
     };
     load();
+    map.on("movestart zoomstart", stopTimer);
     map.on("moveend resize", load);
     map.on("layeradd layerremove", relabelOnLayer);
     map.on("popupopen popupclose tooltipopen tooltipclose", relabel);
     return () => {
-      clearTimeout(timer);
-      abort?.abort();
+      stopTimer();
+      stopPending();
       cancelAnimationFrame(layoutFrame);
+      map.off("movestart zoomstart", stopTimer);
       map.off("moveend resize", load);
       map.off("layeradd layerremove", relabelOnLayer);
       map.off("popupopen popupclose tooltipopen tooltipclose", relabel);
@@ -784,10 +801,10 @@ export function HeatField({
   );
   return (
     <>
-      {wind && <WindParticles field={wind} />}
-      {rainField && <RainParticles field={rainField} />}
-      {overlay && (
-        <ImageOverlay url={overlay.url} bounds={overlay.bounds} interactive={false} pane="heatPane" />
+      {snapshot?.field.uv && <WindParticles field={snapshot.field} />}
+      {snapshot && layer === "rain" && <RainParticles field={snapshot.field} />}
+      {snapshot && (
+        <ImageOverlay url={snapshot.overlay.url} bounds={snapshot.overlay.bounds} interactive={false} pane="heatPane" />
       )}
       <Pane name={VALUE_PANE} style={{ zIndex: 500, pointerEvents: "none" }}>
         {labels.map((l) => (
@@ -818,6 +835,9 @@ export function HeatLegend({ layer, info, scope }: { layer: HeatLayerKey; info: 
         minute: "2-digit",
       }) + " WIB"
     : "";
+  const estimate = info?.source
+    ? `${info.source}${time ? " · " + time : ""}. Estimasi model di ${scope === "detail" ? "titik label" : "titik acuan wilayah"}.`
+    : "";
   return (
     <div className="heat-legend" role="group" aria-label={l.label + " · " + l.unit}>
       <div className="heat-legend-head">
@@ -835,10 +855,9 @@ export function HeatLegend({ layer, info, scope }: { layer: HeatLayerKey; info: 
       <div className="heat-legend-context">
         <strong>{scopeText[scope]}</strong>
         <p role="status">
-          {info?.error || (info
-            ? `${info.source}${time ? " · " + time : ""}. Estimasi model di ${scope === "detail" ? "titik label" : "titik acuan wilayah"}.`
-            : "Memuat estimasi model…")}
+          {info?.error || estimate || "Memuat estimasi model…"}
         </p>
+        {info?.error && estimate && <p>{estimate}</p>}
       </div>
     </div>
   );
