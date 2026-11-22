@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -6,172 +6,135 @@ import {
   Radio,
   CloudSun,
   MessageCircle,
-  ChartNoAxesCombined,
+  Bell,
   Menu,
   X,
   Settings2,
-  Sparkle,
   LockKeyhole,
   FileSpreadsheet,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { AeroMascot } from "@/components/environment/AeroMascot";
-import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
-import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
 
 const features = [
   {
-    title: "Sensor udara",
+    title: "Cek udara di titik sensor",
     icon: Radio,
-    heading: "Pembacaan sensor per lokasi",
-    description:
-      "Pilih titik sensor di peta untuk melihat kondisi udara dan waktu pembacaan terakhir.",
+    description: "Lihat pembacaan kualitas udara, suhu, dan kelembapan menurut lokasi sensor.",
     path: "/dashboard",
-    action: "Lihat pemantauan",
-    scene: "sensor" as const,
   },
   {
-    title: "Cuaca dan lingkungan",
+    title: "Lihat prakiraan cuaca",
     icon: CloudSun,
-    heading: "Cuaca, prakiraan, dan peringatan",
-    description:
-      "Lihat perkiraan hujan per jam, kualitas udara wilayah, dan kejadian di sekitar titik sensor.",
+    description: "Cek perkiraan hujan per jam dan kondisi lingkungan di sekitar Anda.",
     path: "/environment",
-    action: "Buka Hub Lingkungan",
-    scene: "air" as const,
+  },
+  {
+    title: "Baca peringatan sensor",
+    icon: Bell,
+    description: "Lihat titik pemantauan yang perlu diperhatikan dan cara menerima kabar lewat WhatsApp.",
+    path: "/alerts",
   },
   {
     title: "Tanya AERO-BOT",
     icon: MessageCircle,
-    heading: "Tanya AERO-BOT",
-    description:
-      "Tanya kapan hujan diperkirakan turun atau apa arti angka kualitas udara di sekitar Anda.",
+    description: "Tanyakan arti pembacaan udara atau kapan hujan diperkirakan turun.",
     path: "/aerobot",
-    action: "Tanya AERO-BOT",
-    scene: null,
-  },
-  {
-    title: "Riwayat dan laporan",
-    icon: ChartNoAxesCombined,
-    heading: "Grafik, laporan, dan ekspor data",
-    description:
-      "Bandingkan pembacaan dari waktu ke waktu. Pengelola dapat mengunduh laporan dan data CSV.",
-    path: "/analytics",
-    action: "Lihat riwayat udara",
-    scene: "sensor" as const,
   },
 ];
 
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState(0);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const { user } = useAuth();
-  const feature = features[active];
+
   return (
     <div className="landing-page">
       <a className="landing-skip" href="#konten">
         Lewati navigasi
       </a>
-      <header className="landing-header">
-        <Link to="/" className="landing-brand" aria-label="AEROSENSE — Halaman utama">
-          <img src="/assets/brand/aerosense-mark.png" alt="" width="40" height="40" />
-          <span>
-            AERO<strong>SENSE</strong>
-          </span>
-        </Link>
-        <button
-          className="landing-menu-button"
-          aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"}
-          aria-expanded={menuOpen}
-          aria-controls="landing-navigation"
-          onClick={() => setMenuOpen(!menuOpen)}
+      <div className="landing-hero-stage">
+        <header
+          className="landing-header landing-container"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && menuOpen) {
+              setMenuOpen(false);
+              menuButton.current?.focus();
+            }
+          }}
         >
-          {menuOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
-        <nav
-          id="landing-navigation"
-          className={menuOpen ? "is-open" : ""}
-          aria-label="Navigasi halaman utama"
-          onClick={() => setMenuOpen(false)}
-        >
-          <a href="#fitur">Fitur</a>
-          <a href="#cara-kerja">Cara kerja</a>
-          <a href="#pengelola">Untuk pengelola</a>
-          <Link to={user ? "/dashboard" : "/login"} className="landing-nav-login">
-            {user ? "Buka dashboard" : "Masuk"}
-            <ArrowUpRight size={16} />
+          <Link to="/" className="landing-brand" aria-label="AEROSENSE — Halaman utama">
+            <img src="/assets/brand/aerosense-mark.png" alt="" width="40" height="40" />
+            <span>
+              AERO<strong>SENSE</strong>
+            </span>
           </Link>
-        </nav>
-      </header>
-      <main id="konten">
+          <button
+            type="button"
+            ref={menuButton}
+            className="landing-menu-button"
+            aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"}
+            aria-expanded={menuOpen}
+            aria-controls="landing-navigation"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <nav
+            id="landing-navigation"
+            className={menuOpen ? "is-open" : ""}
+            aria-label="Navigasi halaman utama"
+            onClick={() => setMenuOpen(false)}
+          >
+            <a href="#fitur">Fitur</a>
+            <a href="#cara-kerja">Cara kerja</a>
+            <a href="#pengelola">Untuk pengelola</a>
+            <Link to={user ? "/dashboard" : "/login"} className="landing-nav-login">
+              {user ? "Buka dashboard" : "Masuk"}
+              <ArrowUpRight size={16} />
+            </Link>
+          </nav>
+        </header>
         <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
-            <h1>
-              Kenali udara dan cuaca <span>di sekitar Anda.</span>
-            </h1>
+            <h1>Kenali <span>udara dan cuaca</span> di sekitar Anda.</h1>
             <p>
-              Cek kualitas udara, prakiraan hujan, dan peringatan di sekitar Anda.
+              Lihat pembacaan dari titik sensor, prakiraan hujan, dan peringatan lingkungan.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
-                Lihat pemantauan
-                <ArrowRight size={19} />
-              </Link>
-              <Link className="landing-text-link" to="/aerobot">
-                Tanya AERO-BOT
-                <ArrowUpRight size={17} />
+                Cek kondisi sekitar
+                <ArrowRight size={18} />
               </Link>
             </div>
           </div>
-          <div className="landing-hero-art" role="img" aria-label="Maskot AERO-BOT menyambut Anda">
+          <div className="landing-hero-art">
             <AeroMascot pose="welcome" className="landing-hero-mascot" />
-            <div className="landing-cheer" aria-hidden="true">
-              <Sparkle />
-              <Sparkle />
-              <Sparkle />
-            </div>
           </div>
         </section>
+      </div>
 
-        <section id="fitur" className="landing-features landing-container">
+      <main id="konten">
+        <section id="fitur" className="landing-features landing-container" aria-labelledby="landing-features-heading">
           <div className="landing-section-heading">
-            <h2>Jelajahi pemantauan</h2>
+            <h2 id="landing-features-heading">Yang bisa Anda cek</h2>
           </div>
-          <div className="landing-feature-layout">
-            <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">
-              {features.map((item, index) => (
-                <button
-                  key={item.title}
-                  aria-pressed={active === index}
-                  onClick={() => setActive(index)}
-                >
-                  <item.icon size={22} />
-                  <span>{item.title}</span>
-                  <ArrowUpRight size={17} />
-                </button>
-              ))}
-            </div>
-            <article className="landing-feature-detail" data-feature={feature.path} aria-live="polite">
-              <div>
-                <h3>{feature.heading}</h3>
-                <p>{feature.description}</p>
-                <Link className="landing-text-link" to={feature.path}>
-                  {feature.action}
-                  <ArrowRight size={17} />
+          <ul className="landing-feature-list">
+            {features.map(({ title, icon: Icon, description, path }) => (
+              <li key={path}>
+                <Link to={path} className="landing-feature-link" data-destination={path}
+                  aria-labelledby={`fitur-${path.slice(1)}`} aria-describedby={`info-${path.slice(1)}`}>
+                  <span className="landing-feature-icon"><Icon size={24} aria-hidden="true" /></span>
+                  <span className="landing-feature-copy">
+                    <strong id={`fitur-${path.slice(1)}`}>{title}</strong>
+                    <span id={`info-${path.slice(1)}`}>{description}</span>
+                  </span>
+                  <ArrowRight size={18} aria-hidden="true" />
                 </Link>
-              </div>
-              <div className="landing-feature-illustration">
-                {feature.path === "/analytics" ? (
-                  <LandingTrend />
-                ) : feature.scene ? (
-                  <ConditionScene scene={feature.scene} />
-                ) : (
-                  <AeroMascot pose="watch" />
-                )}
-              </div>
-            </article>
-          </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section id="cara-kerja" className="landing-workflow landing-container">
@@ -182,7 +145,7 @@ export function LandingPage() {
           <ol className="landing-workflow-steps">
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                1
+                01
               </span>
               <div>
                 <h3>Ukur di lokasi</h3>
@@ -191,7 +154,7 @@ export function LandingPage() {
             </li>
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                2
+                02
               </span>
               <div>
                 <h3>Cek kondisi sekitar</h3>
@@ -200,7 +163,7 @@ export function LandingPage() {
             </li>
             <li>
               <span className="landing-step-number" aria-hidden="true">
-                3
+                03
               </span>
               <div>
                 <h3>Tinjau peringatan</h3>
@@ -246,13 +209,6 @@ export function LandingPage() {
             </p>
           </div>
         </section>
-        <aside id="tentang-data" className="landing-data-note landing-container">
-          <strong>Tentang data</strong>
-          <p>
-            Pembacaan sensor dan estimasi wilayah ditampilkan terpisah. Ambang pengelola digunakan
-            untuk pemantauan operasional.
-          </p>
-        </aside>
       </main>
       <footer className="landing-footer landing-container">
         <Link to="/" className="landing-brand">

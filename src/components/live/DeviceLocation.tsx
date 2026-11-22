@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed } from "@/components/ui/aero-icons";
 import type { ErrorEvent, LocationEvent } from "leaflet";
 import { useMap } from "react-leaflet";
 import { validPoint, type GeoPoint } from "@/lib/nearby-nodes";

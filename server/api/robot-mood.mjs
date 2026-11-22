@@ -1,3 +1,5 @@
+import { robotCondition } from "./robot-condition.mjs";
+
 export const MOOD_EVERY_MS = 30 * 60000;
 
 const HOOKS = {
@@ -33,33 +35,12 @@ const ACTION = {
 };
 const FACE = { danger: "danger", warning: "warning", calm: "happy" };
 
-const ispu = (v) =>
-  v <= 15.5
-    ? ["baik", "calm"]
-    : v <= 55.4
-      ? ["sedang", "calm"]
-      : v <= 150.4
-        ? ["tidak sehat", "warning"]
-        : v <= 250.4
-          ? ["sangat tidak sehat", "danger"]
-          : ["berbahaya", "danger"];
 const num = (v, d = 0) => String(Math.round(v * 10 ** d) / 10 ** d).replace(".", ",");
 
 export function moodFor({ latest, rules = [], pm25Validated, slot = 0, now = Date.now() }) {
-  if (!latest?.observed_at || now - Date.parse(latest.observed_at) > 600000) return null;
-  if (latest.quality?.invalid === true) return null;
-  const metric = pm25Validated && Number.isFinite(latest.metrics?.pm25_ug_m3) ? "pm25_ug_m3" : "dust_ug_m3";
-  const value = latest.metrics?.[metric];
-  if (!Number.isFinite(value) || value < 0) return null;
-  const [category, ispuBand] = ispu(value);
-  const rule = rules.find((r) => r.enabled && r.metric === metric && Number.isFinite(r.high) && r.high > 0);
-  const band = rule
-    ? Number.isFinite(rule.danger_high) && value >= rule.danger_high
-      ? "danger"
-      : value >= rule.high
-        ? "warning"
-        : "calm"
-    : ispuBand;
+  const condition = robotCondition({ latest, rules, pm25Validated, now });
+  if (!condition) return null;
+  const { band, metric, value, category } = condition;
   const label = metric === "pm25_ug_m3" ? "PM2.5" : "kadar debu";
   const hooks = HOOKS[band];
   const parts = [

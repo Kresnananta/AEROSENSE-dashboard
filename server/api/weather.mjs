@@ -23,8 +23,14 @@ const hourLabel = (t) => String(t).slice(11, 16).replace(":", ".") + " WIB";
 
 export function weatherAlerts(hourly, daily) {
   const alerts = [];
-  const span = (list) =>
-    list.length ? `${hourLabel(list[0].time)}–${hourLabel(list[list.length - 1].time)}` : "";
+  const span = (list) => {
+    if (!list.length) return "";
+    const first = list[0].time;
+    const last = list[list.length - 1].time;
+    if (first === last) return hourLabel(first);
+    const nextDay = String(last).slice(0, 10) > String(first).slice(0, 10);
+    return `${hourLabel(first)}–${hourLabel(last)}${nextDay ? " besok" : ""}`;
+  };
   const thunder = hourly.filter(
     (h) => h.code >= 95 || (h.cape >= 1500 && (h.rain_chance ?? 0) >= 40),
   );
@@ -73,12 +79,17 @@ export function weatherAlerts(hourly, daily) {
   return alerts;
 }
 
-export function parseForecast(data, now = Date.now()) {
+function forecastParts(data) {
   const c = data?.current,
     h = data?.hourly,
     d = data?.daily;
   if (!c || !Array.isArray(h?.time) || !Array.isArray(d?.time)) throw fail("Format prakiraan berubah.", 502);
 
+  return { c, h, d };
+}
+
+export function parseForecast(data, now = Date.now()) {
+  const { c, h, d } = forecastParts(data);
   const local = new Date(now + 7 * 3600000).toISOString().slice(0, 13);
   const start = h.time.findIndex((t) => t.slice(0, 13) >= local);
   const dayHours = start === -1 ? [] : h.time.slice(start).map((time, k) => {
@@ -106,7 +117,7 @@ export function parseForecast(data, now = Date.now()) {
     rain_chance: round(d.precipitation_probability_max?.[i]),
     gust: round(d.wind_gusts_10m_max?.[i]),
     uv: round(d.uv_index_max?.[i], 1),
-  }));
+  })).filter(({ date }) => date >= local.slice(0, 10));
   return {
     latitude: data.latitude,
     longitude: data.longitude,
@@ -160,33 +171,63 @@ export function parseCyclones(geo, now = Date.now()) {
   return out;
 }
 
-export function parseQuakes(data, now = Date.now()) {
+const QUAKE_WINDOW = 7 * 86400000;
+
+export function parseQuakes(data, now = Date.now(), earliest = now - QUAKE_WINDOW) {
   const rows = data?.Infogempa?.gempa;
   if (!Array.isArray(rows)) throw fail("Format BMKG berubah.", 502);
-  return rows
-    .map((g) => {
-      const [lat, lng] = String(g.Coordinates || "").split(",").map(Number);
-      const time = Date.parse(g.DateTime);
-      return {
-        id: "eq-" + g.DateTime,
-        latitude: lat,
-        longitude: lng,
-        magnitude: Number(String(g.Magnitude).replace(",", ".")),
-        depth: String(g.Kedalaman || "").slice(0, 20),
-        region: String(g.Wilayah || "").slice(0, 160),
-        potential: String(g.Potensi || "").slice(0, 160),
-        time: Number.isFinite(time) ? new Date(time).toISOString() : null,
-      };
-    })
-    .filter(
-      (q) =>
-        Number.isFinite(q.latitude) &&
-        Number.isFinite(q.longitude) &&
-        Number.isFinite(q.magnitude) &&
-        q.time &&
-        now - Date.parse(q.time) < 7 * 86400000,
-    )
-    .slice(0, 15);
+  return rows.flatMap((g) => {
+    const [lat, lng] = String(g?.Coordinates ?? "").split(",").map((part) => part.trim() ? Number(part) : NaN);
+    const time = Date.parse(g?.DateTime);
+    const magnitude = Number(String(g?.Magnitude).replace(",", "."));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 ||
+        !Number.isFinite(time) || time > now || time < earliest ||
+        !Number.isFinite(magnitude) || magnitude < 5 || magnitude > 10.5) return [];
+    return [{
+      id: "eq-" + g.DateTime,
+      latitude: lat,
+      longitude: lng,
+      magnitude,
+      depth: String(g.Kedalaman || "").slice(0, 20),
+      region: String(g.Wilayah || "").slice(0, 160),
+      potential: String(g.Potensi || "").slice(0, 160),
+      time: new Date(time).toISOString(),
+    }];
+  }).sort((a, b) => b.time.localeCompare(a.time)).slice(0, 30);
+}
+
+function readBmkgPage(html, now) {
+  const embedded = typeof html === "string" &&
+    html.match(/<script\b[^>]*\bid=["']__NUXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1];
+  const values = embedded ? JSON.parse(embedded) : null;
+  if (!Array.isArray(values)) throw fail("Format halaman BMKG berubah.", 502);
+  const feed = values.find((item) =>
+    typeof item?.identifier === "number" && Array.isArray(values[item.info]) &&
+    values[item.info].every((index) => values[values[index]?.event] === "Gempabumi"),
+  );
+  const entries = values[feed?.info];
+  if (!entries?.length || entries.length > 30) throw fail("Daftar nasional BMKG belum tersedia.", 502);
+
+  const rows = entries.map((index) => {
+    const row = values[index];
+    const date = String(values[row.date]).match(/^(\d{2})-(\d{2})-(\d{2}|\d{4})$/);
+    const clock = String(values[row.time]).match(/^(\d{2}:\d{2}:\d{2})\s+WIB$/);
+    const [lng, lat] = String(values[values[row.point]?.coordinates] ?? "").split(",");
+    if (!date || !clock || lat == null) throw fail("Format kejadian BMKG berubah.", 502);
+    const [, day, month, year] = date;
+    const timestamp = new Date(`${year.length === 2 ? "20" + year : year}-${month}-${day}T${clock[1]}+07:00`);
+    return {
+      Coordinates: `${lat},${lng}`,
+      DateTime: timestamp.toISOString().replace(".000Z", "+00:00"),
+      Magnitude: values[row.magnitude],
+      Kedalaman: values[row.depth],
+      Wilayah: values[row.area],
+      Potensi: values[row.potential],
+    };
+  });
+  const quakes = parseQuakes({ Infogempa: { gempa: rows } }, now, -Infinity);
+  if (quakes.length !== rows.length) throw fail("Sebagian data BMKG belum bisa dibaca.", 502);
+  return quakes;
 }
 
 const distanceKm = (a, b) => {
@@ -208,13 +249,13 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     value,
     unit: "",
     valid_at: new Date(now).toISOString(),
-    source: category === "weather" ? "Open-Meteo" : "GDACS / BMKG",
+    source: "Open-Meteo",
     kind: "forecast",
     spatial_context: `Model di sekitar titik ${area.name || "node"}, terpisah dari sensor AEROSENSE.`,
     data_origin: "external_api",
     role: "supplementary",
   });
-  if (outlook) {
+  if (outlook && !outlook.stale) {
     const h = outlook.hourly;
     const temps = h.map((x) => x.temperature).filter(Number.isFinite);
     const wet = h.filter((x) => (x.rain_chance ?? 0) >= 50 || (x.rain ?? 0) >= 0.5);
@@ -238,26 +279,37 @@ export function weatherFacts(outlook, hazards, area, now = Date.now()) {
     });
     if (days.length) facts.push(fact("days", "Prakiraan 3 hari berikutnya", days.join("; ") + "."));
   }
-  const warn = [...(outlook?.alerts || []).map((a) => `${a.title}: ${a.text}`)];
-  for (const c of hazards?.cyclones || [])
-    warn.push(
-      `Siklon tropis ${c.name} (status ${c.level}) di ${Math.abs(c.latitude).toFixed(1)}°${c.latitude < 0 ? "LS" : "LU"} ${c.longitude.toFixed(1)}°BT, sekitar ${Math.round(distanceKm(area, c))} km dari titik ini.`,
-    );
-  const quake = (hazards?.quakes || []).find((q) => distanceKm(area, q) <= 500);
-  if (quake)
-    warn.push(
-      `Gempa M${quake.magnitude} ${quake.region}, kedalaman ${quake.depth}, sekitar ${Math.round(distanceKm(area, quake))} km dari titik ini. ${quake.potential}`,
-    );
-  facts.push(
-    fact(
+  if (outlook && !outlook.stale) {
+    const alerts = outlook.alerts.map((a) => a.title + ": " + a.text);
+    facts.push(fact(
       "alerts",
-      "Peringatan cuaca dan bencana",
-      warn.length
-        ? warn.join(" ")
-        : "Tidak ada peringatan cuaca ekstrem dalam 24 jam, tidak ada siklon tropis aktif di sekitar Indonesia, dan tidak ada gempa M5+ dalam 500 km selama 7 hari terakhir.",
-      warn.length ? "weather_alert" : "weather",
-    ),
-  );
+      "Peringatan cuaca",
+      alerts.join(" ") || "Prakiraan 24 jam ini tidak memuat peringatan cuaca ekstrem.",
+      "weather_alert",
+    ));
+  }
+  for (const cyclone of hazards?.cyclones ?? []) {
+    facts.push({
+      ...fact(cyclone.id, "Pantauan siklon tropis",
+        `Siklon tropis ${cyclone.name} (status ${cyclone.level}), sekitar ${Math.round(distanceKm(area, cyclone))} km dari titik ini.`, "weather_alert"),
+      source: "GDACS",
+      source_url: cyclone.url || "https://www.gdacs.org/",
+      spatial_context: "Siklon di sekitar Indonesia dalam pantauan GDACS.",
+    });
+  }
+  if (Array.isArray(hazards?.quakes)) {
+    const quake = hazards.quakes.find((q) => distanceKm(area, q) <= 500);
+    facts.push({
+      ...fact("bmkg-quakes", "Gempa M5+ dari BMKG", quake
+        ? `Gempa M${quake.magnitude} ${quake.region}, kedalaman ${quake.depth}, sekitar ${Math.round(distanceKm(area, quake))} km dari titik ini. ${quake.potential}`
+        : "Daftar BMKG tidak mencatat gempa M5+ dalam 500 km dari titik acuan selama 7 hari terakhir.", "earthquake"),
+      source: "BMKG",
+      source_url: "https://www.bmkg.go.id/gempabumi/gempabumi-m5",
+      kind: "event",
+      valid_at: quake?.time || new Date(now).toISOString(),
+      spatial_context: "Daftar gempa M5+ BMKG dalam radius 500 km dari titik acuan.",
+    });
+  }
   return facts;
 }
 
@@ -267,32 +319,91 @@ const FORECAST =
   "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max" +
   "&timezone=Asia%2FJakarta&forecast_days=7";
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC";
+const BMKG_NATIONAL = "https://www.bmkg.go.id/gempabumi/gempabumi-m5";
 const BMKG_QUAKES = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json";
 
-export function weatherService({ request, now = Date.now }) {
+const FORECAST_TTL = 30 * 60_000;
+const FORECAST_MAX_AGE = 6 * 60 * 60_000;
+const RATE_LIMIT_PAUSE = 5 * 60_000;
+
+function forecastUnavailable() {
+  return fail("Prakiraan cuaca belum dapat diperbarui. Coba lagi beberapa menit lagi.", 503);
+}
+
+export function openMeteoRequest({ request, now = Date.now }) {
+  let retryAt = 0;
+  return async (url, options) => {
+    if (now() < retryAt) throw Object.assign(forecastUnavailable(), { code: "open_meteo_cooldown" });
+    try {
+      return await request(url, options);
+    } catch (error) {
+      if (error.status === 429) {
+        const retryAfter = error.retryAfter;
+        const delay = retryAfter && /^\d+$/.test(retryAfter)
+          ? Number(retryAfter) * 1000
+          : Date.parse(retryAfter) - now();
+        const pause = Number.isFinite(delay) ? Math.max(60_000, delay) : RATE_LIMIT_PAUSE;
+        retryAt = Math.max(retryAt, now() + pause);
+      }
+      throw error;
+    }
+  };
+}
+
+export function weatherService({ request, now = Date.now, openMeteo = openMeteoRequest({ request, now }) }) {
   const cache = new Map();
+  const pending = new Map();
+
   async function cached(key, ttl, load) {
     const hit = cache.get(key);
     if (hit && hit.until > now()) return hit.value;
-    const value = await load();
-    if (cache.size > 500) cache.clear();
-    cache.set(key, { value, until: now() + ttl });
-    return value;
-  }
-  const outlook = (latitude, longitude) => {
+    if (pending.has(key)) return pending.get(key);
 
-    const lat = Math.round(latitude * 100) / 100,
-      lng = Math.round(longitude * 100) / 100;
-    return cached(`wx:${lat}:${lng}`, 900000, async () =>
-      parseForecast(await request(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 }), now()),
-    );
+    const update = Promise.resolve().then(load).then((value) => {
+      if (cache.size >= 500 && !cache.has(key)) cache.delete(cache.keys().next().value);
+      cache.set(key, { value, until: now() + ttl });
+      return value;
+    }).finally(() => pending.delete(key));
+    pending.set(key, update);
+    return update;
+  }
+
+  const outlook = async (latitude, longitude) => {
+    const lat = Math.round(latitude * 100) / 100;
+    const lng = Math.round(longitude * 100) / 100;
+    const key = `wx:${lat}:${lng}`;
+    try {
+      const data = await cached(key, FORECAST_TTL, async () => {
+        const raw = await openMeteo(`${FORECAST}&latitude=${lat}&longitude=${lng}`, { timeout: 8000 });
+        forecastParts(raw);
+        return raw;
+      });
+      return parseForecast(data, now());
+    } catch {
+      const previous = cache.get(key);
+      if (previous && now() < previous.until - FORECAST_TTL + FORECAST_MAX_AGE) {
+        const outlook = parseForecast(previous.value, now());
+        if (outlook.hourly.length && outlook.daily.length) return { ...outlook, stale: true };
+      }
+      throw forecastUnavailable();
+    }
   };
+  const nationalQuakes = async () => {
+    try {
+      const html = await request(BMKG_NATIONAL, { timeout: 4500, format: "text" });
+      return { records: readBmkgPage(html, now()), feed: "bmkg_web" };
+    } catch {
+      const data = await request(BMKG_QUAKES, { timeout: 3000 });
+      return { records: parseQuakes(data, now(), -Infinity), feed: "bmkg_json" };
+    }
+  };
+
   const hazards = () =>
     cached("hazards", 600000, async () => {
       const day = (ms) => new Date(ms).toISOString().slice(0, 10);
       const [tc, eq] = await Promise.allSettled([
         request(`${GDACS}&fromdate=${day(now() - 7 * 86400000)}&todate=${day(now() + 86400000)}`, { timeout: 8000 }),
-        request(BMKG_QUAKES, { timeout: 8000 }),
+        nationalQuakes(),
       ]);
       const read = (r, parse) => {
         try {
@@ -301,9 +412,13 @@ export function weatherService({ request, now = Date.now }) {
           return null;
         }
       };
+      const national = eq.status === "fulfilled" ? eq.value : null;
+      const earliest = now() - QUAKE_WINDOW;
       return {
         cyclones: read(tc, parseCyclones),
-        quakes: read(eq, parseQuakes),
+        quakes: national?.records.filter(({ time }) => Date.parse(time) >= earliest) ?? null,
+        national_quakes: national?.records ?? null,
+        quake_feed: national?.feed ?? null,
         sources: ["GDACS (siklon tropis)", "BMKG (gempa M5+)"],
         updated_at: new Date(now()).toISOString(),
       };
@@ -320,9 +435,7 @@ export function weatherRoutes({ service, send, rate }) {
       if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
         throw fail("Lokasi tidak valid.");
       rate("wx:" + ip, 40);
-      const data = await service.outlook(lat, lng).catch((err) => {
-        throw err.status ? err : fail("Prakiraan cuaca sedang tidak tersedia.", 503);
-      });
+      const data = await service.outlook(lat, lng);
       send(res, 200, data);
       return true;
     }

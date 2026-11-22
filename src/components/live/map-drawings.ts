@@ -1,8 +1,20 @@
-export const mapDrawings = {
-  watersense: '<path d="M12 2.7C9 7.1 5.5 10.3 5.5 14a6.5 6.5 0 0 0 13 0c0-3.7-3.5-6.9-6.5-11.3Z"/><path d="M9 14.7a3 3 0 0 0 2.5 2.8"/>',
-  sensor:
-    '<path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9M7.8 4.7a6.14 6.14 0 0 0-.8 7.5M16.2 4.8c2 2 2.26 5.11.8 7.47M19.1 1.9a9.96 9.96 0 0 1 0 14.1M9.5 18h5m-6.5 4 4-11 4 11"/><circle cx="12" cy="9" r="2"/>',
-  fire: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
-  earthquake:
-    '<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/>',
+import { environmentGlyphs } from "@/lib/aero-glyphs";
+
+const mapDrawings = {
+  watersense: `<path d="${environmentGlyphs.water}"/>`,
+  sensor: `<image class="sensor-pin-mark" href="${import.meta.env.BASE_URL}assets/brand/aerosense-mark.png" width="24" height="24"/>`,
+  fire: `<path d="${environmentGlyphs.heat}"/>`,
+  earthquake: `<path d="${environmentGlyphs.quake}"/>`,
 };
+
+export type MapPinKind = keyof typeof mapDrawings;
+
+export function mapPinArt(kind: MapPinKind, showStatus = false, magnitude = "") {
+  return `<svg class="map-pin-art" viewBox="0 0 36 44" aria-hidden="true">
+    <path class="map-pin-shape" d="M18 2C9.7 2 3 8.7 3 17c0 8 7 15.6 13.5 24a1.9 1.9 0 0 0 3 0C26 32.6 33 25 33 17 33 8.7 26.3 2 18 2Z"/>
+    ${magnitude
+      ? `<text class="map-quake-number" x="18" y="20" text-anchor="middle"><tspan class="map-quake-unit">M </tspan>${magnitude}</text>`
+      : `<svg class="map-pin-glyph" x="9" y="8" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${mapDrawings[kind]}</svg>`}
+    ${showStatus ? '<circle class="map-pin-status" cx="29" cy="9" r="3.5"/>' : ""}
+  </svg>`;
+}

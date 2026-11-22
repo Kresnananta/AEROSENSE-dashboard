@@ -1,9 +1,14 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
   ArrowUpRight,
   CloudLightning,
   CloudRainWind,
+  CloudSnow,
+  CloudOff,
+  Clock3,
+  ChevronDown,
   ChevronRight,
   Droplets,
   Map as MapIcon,
@@ -11,45 +16,75 @@ import {
   Thermometer,
   Tornado,
   Umbrella,
-  Waves,
   Wind,
   X,
-  type LucideIcon,
-} from "lucide-react";
+  type AeroIcon,
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
+import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
+import { savedForecast } from "@/lib/saved-forecast";
+import type { EnvironmentFact } from "@/types/live.types";
 import { conditionArtUrl } from "@/lib/condition-art";
+import { formatQuakeMagnitude, formatQuakeRegion, formatQuakeTime } from "@/lib/environment-presentation";
+import {
+  dayPeriodFromHour,
+  dayPeriodLabel,
+  weatherSceneForPeriod,
+  wibHour,
+  type DayPeriod,
+} from "@/lib/time-of-day";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from "@/types/weather.types";
+import type { WeatherOutlook as Outlook, Hazards, Quake, WeatherDay, WeatherHour } from "@/types/weather.types";
 import "@/styles/weather.css";
 
-const SCENE: Record<string, string> = {
-  clear: "sunny",
-  partly: "partly-cloudy",
-  cloudy: "cloudy",
-  fog: "fog",
-  drizzle: "drizzle",
-  rain: "steady-rain",
-  "heavy-rain": "steady-rain",
-  thunder: "storm",
+function weatherPeriod(weather: WeatherDay | WeatherHour | Outlook["current"], fallback: DayPeriod): DayPeriod {
+  const period = "time" in weather ? dayPeriodFromHour(wibHour(weather.time)) : fallback;
+  const isDay = "is_day" in weather ? weather.is_day : null;
+  if (isDay === false) return "night";
+  return isDay === true && period === "night" ? "day" : period;
+}
+
+const cardArtScale: Record<string, number> = {
+  sunny: 1.21,
+  "sunny-night": 0.81,
+  "warm-night": 0.88,
+  cloudy: 0.91,
+  "cloudy-night": 0.87,
+  "drizzle-night": 0.83,
+  "light-rain": 1.04,
+  "light-rain-night": 0.83,
+  "steady-rain": 0.93,
+  "rain-night": 0.83,
+  storm: 0.84,
+  "storm-night": 0.83,
+  fog: 0.8,
+  "fog-night": 0.83,
 };
-const NIGHT: Record<string, string> = {
-  clear: "sunny-night",
-  partly: "cloudy-night",
-  cloudy: "cloudy-night",
-  fog: "fog-night",
-  drizzle: "drizzle-night",
-  rain: "rain-night",
-  "heavy-rain": "rain-night",
-  thunder: "storm-night",
-};
-function WeatherArt({ weather, size }: { weather: WeatherDay | WeatherHour; size: number }) {
+
+function WeatherArt({
+  weather,
+  size,
+  period = "day",
+  card = false,
+}: {
+  weather: WeatherDay | WeatherHour | Outlook["current"];
+  size: number;
+  period?: DayPeriod;
+  card?: boolean;
+}) {
   const { icon, code } = weather;
-  const night = "time" in weather && weather.is_day === false;
-  const scene = code != null && [61, 66, 80].includes(code) ? (night ? "light-rain-night" : "light-rain")
-    : (night ? NIGHT[icon] : SCENE[icon]) || "cloudy";
+  if (code != null && [71, 73, 75, 77, 85, 86].includes(code)) {
+    return <CloudSnow className="wx-art wx-snow" width={size} height={size} aria-hidden="true" />;
+  }
+  const resolvedPeriod = weatherPeriod(weather, period);
+  const isDay = "is_day" in weather ? weather.is_day : null;
+  const scene = weatherSceneForPeriod({ icon, code, period: resolvedPeriod, isDay });
   return (
     <img
       className="wx-art"
+      style={card ? { scale: cardArtScale[scene] ?? 1 } : undefined}
       src={conditionArtUrl(scene)}
       alt=""
       width={size}
@@ -59,7 +94,7 @@ function WeatherArt({ weather, size }: { weather: WeatherDay | WeatherHour; size
     />
   );
 }
-const ALERT_ICON: Record<string, LucideIcon> = {
+const ALERT_ICON: Record<string, AeroIcon> = {
   thunder: CloudLightning,
   heavy_rain: CloudRainWind,
   wind: Wind,
@@ -97,10 +132,12 @@ function todayTip(d: { rain_chance: number | null; uv: number | null; max: numbe
 export function WeatherOutlook({
   point,
   place,
+  fallbackFacts,
   compact = false,
 }: {
   point?: { latitude: number; longitude: number };
   place?: string;
+  fallbackFacts?: EnvironmentFact[];
   compact?: boolean;
 }) {
   const path = point
@@ -108,11 +145,16 @@ export function WeatherOutlook({
     : null;
   const wx = useLiveData<Outlook>(path, 900000, false);
   const hz = useLiveData<Hazards>(compact ? null : "/v1/hazards", 600000, false);
+  const dayPeriod = useDayPeriod();
   const [selection, setSelection] = useState<{ path: string | null; time: string } | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  if (!point) return null;
   const o = wx.data;
+  const savedDays = wx.error && !o ? savedForecast(fallbackFacts ?? []) : [];
+  const { ref: dailyRail, edges: dailyEdges } = useScrollEdges(o?.daily.length ?? 0);
+  if (!point) return null;
   const today = o?.daily[0];
+  const current = o?.stale ? undefined : o?.current;
+  const displayWeather = current ?? today;
 
   const allHours = (o?.day_hours ?? o?.hourly ?? []).slice(1);
   const hours = allHours.slice(0, compact ? 12 : 24);
@@ -138,9 +180,7 @@ export function WeatherOutlook({
           <h2 id="wx-title">Prakiraan cuaca</h2>
           <p>
             {place ? `Sekitar ${place}` : "Sekitar lokasi acuan"} · model Open-Meteo
-            {o?.valid_at
-              ? ` · ${new Date(o.valid_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })} WIB`
-              : ""}
+            {o?.valid_at && !o.stale ? ` · ${clock(o.valid_at)} WIB` : ""}
           </p>
         </div>
         <Link
@@ -154,16 +194,53 @@ export function WeatherOutlook({
           {compact ? "Prakiraan lengkap" : "Tanya AERO-BOT"} <ArrowUpRight size={15} />
         </Link>
       </header>
-      {wx.error && !o && <p className="live-notice">{wx.error} <button type="button" onClick={wx.refresh}>Coba lagi</button></p>}
+      {wx.error && !o && (
+        <div className="wx-forecast-notice" role="status">
+          <CloudOff size={18} aria-hidden="true" />
+          <p>{savedDays.length
+            ? "Prakiraan per jam belum bisa diperbarui. Prakiraan harian yang tersimpan ada di bawah."
+            : "Prakiraan cuaca belum tersedia untuk lokasi ini."}</p>
+          <button type="button" onClick={wx.refresh}>Coba lagi</button>
+        </div>
+      )}
+      {o?.stale && (
+        <div className="wx-forecast-notice" role="status">
+          <Clock3 size={18} aria-hidden="true" />
+          <p>Menampilkan prakiraan tersimpan{o.valid_at ? ` dari ${dateLabel(o.valid_at)}, ${clock(o.valid_at)} WIB` : ""}. Pembaruan belum tersedia.</p>
+        </div>
+      )}
+      {savedDays.length > 0 && (
+        <section className="wx-panel wx-saved" aria-labelledby="wx-saved-title">
+          <h3 id="wx-saved-title">Prakiraan harian tersimpan</h3>
+          <div>
+            {savedDays.map(({ date, metrics }) => (
+              <article key={date}>
+                <h4>{dateLabel(date)}</h4>
+                <dl>
+                  {metrics.map(({ label, value, unit }) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{num(value)}{unit ? ` ${unit}` : ""}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       {!o && !wx.error && <div className="wx-skeleton" role="status" aria-label="Memuat prakiraan cuaca" />}
       {o && !today && <p className="live-notice">Prakiraan harian belum tersedia.</p>}
-      {o && today && (
+      {o && today && displayWeather && (
         <div className="wx-body">
-          <article className={`wx-today tone-${today.icon}`}>
-            <WeatherArt weather={today} size={compact ? 116 : 148} />
+          <article className={`wx-today tone-${displayWeather.icon}`} data-day-period={weatherPeriod(displayWeather, dayPeriod)}>
+            <WeatherArt weather={displayWeather} period={dayPeriod} size={compact ? 116 : 148} />
             <div className="wx-today-copy">
-              <span className="wx-eyebrow">Hari ini</span>
-              <h3>{today.label}</h3>
+              <p className="wx-dateline">
+                Hari ini · {dayPeriodLabel(dayPeriod)}
+                {current?.temperature != null && <> · Saat ini {unit(current.temperature, "°")}</>}
+              </p>
+              <h3>{displayWeather.label}</h3>
               <p className="wx-today-range">
                 <strong>{unit(today.max, "°")}</strong> / {unit(today.min, "°")}
               </p>
@@ -222,9 +299,7 @@ export function WeatherOutlook({
                 const Icon = ALERT_ICON[a.type] || CloudLightning;
                 return (
                   <li key={a.type} className={`is-${a.level}`}>
-                    <span className="wx-alert-icon">
-                      <Icon size={20} aria-hidden="true" />
-                    </span>
+                    <Icon className="wx-alert-icon" size={18} aria-hidden="true" />
                     <div>
                       <strong>{a.title}</strong>
                       <p>{a.text}</p>
@@ -244,29 +319,32 @@ export function WeatherOutlook({
           {!compact && (
             <div className="wx-panel">
               <h3>7 hari ke depan</h3>
-              <ol className="wx-days">
-                {o.daily.map((d, i) => (
-                  <li key={d.date}>
-                    <button type="button" className={`wx-card tone-${d.icon}`} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
-                      <span className="wx-day-name">{dayName(d.date, i)}</span>
-                      <WeatherArt weather={d} size={60} />
-                      <span className="wx-day-label">{d.label}</span>
-                      <span className="wx-day-temp">
-                        <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
-                      </span>
-                      <span className={`wx-chip ${(d.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
-                        <Droplets size={12} aria-hidden="true" /> {unit(d.rain_chance, "%")}
-                      </span>
-                      <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
-                    </button>
-                  </li>
-                ))}
-              </ol>
+              <div className="scroll-vignette" {...dailyEdges}>
+                <ol ref={dailyRail} className="wx-days" aria-label="Prakiraan tujuh hari">
+                  {o.daily.map((d, i) => (
+                    <li key={d.date}>
+                      <button type="button" className={`wx-card tone-${d.icon}`}
+                        data-day-period="day" aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
+                        <span className="wx-day-name">{dayName(d.date, i)}</span>
+                        <WeatherArt weather={d} size={208} card />
+                        <span className="wx-day-label">{d.label}</span>
+                        <span className="wx-day-temp">
+                          <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
+                        </span>
+                        <span className={`wx-chip ${(d.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
+                          <Droplets size={12} aria-hidden="true" /> {unit(d.rain_chance, "%")}
+                        </span>
+                        <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           )}
-          {!compact && <HazardList hazards={hz.data} />}
         </div>
       )}
+      {!compact && <HazardList hazards={hz.data} />}
       <Dialog open={Boolean(detail)} onOpenChange={(open) => { if (!open) setSelection(null); }}>
         {detail && (
           <DialogContent className="wx-detail" showCloseButton={false} onCloseAutoFocus={(event) => {
@@ -303,29 +381,35 @@ function HourCards({ hours, onSelect }: {
   hours: WeatherHour[];
   onSelect: (time: string, button: HTMLButtonElement) => void;
 }) {
+  const { ref: rail, edges } = useScrollEdges(hours.length);
   if (!hours.length) return <p className="wx-muted">Prakiraan per jam belum tersedia.</p>;
   return (
-    <ol className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
-      {hours.map((h, i) => (
-        <li key={h.time}>
-          <button type="button" className={`wx-card tone-${h.icon}`} aria-haspopup="dialog"
-            aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
-            onClick={(e) => onSelect(h.time, e.currentTarget)}>
-            <span className="wx-day-name">{clock(h.time)}</span>
-            {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
-              <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
-            )}
-            <WeatherArt weather={h} size={48} />
-            <span className="wx-day-label">{h.label}</span>
-            <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
-            <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
-              <Droplets size={12} aria-hidden="true" /> {unit(h.rain_chance, "%")}
-            </span>
-            <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
-          </button>
-        </li>
-      ))}
-    </ol>
+    <div className="scroll-vignette" {...edges}>
+      <ol ref={rail} className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
+        {hours.map((h, i) => (
+          <li key={h.time}>
+            <button type="button" className={`wx-card tone-${h.icon}`}
+              data-day-period={weatherPeriod(h, "day")} aria-haspopup="dialog"
+              aria-label={`${dateLabel(h.time)}, pukul ${clock(h.time)} WIB, ${h.label}`}
+              onClick={(e) => onSelect(h.time, e.currentTarget)}>
+              <span className="wx-card-when">
+                <span className="wx-day-name">{clock(h.time)}</span>
+                {(i === 0 || h.time.slice(0, 10) !== hours[i - 1].time.slice(0, 10)) && (
+                  <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
+                )}
+              </span>
+              <WeatherArt weather={h} size={208} card />
+              <span className="wx-day-label">{h.label}</span>
+              <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
+              <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
+                <Droplets size={12} aria-hidden="true" /> {unit(h.rain_chance, "%")}
+              </span>
+              <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
+            </button>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -366,73 +450,91 @@ function RainTimes({ hours }: { hours: WeatherHour[] }) {
 }
 
 function HazardList({ hazards }: { hazards: Hazards | null }) {
-  if (!hazards) return null;
-  const quakes = [...(hazards.quakes || [])].sort((a, b) => b.magnitude - a.magnitude).slice(0, 3);
-  const quakeDate = new Intl.DateTimeFormat("id-ID", {
-    dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Jakarta",
-  });
+  const quakes = hazards?.national_quakes ?? hazards?.quakes ?? [];
+  const cyclones = hazards?.cyclones ?? null;
+  const hasQuakeData = Array.isArray(hazards?.national_quakes ?? hazards?.quakes);
+  const scope = hazards?.quake_feed === "bmkg_web"
+    ? "Daftar nasional"
+    : hazards?.quake_feed === "bmkg_json"
+      ? "Umpan cadangan BMKG"
+      : "7 hari terakhir";
+  const allQuakesWithoutTsunami = quakes.length > 0 && quakes.every(
+    (q) => /^tidak berpotensi tsunami[.!]?$/i.test(q.potential?.trim() ?? ""),
+  );
+  const renderQuake = (quake: Quake) => {
+    const location = formatQuakeRegion(quake.region || "");
+    const when = formatQuakeTime(quake.time);
+    const magnitude = formatQuakeMagnitude(quake.magnitude);
+    return (
+      <li key={quake.id} className="wx-quake">
+        <div className="wx-quake-content">
+          <strong>{location || "Lokasi belum tersedia"}</strong>
+          <div className="wx-quake-meta">
+            {when && <time dateTime={quake.time}>{when}</time>}
+            {quake.depth && <span>Kedalaman {quake.depth}</span>}
+          </div>
+          {!allQuakesWithoutTsunami && quake.potential && <p>{quake.potential}</p>}
+        </div>
+        {magnitude && <span className="wx-magnitude">M {magnitude}</span>}
+      </li>
+    );
+  };
   return (
     <div className="wx-panel wx-hazard-panel">
-      <h3>Siklon &amp; gempa di sekitar Indonesia</h3>
+      <header className="wx-quake-heading">
+        <Activity size={22} />
+        <div>
+          <h3>Gempa M5,0+ · BMKG</h3>
+          {hasQuakeData && <p>{quakes.length} kejadian · {scope}</p>}
+        </div>
+      </header>
       <ul className="wx-hazards">
-        {hazards.cyclones === null ? (
-          <li className="is-muted">
-            <Tornado size={18} aria-hidden="true" /> <span>Data siklon belum tersedia.</span>
-          </li>
-        ) : hazards.cyclones.length === 0 ? (
-          <li className="is-calm">
-            <Tornado size={18} aria-hidden="true" /> Tidak ada siklon tropis aktif di sekitar
-            Indonesia.
-          </li>
-        ) : (
-          hazards.cyclones.map((c) => (
-            <li key={c.id} className={`is-${c.level}`}>
-              <Tornado size={18} aria-hidden="true" />
-              <div>
-                <strong>Siklon tropis {c.name}</strong>
-                <p>
-                  Status {c.level} · {Math.abs(c.latitude).toFixed(1)}°
-                  {c.latitude < 0 ? "LS" : "LU"} {c.longitude.toFixed(1)}°BT
-                  {c.severity ? ` · ${c.severity}` : ""}
-                </p>
-              </div>
-            </li>
-          ))
-        )}
-        {hazards.quakes === null && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Data gempa belum tersedia.</span></li>}
-        {hazards.quakes?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ dalam data terbaru BMKG.</span></li>}
-        {quakes.map((q) => {
-          const location = q.region
-            .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
-            .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
-            .replace(/\bPAPUABRT\b/gi, "Papua Barat")
-            .replace(/(Barat|Timur|Utara|Selatan)(Laut|Daya|Timur|Barat)\b/gi, "$1 $2")
-            .replace(/([a-z])([A-Z])/g, "$1 $2").replace(/-/g, " · ")
-            .replace(/\b[A-Z]{3,}\b/g, (word) => word[0] + word.slice(1).toLowerCase());
-          return (
-            <li key={q.id} className="wx-quake">
-              <Waves className="wx-quake-icon" size={18} aria-hidden="true" />
-              <div className="wx-quake-content">
-                <div className="wx-quake-title">
-                  <strong>{location || "Lokasi belum tersedia"}</strong>
-                  <span className={`wx-magnitude ${q.magnitude >= 6 ? "is-emphasis" : ""}`}>M {num(q.magnitude)}</span>
-                </div>
-                <div className="wx-quake-meta">
-                  <time dateTime={q.time}>{quakeDate.format(new Date(q.time))} WIB</time>
-                  {q.depth && <span>Kedalaman {q.depth}</span>}
-                </div>
-                {q.potential && <p className="wx-quake-note">{q.potential}</p>}
-              </div>
-            </li>
-          );
-        })}
+        {!hasQuakeData && <li className="is-muted">Data gempa belum tersedia.</li>}
+        {hasQuakeData && quakes.length === 0 && <li className="is-muted">Belum ada gempa M5,0+ dalam daftar ini.</li>}
+        {quakes.slice(0, 3).map(renderQuake)}
       </ul>
+      {quakes.length > 3 && (
+        <details className="wx-quake-more">
+          <summary>Lihat {quakes.length - 3} gempa lainnya <ChevronDown size={16} /></summary>
+          <ul className="wx-hazards">{quakes.slice(3).map(renderQuake)}</ul>
+        </details>
+      )}
+      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Menurut BMKG, seluruh kejadian dalam daftar ini tidak berpotensi tsunami.</p>}
       <div className="wx-foot">
+        <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
+          Data BMKG <ArrowUpRight size={15} aria-hidden="true" />
+        </a>
+      </div>
+      <div className="wx-cyclone-section">
+        <h4>Siklon tropis dari GDACS</h4>
+        <ul className="wx-hazards">
+          {cyclones === null ? (
+            <li className="is-muted">
+              <Tornado size={18} aria-hidden="true" /> <span>Data siklon belum tersedia.</span>
+            </li>
+          ) : cyclones.length === 0 ? (
+            <li className="is-muted">
+              <Tornado size={18} aria-hidden="true" /> <span>Tidak ada siklon aktif.</span>
+            </li>
+          ) : (
+            cyclones.map((c) => (
+              <li key={c.id} className={`wx-cyclone is-${c.level}`}>
+                <Tornado size={18} aria-hidden="true" />
+                <div>
+                  <strong>Siklon tropis {c.name}</strong>
+                  <p>
+                    Status {c.level} · {Math.abs(c.latitude).toFixed(1)}°
+                    {c.latitude < 0 ? "LS" : "LU"} {c.longitude.toFixed(1)}°BT
+                    {c.severity ? ` · ${c.severity}` : ""}
+                  </p>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
         <Link className="insight-text-link" to="/sensor-map?overlay=rain&event_type=all">
-          <MapIcon size={15} aria-hidden="true" /> Buka peta cuaca{" "}
-          <ArrowUpRight size={15} />
+          <MapIcon size={15} aria-hidden="true" /> Peta cuaca <ArrowUpRight size={15} aria-hidden="true" />
         </Link>
-        <small>Siklon dari GDACS · Gempa M5+ dari BMKG</small>
       </div>
     </div>
   );

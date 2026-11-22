@@ -56,6 +56,13 @@
   color: #fff;
   background: #175fb4;
 }
+.disaster-toolbar-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+.disaster-toolbar-meta a { min-block-size: 44px; }
 .disaster-result-count {
   color: #426380;
   font-size: 13px;
@@ -78,25 +85,14 @@
 }
 .disaster-card {
   padding: 23px;
-  border: 1px solid #d7e5f3;
-  border-radius: 20px;
-  background: linear-gradient(145deg, #fff 50%, #edf5fd);
+  border: 1px solid var(--aero-rim, #cddff0);
+  border-radius: var(--aero-panel-radius, 22px);
+  background: var(--aero-surface, #ffffff);
   min-width: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-}
-.disaster-card::before {
-  content: "";
-  position: absolute;
-  width: 100px;
-  height: 100px;
-  border: 1px solid #dfebf7;
-  border-radius: 50%;
-  right: -45px;
-  top: -45px;
-  pointer-events: none;
 }
 .disaster-card-top {
   display: flex;
@@ -143,6 +139,20 @@
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+.disaster-map { margin: 0 0 16px; }
+.disaster-map img {
+  width: 100%;
+  height: clamp(132px, 16vw, 200px);
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--muted);
+}
+.disaster-map figcaption {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.disaster-map figcaption a { text-decoration: underline; }
 .disaster-metric {
   margin: 0 0 23px;
   display: flex;
@@ -556,8 +566,8 @@
   color: var(--panel-light);
   background: var(--panel-rule);
 }
-.insight-lead:has(.motion-toggle[aria-pressed="true"]) .condition-scene img,
-.sensor-hero:has(.motion-toggle[aria-pressed="true"]) .condition-scene img {
+.insight-lead:has(.motion-toggle[aria-pressed="true"]) .condition-scene .scene-art,
+.sensor-hero:has(.motion-toggle[aria-pressed="true"]) .condition-scene :is(.scene-art, .sensor-float-object, .sensor-dust) {
   animation-play-state: paused;
 }
 .panel-soil {
@@ -720,7 +730,7 @@
   place-items: center;
   pointer-events: none;
 }
-.condition-scene img {
+.condition-scene .scene-art {
   position: relative;
   width: 100%;
   height: 100%;
@@ -762,40 +772,34 @@
   width: 3px;
   height: 3px;
 }
-:is(.scene-drizzle, .scene-drizzle-night, .scene-light-rain, .scene-light-rain-night, .scene-steady-rain, .scene-rain-night) img {
+:is(.scene-drizzle, .scene-drizzle-night, .scene-light-rain, .scene-light-rain-night, .scene-steady-rain, .scene-rain-night) .scene-art {
   animation: rain-hover 4s ease-in-out infinite;
 }
-:is(.scene-storm, .scene-storm-night) img {
+:is(.scene-storm, .scene-storm-night) .scene-art {
   animation: storm-hover 6s ease-in-out infinite;
 }
-:is(.scene-air, .scene-haze, .scene-fog, .scene-fog-night) img {
+:is(.scene-air, .scene-haze, .scene-fog, .scene-fog-night) .scene-art {
   animation: air-hover 8s ease-in-out infinite;
 }
-.scene-soil img {
+.scene-soil .scene-art {
   animation: leaf-hover 9s ease-in-out infinite;
 }
-.scene-muted img {
+.scene-muted .scene-art {
   filter: grayscale(0.6) drop-shadow(0 16px 20px rgb(2 8 30 / 20%));
   opacity: 0.75;
   animation: none;
-}
-.scene-muted .scene-spark {
-  opacity: 0.2;
 }
 .scene-small {
   width: 100px;
   height: 100px;
   aspect-ratio: 1;
 }
-.scene-small .scene-halo,
-.scene-small .scene-ring,
-.scene-small .scene-spark {
-  display: none;
-}
-.scene-small img {
+.scene-muted .scene-spark { opacity: 0.2; }
+.scene-small :is(.scene-halo, .scene-ring, .scene-spark) { display: none; }
+.scene-small .scene-art {
   animation: none;
 }
-.scene-offscreen img {
+.scene-offscreen .scene-art {
   animation-play-state: paused;
 }
 .soil-history {
@@ -879,6 +883,9 @@
   width: 82px;
   height: 82px;
 }
+.insight-glance .condition-scene .scene-art {
+  animation: none;
+}
 .insight-glance h3 {
   font-size: 14px;
   font-weight: 700;
@@ -899,12 +906,12 @@
   letter-spacing: -0.025em;
 }
 .glance-number span {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insight-muted);
 }
 .insight-glance > small {
   display: block;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insight-muted);
   margin-top: 9px;
 }
@@ -1342,7 +1349,7 @@
   .motion-toggle {
     display: none;
   }
-  .condition-scene img,
+  .condition-scene .scene-art,
   .refreshing {
     animation: none;
   }

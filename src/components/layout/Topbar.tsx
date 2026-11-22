@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccess } from "@/hooks/useAccess";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
-import { Menu, ChevronRight, Bell } from "lucide-react";
+import { Menu, ChevronRight, Bell } from "@/components/ui/aero-icons";
 import type { Ref } from "react";
 
 interface TopbarProps {
@@ -16,7 +16,6 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
   const { user } = useAuth();
   const { canViewModel } = useAccess();
   const location = useLocation();
-  const navigate = useNavigate();
   const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
   const currentLabel =
     location.pathname === ROUTES.ANALYTICS && !canViewModel
@@ -38,30 +37,29 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
           aria-label="Buka menu navigasi"
           aria-controls="mobile-navigation"
           aria-expanded={menuOpen}
-          className="md:hidden w-8 h-8 rounded-lg bg-[#e8f3ff] text-[#0870f0] grid place-items-center hover:bg-[#d9ecff] transition-colors cursor-pointer"
+          className="topbar-icon md:hidden w-8 h-8 rounded-lg bg-[#e8f1fc] text-[#0a58ca] grid place-items-center hover:bg-[#d8e7fa] transition-colors cursor-pointer"
         >
-          <Menu className="w-4 h-4 stroke-[2]" />
+          <Menu size={18} />
         </button>
 
         <nav
           aria-label="Lokasi halaman"
-          className="flex items-center gap-2 text-[#526d88] text-xs font-semibold"
+          className="topbar-breadcrumb flex items-center gap-2 text-xs font-semibold"
         >
           <span className="hidden sm:inline">AEROSENSE</span>
-          <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-[#526d88]" />
-          <strong className="text-[#25405f] font-bold">{currentLabel}</strong>
+          <ChevronRight size={14} className="hidden sm:block text-[#3f566a]" />
+          <strong className="text-[#102436] font-bold">{currentLabel}</strong>
         </nav>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.ALERTS)}
-          aria-label="Lihat peringatan"
-          className="relative w-8 h-8 rounded-lg text-[#59718e] hover:bg-[#f0f6fc] hover:text-[#086cfb] grid place-items-center transition-colors cursor-pointer"
+      <div className="topbar-actions flex items-center gap-3 sm:gap-4">
+        <Link
+          to={ROUTES.ALERTS}
+          aria-label="Lihat peringatan sensor"
+          className="topbar-icon topbar-alert-link grid size-11 place-items-center rounded-lg md:hidden"
         >
-          <Bell className="w-4 h-4" />
-        </button>
+          <Bell size={18} aria-hidden="true" />
+        </Link>
 
         <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>
           {user ? "Akun saya" : "Masuk"}

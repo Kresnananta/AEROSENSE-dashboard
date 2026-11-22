@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight } from "@/components/ui/aero-icons";
 import { Link } from "react-router-dom";
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { ROUTES } from "@/lib/constants";

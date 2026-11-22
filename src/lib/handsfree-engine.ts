@@ -46,6 +46,8 @@ export interface HandsFreeEngine {
   stop(): void;
   speakAnswer(jobId: string, text: string, emotion?: string): Promise<void>;
   announce(text: string): Promise<void>;
+  /** Speak a greeting, then listen for a question without requiring "Halo AERO-BOT". */
+  greet(text: string): Promise<void>;
   stopSpeaking(): void;
   readonly state: HandsFreeState;
 }
@@ -53,6 +55,7 @@ export interface HandsFreeEngine {
 const TARGET_RATE = 16000;
 const PRE_ROLL_MS = 450;
 const LISTEN_TIMEOUT_MS = 9000;
+const GREETING_LISTEN_MS = 12000;
 const MAX_QUESTION_MS = 20000;
 const END_SILENCE_MS = 1100;
 const workletSource = `
@@ -545,6 +548,18 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     if (token === run) enterWaiting();
   }
 
+  async function greet(text: string) {
+    if (state.phase !== "waiting" && state.phase !== "listening") return;
+    const token = run;
+    clearTimeout(listenTimer);
+    await say(text);
+    if (token !== run) return;
+    // The presence camera already saw someone in front of the robot: it acts as the wake word
+    // for the first question. Silence after the greeting falls back to waiting for the wake phrase.
+    wakeAuthorized = true;
+    enterListening(GREETING_LISTEN_MS, true, "Silakan sampaikan pertanyaan Anda.");
+  }
+
   function stopSpeaking() {
     clearInterval(thinkingTimer);
     releaseSpeech();
@@ -581,6 +596,7 @@ export function createHandsFreeEngine(callbacks: HandsFreeCallbacks): HandsFreeE
     stop,
     speakAnswer,
     announce,
+    greet,
     stopSpeaking,
     get state() {
       return state;

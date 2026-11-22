@@ -33,6 +33,7 @@ export interface WeatherOutlook {
   longitude: number;
   source: string;
   valid_at: string | null;
+  stale?: boolean;
   current: {
     temperature: number | null;
     feels_like: number | null;
@@ -75,6 +76,8 @@ export interface Quake {
 export interface Hazards {
   cyclones: Cyclone[] | null;
   quakes: Quake[] | null;
+  national_quakes?: Quake[] | null;
+  quake_feed?: "bmkg_web" | "bmkg_json" | null;
   sources: string[];
   updated_at: string;
 }

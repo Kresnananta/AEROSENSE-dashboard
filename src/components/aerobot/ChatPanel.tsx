@@ -16,7 +16,8 @@ import {
   RefreshCw,
   Square,
   Volume2,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
+import { conditionArtUrl } from "@/lib/condition-art";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
@@ -29,9 +30,13 @@ import { configureRobotFace, publishRobotFace } from "@/lib/robot-face-bus";
 import { useAccess } from "@/hooks/useAccess";
 import { ROBOT_SLOTS, useRobotSlot } from "@/hooks/useRobotSlot";
 import { detectWakePhrase } from "@/lib/handsfree";
+import { useRobotPresence } from "@/hooks/useRobotPresence";
+import { presenceUrl, ROBOT_GREETING, type PresenceCommand } from "@/lib/robot-presence";
 import { startProcessingSound } from "@/lib/processing-sound";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
+
+import { ChatSide } from "@/components/aerobot/ChatSide";
 
 const CHAT_LOCATION_RADIUS_KM = 5;
 
@@ -55,17 +60,17 @@ const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
 };
 const suggestions = [
-  { icon: CloudSun, text: "Bagaimana cuaca di sekitarku hari ini?" },
-  { icon: CloudRain, text: "Apakah nanti akan hujan?" },
-  { icon: Footprints, text: "Aman tidak olahraga di luar sekarang?" },
-  { icon: Leaf, text: "Bagaimana cara mengurangi polusi?" },
+  { icon: CloudSun, topic: "weather", text: "Bagaimana cuaca di sekitarku hari ini?" },
+  { icon: CloudRain, topic: "rain", text: "Apakah nanti akan hujan?" },
+  { icon: Footprints, topic: "activity", text: "Aman tidak olahraga di luar sekarang?" },
+  { icon: Leaf, topic: "air", text: "Bagaimana cara mengurangi polusi?" },
 ];
 export function ChatPanel() {
   const { user, isLoading, error: authError } = useAuth();
   const userId = user?.id;
   const [slot, setSlot] = useRobotSlot(userId);
   const onChat = useLocation().pathname === "/aerobot";
-  const { canUseRobotScreen } = useAccess();
+  const { canUseRobotScreen, role } = useAccess();
   useEffect(() => {
     configureRobotFace(userId, canUseRobotScreen, slot);
     return () => configureRobotFace(undefined, false);
@@ -83,6 +88,10 @@ export function ChatPanel() {
   const nodes = useLiveData<{ nodes: LiveNode[] }>(
     isLoading ? null : user ? "/v1/dashboard" : "/v1/dashboard?guest=1",
     60000,
+  );
+  const robots = useLiveData<{ robots: { id: string; node_id: string }[] }>(
+    robotId && onChat ? "/v1/robots" : null,
+    300000,
   );
   const [nodeId, setNodeId] = useState("");
   const [devicePoint, setDevicePoint] = useState<{ owner: string; point: GeoPoint } | null>(null);
@@ -128,8 +137,11 @@ export function ChatPanel() {
       .filter(({ distance }) => distance <= CHAT_LOCATION_RADIUS_KM)
       .sort((a, b) => a.distance - b.distance)[0];
   const manual = availableNodes.find((node) => node.id === nodeId);
-  const contextNode =
-    manual || (point ? nearest?.node : availableNodes.length === 1 ? availableNodes[0] : undefined);
+  const robotNodeId = robots.data?.robots.find((robot) => robot.id === robotId)?.node_id;
+  const defaultNode = !user || (!point && availableNodes.length === 1) ? availableNodes[0] : undefined;
+  const contextNode = robotId
+    ? availableNodes.find((node) => node.id === robotNodeId)
+    : manual ?? nearest?.node ?? defaultNode;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -166,6 +178,47 @@ export function ChatPanel() {
     },
   });
   const handsFreeControls = handsFree.controls;
+  // Robot chest screen: the robot-display hub on the mini PC (fed by the presence camera) wakes
+  // the robot. The page publishes the face "wake" to the tablet, turns voice mode on and says a
+  // short friendly greeting (no data; the visitor asks for conditions) with the /aerobot voice,
+  // then listens without the wake phrase. One greeting per wake: the next one comes only after
+  // the robot has slept and woken again.
+  // Only the dedicated robot account uses it (operators/admins can test with ?camera=1).
+  const cameraEnabled =
+    onChat &&
+    !!userId &&
+    canUseRobotScreen &&
+    (role === "robot" || params.get("camera") === "1") &&
+    handsFree.supported &&
+    voice.configured &&
+    !DEMO_MODE;
+  const handsFreePhase = useRef(handsFree.phase);
+  handsFreePhase.current = handsFree.phase;
+  const greetWhenReady = useRef(false);
+  const greetedThisWake = useRef(false);
+  const requestGreeting = useRef<() => void>(() => {});
+  const presenceLink = useRobotPresence({
+    enabled: cameraEnabled,
+    url: presenceUrl(params.get("camera_url")),
+    onCommand: (command: PresenceCommand) => {
+      if (command.kind === "sleep") {
+        greetWhenReady.current = false;
+        greetedThisWake.current = false;
+        handsFreeControls.disable();
+        publishRobotFace(userId, { action: "sleep" });
+        return;
+      }
+      publishRobotFace(userId, { action: "wake" });
+      const phase = handsFreePhase.current;
+      if (phase === "off") handsFreeControls.enable();
+      if (!command.greet || greetedThisWake.current) return;
+      if (phase === "waiting" || phase === "listening") requestGreeting.current();
+      else greetWhenReady.current = true;
+    },
+  });
+  useEffect(() => {
+    if (greetWhenReady.current && handsFree.phase === "waiting") requestGreeting.current();
+  }, [handsFree.phase]);
   const voiceSpeak = useRef(voice.speak);
   voiceSpeak.current = voice.speak;
   const voiceStop = useRef(voice.stopSpeaker);
@@ -299,9 +352,7 @@ export function ChatPanel() {
   }, [handsFreeControls]);
   async function send(text = input, fromVoice = false): Promise<string | null> {
 
-    const targetNode = robotId
-      ? undefined
-      : (contextNode?.id ?? (user ? undefined : availableNodes[0]?.id));
+    const targetNode = robotId ? undefined : contextNode?.id;
     if (!text.trim() || sending.current || pending || isLoading) return null;
     if (!user && !targetNode) {
       setError("Belum ada titik pemantauan publik untuk dijadikan acuan.");
@@ -347,26 +398,39 @@ export function ChatPanel() {
     }
   }
   sendRef.current = send;
+  requestGreeting.current = () => {
+    greetWhenReady.current = false;
+    if (greetedThisWake.current) return;
+    greetedThisWake.current = true;
+    // Someone is already chatting: do not interrupt with a greeting.
+    if (!user || sending.current || pending) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: "greeting-" + crypto.randomUUID(), sender: "bot", text: ROBOT_GREETING, emotion: "happy" },
+    ]);
+    void handsFreeControls.greet(ROBOT_GREETING);
+  };
   const [handsFreeTitle, handsFreeHint] = handsFreeLabels[handsFree.phase];
   return (
-    <>
+    <div className="chat-workspace">
       <section className="live-chat" aria-label="Percakapan AERO-BOT">
         <header>
-          <img
-            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"}
-            alt=""
-          />
+          <img className="chat-header-icon" alt="" width={44} height={44}
+            src={busy ? "/assets/aerobot/falcon/watch.webp" : "/assets/aerobot/falcon/talk.webp"} />
           <div>
-            <strong>AERO-BOT</strong>
-            <small>{robotId ? "Layar robot · " + robotId : "Asisten lingkungan"}</small>
+            <strong>Percakapan</strong>
+            <small>
+              {robotId ? "Layar robot · " + robotId : ""}
+              {cameraEnabled &&
+                " · kamera " + (presenceLink === "connected" ? "tersambung" : "belum tersambung")}
+            </small>
           </div>
-          <span className="live-tag">{busy ? "Memproses" : "Siap"}</span>
+          {busy && <span className="live-tag" role="status">Menyiapkan jawaban</span>}
         </header>
         {!user && !isLoading && (
           <div className="chat-guest">
             <p>
-              <Link to="/login">Masuk</Link> untuk memakai mode suara
-              dan riwayat titik pantau Anda.
+              <Link to="/login">Masuk</Link> untuk memakai mode suara.
             </p>
             <WhatsAppEntry />
           </div>
@@ -377,9 +441,10 @@ export function ChatPanel() {
           </p>
         )}
         {canUseRobotScreen && (
-          <label className="chat-scope">
-            Layar robot
+          <div className="chat-scope">
+            <label htmlFor="chat-robot-slot">Layar robot</label>
             <select
+              id="chat-robot-slot"
               value={slot}
               onChange={(e) => setSlot(e.target.value)}
               disabled={busy || !!pending || !!voice.speaking || handsFree.phase === "speaking"}
@@ -390,7 +455,13 @@ export function ChatPanel() {
                 </option>
               ))}
             </select>
-          </label>
+            <Link
+              to="/robot-screen"
+              className="font-semibold text-[#0059b9] underline underline-offset-2"
+            >
+              Buka layar
+            </Link>
+          </div>
         )}
         {!robotId && availableNodes.length > 0 && (
           <div className="chat-scope">
@@ -417,7 +488,7 @@ export function ChatPanel() {
             )}
             {availableNodes.length > 1 && (
               <details className="w-full">
-                <summary className="cursor-pointer">Pilih titik lain</summary>
+                <summary className="cursor-pointer">Pilih titik pantau</summary>
                 <MonitoringSelect
                   label="Acuan percakapan"
                   value={nodeId || "__auto__"}
@@ -436,15 +507,15 @@ export function ChatPanel() {
         <div className="live-messages" role="log" aria-live="polite">
           {messages.length === 1 && !busy && (
             <div className="chat-welcome">
-              <img src="/assets/aerobot/falcon/welcome.webp" alt="" />
-              <h2>Hai, aku AERO-BOT!</h2>
-              <p>
-                Tanya soal udara dan cuaca di sekitarmu.
-              </p>
+              <div className="chat-welcome-heading">
+                <img src={conditionArtUrl("partly-cloudy")} width={112} height={112} alt="" decoding="async" />
+                <h2>Mau tanya apa?</h2>
+              </div>
               <div className="chat-suggestions">
-                {suggestions.map(({ icon: Icon, text }) => (
+                {suggestions.map(({ icon: Icon, text, topic }) => (
                   <button
                     key={text}
+                    data-topic={topic}
                     type="button"
                     disabled={busy || !!pending || isLoading}
                     onClick={() => void send(text)}
@@ -532,7 +603,7 @@ export function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             maxLength={2000}
             disabled={isLoading || busy || !!pending || voice.recording || voice.transcribing}
-            placeholder="Tanyakan tentang lingkungan…"
+            placeholder="Tulis pertanyaan Anda…"
             autoComplete="off"
           />
           {voice.configured && (
@@ -563,6 +634,8 @@ export function ChatPanel() {
             </button>
           )}
           <button
+            type="submit"
+            className="chat-send"
             aria-label="Kirim pesan"
             title="Kirim pesan"
             disabled={
@@ -574,7 +647,8 @@ export function ChatPanel() {
               voice.transcribing
             }
           >
-            <ArrowUp size={18} />
+            <span>Kirim</span>
+            <ArrowUp size={18} aria-hidden="true" />
           </button>
         </form>
         {(voice.recording || voice.transcribing) && (
@@ -667,6 +741,12 @@ export function ChatPanel() {
           </p>
         )}
       </section>
+      <ChatSide
+        node={contextNode}
+        loading={isLoading || nodes.loading || (!!robotId && robots.loading)}
+        refreshFailed={!!nodes.error || (!!robotId && !!robots.error)}
+        fixedLocation={!!robotId}
+      />
       {!onChat &&
         (handsFree.active || voice.speaking) &&
         createPortal(
@@ -685,6 +765,6 @@ export function ChatPanel() {
           </div>,
           document.body,
         )}
-    </>
+    </div>
   );
 }

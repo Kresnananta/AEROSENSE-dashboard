@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   conditionScene,
   environmentHighlights,
+  formatQuakeRegion,
   sensorSummary as sensorSummaryDefault,
 } from "../../src/lib/environment-presentation.ts";
 import { visibleSensorResponse } from "../../src/lib/sensor-display.ts";
@@ -80,19 +81,23 @@ test("condition illustration follows fresh weather evidence, not temperature alo
 test("weather illustrations use both the condition and the reading's time in WIB", () => {
   const insight = { category: "weather", available: true };
   for (const [validAt, code, scene, title] of [
-    ["2026-11-05T23:00:00Z", 0, "sunny-morning"],
+    ["2026-11-05T23:00:00Z", 0, "sunny"],
     ["2026-11-06T05:00:00Z", 0, "sunny"],
     ["2026-11-06T05:00:00Z", 2, "partly-cloudy"],
-    ["2026-11-06T05:00:00Z", 2, "sunny-dusk", "Cuaca terasa hangat"],
-    ["2026-11-06T05:00:00Z", 2, "sunny", "Cuaca terasa panas"],
-    ["2026-11-07T00:00:00Z", 3, "sunny-dusk", "Cuaca terasa hangat"],
+    ["2026-11-06T05:00:00Z", 2, "partly-cloudy", "Cuaca terasa hangat"],
+    ["2026-11-06T05:00:00Z", 2, "partly-cloudy", "Cuaca terasa panas"],
+    ["2026-11-07T00:00:00Z", 3, "cloudy", "Cuaca terasa hangat"],
     ["2026-11-06T05:00:00Z", 45, "fog", "Cuaca terasa hangat"],
-    ["2026-11-06T10:00:00Z", 0, "sunny-dusk"],
+    ["2026-11-06T08:00:00Z", 0, "sunny"],
+    ["2026-11-06T10:00:00Z", 0, "sunny"],
+    ["2026-11-06T10:00:00Z", 1, "sunny-dusk"],
     ["2026-11-06T10:00:00Z", 63, "steady-rain"],
-    ["2026-11-06T11:00:00Z", 2, "sunny-night"],
+    ["2026-11-06T11:00:00Z", 0, "sunny-night"],
+    ["2026-11-06T11:00:00Z", 1, "cloudy-night"],
+    ["2026-11-06T11:00:00Z", 2, "cloudy-night"],
     ["2026-11-06T11:00:00Z", 2, "warm-night", "Cuaca terasa hangat"],
-    ["2026-11-06T11:00:00Z", 3, "warm-night", "Cuaca terasa hangat"],
-    ["2026-11-06T13:00:00Z", 3, "cloudy-night"],
+    ["2026-11-06T11:00:00Z", 3, "cloudy", "Cuaca terasa hangat"],
+    ["2026-11-06T13:00:00Z", 3, "cloudy"],
     ["2026-11-06T13:00:00Z", 45, "fog-night"],
     ["2026-11-06T13:00:00Z", 63, "rain-night"],
     ["2026-11-06T13:00:00Z", 51, "drizzle-night"],
@@ -108,16 +113,40 @@ test("weather illustrations use both the condition and the reading's time in WIB
     });
     assert.equal(conditionScene({ ...insight, title }, [weather], checkedAt), scene);
   }
+  // When a cached daytime reading is viewed hours later at night, follow current WIB period
+  const cachedAfternoon = fact({
+    label: "Kode kondisi cuaca (WMO)",
+    value: 0,
+    valid_at: "2026-11-06T09:00:00Z",
+    fresh_until: "2026-11-06T15:00:00Z",
+  });
+  assert.equal(
+    conditionScene(insight, [cachedAfternoon], Date.parse("2026-11-06T13:00:00Z")),
+    "sunny-night",
+  );
+  // Unavailable weather at night uses cloudy-night
+  assert.equal(
+    conditionScene({ category: "weather", available: false }, [], Date.parse("2026-11-06T13:00:00Z")),
+    "cloudy-night",
+  );
 });
 test("moderate regional air quality uses the haze illustration", () => {
+  const dayTime = Date.parse("2026-11-06T05:00:00Z"); // 12:00 WIB
+  const nightTime = Date.parse("2026-11-06T13:00:00Z"); // 20:00 WIB
   const ispu = fact({
     category: "air_quality",
     label: "Estimasi ISPU PM2.5 (24 jam)",
     value: 85,
+    valid_at: new Date(dayTime - 60000).toISOString(),
+    fresh_until: new Date(nightTime + 3600000).toISOString(),
   });
-  const insight = summarizeEnvironment([ispu], now).find((item) => item.category === "air_quality");
-  assert.equal(conditionScene(insight, [ispu], now), "haze");
-  assert.equal(conditionScene({ ...insight, available: false }, [], now), "air");
+  const insight = summarizeEnvironment([ispu], dayTime).find((item) => item.category === "air_quality");
+  assert.equal(conditionScene(insight, [ispu], dayTime), "haze");
+  assert.equal(conditionScene({ ...insight, available: false }, [], dayTime), "air");
+  assert.equal(conditionScene(insight, [ispu], nightTime), "haze-night");
+  assert.equal(conditionScene({ ...insight, available: false }, [], nightTime), "air-night");
+  assert.equal(conditionScene({ category: "fire", available: true, tone: "calm" }, [], dayTime), "fire");
+  assert.equal(conditionScene({ category: "fire", available: true, tone: "calm" }, [], nightTime), "fire-night");
 });
 test("sensor summary respects hysteresis, validation and missing readings", () => {
   const rule = {
@@ -238,4 +267,23 @@ test("temporary PM2.5-only status: judged on PM2.5 estimasi, a missing dust_ug_m
   assert.equal(sensorSummary(node(null), [dust, pm25], true).label, "Data belum cukup");
   assert.equal(sensorSummary(node(41.8), [dust], true).label, "Data belum cukup");
   assert.equal(sensorSummaryDefault(node(41.8), [dust, pm25]).label, "Terpantau baik");
+});
+
+test("formatQuakeRegion formats raw BMKG earthquake region strings cleanly", () => {
+  assert.equal(
+    formatQuakeRegion("43 km BaratLaut MALUKUBRTDAYA"),
+    "43 km Barat Laut Maluku Barat Daya",
+  );
+  assert.equal(
+    formatQuakeRegion("130 km BaratDaya MALUKUTENGGARA"),
+    "130 km Barat Daya Maluku Tenggara",
+  );
+  assert.equal(
+    formatQuakeRegion("49 km TimurLaut RUTENG-MANGGARAI-NTT"),
+    "49 km Timur Laut Ruteng · Manggarai · NTT",
+  );
+  assert.equal(
+    formatQuakeRegion("114 km BaratDaya NIASBARAT-SUMUT"),
+    "114 km Barat Daya Nias Barat · Sumatera Utara",
+  );
 });

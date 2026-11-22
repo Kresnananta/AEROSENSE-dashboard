@@ -10,7 +10,7 @@ import {
   Navigation,
   RefreshCw,
   TriangleAlert,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { nearbyNodes, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
 import { useLiveData } from "@/hooks/useLiveData";

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { savedForecast } from "../../src/lib/saved-forecast.ts";
 import { parseForecast, parseCyclones, parseQuakes, weatherFacts, weatherService, weatherLabel } from "../api/weather.mjs";
 
 const now = Date.parse("2026-11-13T03:20:00Z");
@@ -44,13 +45,29 @@ test("forecast starts at the current local hour and explains warnings", () => {
   assert.equal(o.daily[0].label, "Hujan petir");
   const types = o.alerts.map((a) => a.type);
   assert.deepEqual(types, ["thunder", "heavy_rain", "uv"]);
-  assert.match(o.alerts[0].text, /15\.00 WIB/);
+  assert.match(o.alerts[0].text, /15\.00 WIB\./);
+  assert.doesNotMatch(o.alerts[0].text, /15\.00 WIB–15\.00 WIB/);
+});
+
+test("overnight weather alert span clarifies next day", () => {
+  const overnight = {
+    ...forecast,
+    hourly: {
+      ...forecast.hourly,
+      weather_code: hours.map((_, i) => (i === 19 || i === 32 ? 95 : 2)),
+    },
+  };
+  const o = parseForecast(overnight, Date.parse("2026-11-13T11:00:00Z"));
+  const thunder = o.alerts.find((a) => a.type === "thunder");
+  assert.ok(thunder);
+  assert.match(thunder.text, /19\.00 WIB–08\.00 WIB besok/);
 });
 
 test("expired hourly forecast does not reuse past hours", () => {
   const o = parseForecast(forecast, Date.parse("2026-11-15T03:20:00Z"));
   assert.deepEqual(o.hourly, []);
   assert.deepEqual(o.day_hours, []);
+  assert.equal(o.daily[0].date, "2026-11-15");
 });
 
 test("labels cover thunderstorm codes", () => {
@@ -83,18 +100,24 @@ test("cyclones near Indonesia only, quakes from the last week", () => {
 test("AERO-BOT gets forecast, coming days and warnings as facts", () => {
   const o = parseForecast(forecast, now);
   const area = { id: "n1", name: "ITS", latitude: -7.28, longitude: 112.79 };
-  const facts = weatherFacts(o, { cyclones: [], quakes: [{ latitude: -8.1, longitude: 113.2, magnitude: 5.3, depth: "10 km", region: "Selatan Jawa Timur", potential: "Tidak berpotensi tsunami" }] }, area, now);
-  assert.equal(facts.length, 3);
+  const facts = weatherFacts(o, { cyclones: [{ id: "tc-1", name: "Siklon A", level: "green", latitude: -8.3, longitude: 113.4 }], quakes: [{ latitude: -8.1, longitude: 113.2, magnitude: 5.3, depth: "10 km", region: "Selatan Jawa Timur", potential: "Tidak berpotensi tsunami", time: new Date(now - 3600000).toISOString() }] }, area, now);
+  assert.equal(facts.length, 5);
   assert.match(facts[0].value, /Hujan berpeluang turun mulai 14\.00 WIB/);
   assert.match(facts[1].value, /peluang hujan 60%/);
   assert.match(facts[2].value, /Potensi hujan petir/);
-  assert.match(facts[2].value, /Gempa M5\.3/);
+  assert.equal(facts[2].source, "Open-Meteo");
+  assert.equal(facts[3].source, "GDACS");
+  assert.equal(facts[4].category, "earthquake");
+  assert.equal(facts[4].source, "BMKG");
+  assert.match(facts[4].value, /Gempa M5\.3.*Tidak berpotensi tsunami/);
+  assert.equal(facts[4].valid_at, new Date(now - 3600000).toISOString());
   for (const f of facts) assert.equal(f.data_origin, "external_api");
   const calm = weatherFacts(null, { cyclones: [], quakes: [] }, area, now);
-  assert.match(calm[0].value, /Tidak ada peringatan/);
+  assert.match(calm[0].value, /Daftar BMKG tidak mencatat/);
+  assert.deepEqual(weatherFacts(null, { cyclones: null, quakes: null }, area, now), []);
 });
 
-test("service caches by ~5 km and survives a failed hazard source", async () => {
+test("service shares rounded coordinates and survives a failed hazard source", async () => {
   let calls = 0;
   const svc = weatherService({
     now: () => now,
@@ -111,4 +134,110 @@ test("service caches by ~5 km and survives a failed hazard source", async () => 
   const hz = await svc.hazards();
   assert.equal(hz.cyclones, null);
   assert.deepEqual(hz.quakes, []);
+});
+
+test("national BMKG list keeps older quakes and falls back to the open feed", async () => {
+  const values = [];
+  const add = (value) => values.push(value) - 1;
+  const earthquake = (date, magnitude) => add({
+    event: add("Gempabumi"), date: add(date), time: add("09:00:00 WIB"),
+    point: add({ coordinates: add("113.2,-8.1") }), magnitude: add(magnitude),
+    depth: add("10 km"), area: add("Jawa Timur"), potential: add("Tidak berpotensi tsunami"),
+  });
+  add({ identifier: add("history"), info: add([earthquake("12-11-26", 5.3), earthquake("20-10-26", 6)]) });
+  const html = '<script type="application/json" id="__NUXT_DATA__">' + JSON.stringify(values) + '</script>';
+  let clock = now;
+  let page = html;
+  const fallback = { Infogempa: { gempa: [
+    { DateTime: "2026-10-20T02:00:00+00:00", Coordinates: "-8.1,113.2", Magnitude: "6" },
+  ] } };
+  const service = weatherService({
+    now: () => clock,
+    request: async (url, { format }) => {
+      if (url.includes("gdacs.org")) return { features: [] };
+      return format === "text" ? page : fallback;
+    },
+  });
+
+  const live = await service.hazards();
+  assert.equal(live.quake_feed, "bmkg_web");
+  assert.deepEqual(live.national_quakes.map(({ magnitude }) => magnitude), [5.3, 6]);
+  assert.equal(live.quakes.length, 1);
+  assert.equal(live.quakes[0].time, "2026-11-12T02:00:00.000Z");
+  assert.equal(live.quakes[0].latitude, -8.1);
+  assert.equal(live.quakes[0].longitude, 113.2);
+  assert.equal(live.quakes[0].potential, "Tidak berpotensi tsunami");
+
+  page = "<html>Daftar belum tersedia</html>";
+  clock += 11 * 60_000;
+  const backup = await service.hazards();
+  assert.equal(backup.quake_feed, "bmkg_json");
+  assert.equal(backup.national_quakes.length, 1);
+  assert.deepEqual(backup.quakes, []);
+});
+
+test("forecast coalesces requests and serves fresh-time slices during provider limits", async () => {
+  let clock = now;
+  let calls = 0;
+  let limited = false;
+  const service = weatherService({
+    now: () => clock,
+    request: async () => {
+      calls++;
+      if (limited) throw Object.assign(new Error("Upstream HTTP 429"), { status: 429, retryAfter: "120" });
+      return forecast;
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    service.outlook(-7.25, 112.75),
+    service.outlook(-7.251, 112.749),
+  ]);
+  assert.deepEqual(first, second);
+  assert.equal(calls, 1);
+
+  limited = true;
+  clock += 60 * 60_000;
+  const stale = await service.outlook(-7.25, 112.75);
+  assert.equal(stale.stale, true);
+  assert.equal(stale.valid_at, first.valid_at);
+  assert.equal(stale.hourly[0].time, "2026-11-13T11:00");
+  assert.deepEqual(weatherFacts(stale, null, { name: "ITS" }, clock), []);
+  await assert.rejects(service.outlook(-7.30, 112.75), { status: 503, message: /Prakiraan cuaca/ });
+  assert.equal(calls, 2);
+
+  limited = false;
+  clock += 120_000;
+  assert.equal((await service.outlook(-7.25, 112.75)).stale, undefined);
+  assert.equal(calls, 3);
+
+  limited = true;
+  clock += 6 * 60 * 60_000;
+  await assert.rejects(service.outlook(-7.25, 112.75), { status: 503, message: /Prakiraan cuaca/ });
+  assert.equal(calls, 4);
+});
+
+test("saved daily outlook uses only unexpired Open-Meteo forecasts at the selected node", () => {
+  const fact = (day, overrides = {}) => ({
+    label: `Prakiraan peluang presipitasi maksimum (hari WIB ${day})`,
+    category: "weather",
+    kind: "forecast",
+    value: 80,
+    unit: "%",
+    source: "Open-Meteo / model cuaca",
+    fresh_until: new Date(now + 60_000).toISOString(),
+    ...overrides,
+  });
+  const days = savedForecast([
+    fact("2026-11-12"),
+    fact("2026-11-13"),
+    fact("2026-11-14", { value: 30 }),
+    fact("2026-11-15", { stale: true }),
+    fact("2026-11-16", { fresh_until: new Date(now - 1).toISOString() }),
+    fact("2026-11-17", { source: "BMKG" }),
+  ], now);
+  assert.deepEqual(days, [
+    { date: "2026-11-13", metrics: [{ label: "Peluang hujan tertinggi", value: 80, unit: "%" }] },
+    { date: "2026-11-14", metrics: [{ label: "Peluang hujan tertinggi", value: 30, unit: "%" }] },
+  ]);
 });

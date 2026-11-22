@@ -1,4 +1,4 @@
-import { CheckCircle2, TriangleAlert, OctagonAlert, Clock3 } from "lucide-react";
+import { CheckCircle2, TriangleAlert, OctagonAlert, Clock3 } from "@/components/ui/aero-icons";
 import { sensorSummary } from "@/lib/environment-presentation";
 import type { LiveNode } from "@/types/live.types";
 
@@ -17,7 +17,7 @@ export function NodeStatus({ node }: { node: LiveNode }) {
       className={`node-status status-${status.tone}`}
       title="Status pemantauan berdasarkan ambang sensor yang diatur; bukan AQI atau kategori kesehatan."
     >
-      <Icon size={13} aria-hidden="true" />
+      <Icon size={14} aria-hidden="true" />
       {status.label}
     </span>
   );

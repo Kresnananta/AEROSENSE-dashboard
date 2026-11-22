@@ -55,13 +55,18 @@ export const LAYERS = {
   },
 };
 
-const TARGET_POINTS = 256;
+const WEATHER_FIELDS = "temperature_2m,precipitation,cloud_cover,cape,wind_speed_10m,wind_direction_10m";
+const AIR_FIELDS = "pm2_5,us_aqi";
+const TARGET_POINTS = 144;
+const POINT_TTL = 30 * 60_000;
+const POINT_MAX_AGE = 6 * 60 * 60_000;
+const MAP_BUDGETS = [[60_000, 350], [3_600_000, 2_000], [86_400_000, 5_000]];
 const MAX_AXIS = 32;
 const MAX_SPAN = 60;
 
 export function heatGrid(south, west, north, east, minStep = 0.1) {
   if (![south, west, north, east].every(Number.isFinite)) throw fail("Area peta tidak valid.");
-  if (south >= north || west >= east || Math.abs(south) > 85 || Math.abs(north) > 85)
+  if (south >= north || west >= east || south < -85 || north > 85 || west < -180 || east > 180)
     throw fail("Area peta tidak valid.");
   const latSpan = north - south,
     lngSpan = east - west;
@@ -69,65 +74,111 @@ export function heatGrid(south, west, north, east, minStep = 0.1) {
 
   const area = Math.sqrt((latSpan * lngSpan) / TARGET_POINTS);
   const longest = Math.max(latSpan, lngSpan) / (MAX_AXIS - 2);
-  const step = Math.max(minStep, Math.ceil(Math.max(area, longest) * 20) / 20);
-  const s = Math.floor(south / step) * step,
-    w = Math.floor(west / step) * step;
-  const rows = Math.min(MAX_AXIS, Math.ceil((north - s) / step) + 1);
-  const cols = Math.min(MAX_AXIS, Math.ceil((east - w) / step) + 1);
+  const scale = Math.max(0, Math.ceil(Math.log2(Math.max(area, longest) / minStep)));
+  const step = minStep * 2 ** scale;
+  const firstRow = Math.floor(south / step + 1e-9);
+  const firstCol = Math.floor(west / step + 1e-9);
+  const rows = Math.ceil(north / step - 1e-9) - firstRow + 1;
+  const cols = Math.ceil(east / step - 1e-9) - firstCol + 1;
   const r = (v) => Math.round(v * 1000) / 1000;
-  return { south: r(s), west: r(w), step: r(step), rows, cols };
+  return { south: r(firstRow * step), west: r(firstCol * step), step: r(step), rows, cols };
 }
 
 export function heatmapRoutes({ send, rate, request, now = Date.now }) {
   const cache = new Map();
-  return async (req, res, url) => {
-    if (url.pathname !== "/v1/heatmap" || req.method !== "GET") return false;
-    const layer = LAYERS[url.searchParams.get("layer")];
-    if (!layer) throw fail("Lapisan heatmap tidak dikenal.");
-    const q = (k) => Number(url.searchParams.get(k));
-    const g = heatGrid(q("south"), q("west"), q("north"), q("east"), layer.minStep);
-    const key = [url.searchParams.get("layer"), g.south, g.west, g.step, g.rows, g.cols].join(":");
-    const hit = cache.get(key);
-    if (hit && hit.until > now()) return send(res, 200, hit.body), true;
-    const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0];
-    rate("heat:" + ip, 30);
-    const lats = [],
-      lons = [];
-    for (let i = 0; i < g.rows; i++)
-      for (let j = 0; j < g.cols; j++) {
-        lats.push((g.south + i * g.step).toFixed(3));
-        lons.push((g.west + j * g.step).toFixed(3));
-      }
-    const fields = [layer.field, layer.windSpeed, layer.direction].filter(Boolean);
+  const pending = new Map();
+  const reservations = [];
+
+  function reserve(count) {
+    const timestamp = now();
+    while (reservations.length && reservations[0].at <= timestamp - MAP_BUDGETS.at(-1)[0])
+      reservations.shift();
+    for (const [duration, limit] of MAP_BUDGETS) {
+      const used = reservations.reduce((sum, entry) => entry.at > timestamp - duration ? sum + entry.count : sum, 0);
+      if (used + count > limit) throw fail("Pembaruan peta sementara dibatasi.", 503);
+    }
+    const entry = { at: timestamp, count };
+    reservations.push(entry);
+    return entry;
+  }
+
+  async function load(url, points) {
+    const reservation = reserve(points.length);
+    const latitudes = points.map((point) => point.lat).join(",");
+    const longitudes = points.map((point) => point.lng).join(",");
+    const fields = url.includes("/air-quality") ? AIR_FIELDS : WEATHER_FIELDS;
     const data = await request(
-      `${layer.url}?latitude=${lats.join(",")}&longitude=${lons.join(",")}&current=${fields.join(",")}&timezone=UTC`,
+      `${url}?latitude=${latitudes}&longitude=${longitudes}&current=${fields}&timezone=UTC`,
       { timeout: 15000 },
-    ).catch(() => {
-      throw fail("Data heatmap sedang tidak tersedia.", 503);
+    ).catch((error) => {
+      const i = reservations.indexOf(reservation);
+      if (error.code === "open_meteo_cooldown" && i !== -1) reservations.splice(i, 1);
+      throw error;
     });
     const list = Array.isArray(data) ? data : [data];
-    const gridOf = (fieldName, round = 10) => {
-      const flat = list.map((d) => {
-        const v = Number(d?.current?.[fieldName]);
-        return Number.isFinite(v) ? Math.round(v * round) / round : null;
+    if (list.length !== points.length || list.some((item) => !item?.current))
+      throw fail("Data peta tidak lengkap.", 502);
+    const receivedAt = now();
+    points.forEach((point, i) => {
+      cache.delete(point.key);
+      cache.set(point.key, { current: list[i].current, receivedAt });
+    });
+    while (cache.size > 12_000) cache.delete(cache.keys().next().value);
+  }
+
+  return async (req, res, url) => {
+    if (url.pathname !== "/v1/heatmap" || req.method !== "GET") return false;
+    const name = url.searchParams.get("layer");
+    const layer = Object.hasOwn(LAYERS, name) ? LAYERS[name] : null;
+    if (!layer) throw fail("Lapisan heatmap tidak dikenal.");
+    const q = (k) => url.searchParams.has(k) ? Number(url.searchParams.get(k)) : NaN;
+    const g = heatGrid(q("south"), q("west"), q("north"), q("east"), layer.minStep);
+    const points = [];
+    for (let i = 0; i < g.rows; i++) {
+      for (let j = 0; j < g.cols; j++) {
+        const lat = Math.max(-90, Math.min(90, g.south + i * g.step)).toFixed(3);
+        const lng = Math.max(-180, Math.min(180, g.west + j * g.step)).toFixed(3);
+        points.push({ lat, lng, key: `${layer.url}:${lat}:${lng}` });
+      }
+    }
+    const missing = points.filter(({ key }) => (cache.get(key)?.receivedAt ?? -Infinity) <= now() - POINT_TTL);
+    if (missing.length) {
+      const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0];
+      rate("heat:" + ip, 30);
+      const newPoints = [...new Map(missing.filter(({ key }) => !pending.has(key)).map((point) => [point.key, point])).values()];
+      if (newPoints.length) {
+        const update = load(layer.url, newPoints).finally(() => {
+          for (const { key } of newPoints) pending.delete(key);
+        });
+        for (const { key } of newPoints) pending.set(key, update);
+      }
+      await Promise.allSettled(new Set(missing.map(({ key }) => pending.get(key))));
+    }
+    const samples = points.map(({ key }) => cache.get(key));
+    if (samples.some((sample) => !sample || sample.receivedAt <= now() - POINT_MAX_AGE))
+      throw fail("Data model peta belum tersedia. Coba lagi nanti.", 503);
+    const gridOf = (field, precision = 10) => {
+      const flat = samples.map(({ current }) => {
+        const value = current[field];
+        return Number.isFinite(value) ? Math.round(value * precision) / precision : null;
       });
       return Array.from({ length: g.rows }, (_, i) => flat.slice(i * g.cols, (i + 1) * g.cols));
     };
-    if (list.length !== g.rows * g.cols) throw fail("Data heatmap tidak lengkap.", 502);
-    const values = gridOf(layer.field, url.searchParams.get("layer") === "rain" ? 100 : 10);
-    const body = {
-      layer: url.searchParams.get("layer"),
+    const values = gridOf(layer.field, name === "rain" ? 100 : 10);
+    if (!values.some((row) => row.some((value) => value !== null)))
+      throw fail("Data model peta belum tersedia.", 503);
+    const firstTime = samples.map(({ current }) => current.time).filter(Boolean).sort()[0];
+    send(res, 200, {
+      layer: name,
       ...g,
       values,
-      ...(layer.windSpeed ? { wind_speed: gridOf(layer.windSpeed, 10) } : {}),
+      ...(layer.windSpeed ? { wind_speed: gridOf(layer.windSpeed) } : {}),
       ...(layer.direction ? { direction: gridOf(layer.direction, 1) } : {}),
       unit: layer.unit,
       source: layer.source,
-      valid_at: list[0]?.current?.time ? list[0].current.time + "Z" : null,
-    };
-    if (cache.size > 200) cache.clear();
-    cache.set(key, { body, until: now() + 1800000 });
-    send(res, 200, body);
+      valid_at: firstTime ? firstTime + "Z" : null,
+      stale: samples.some(({ receivedAt }) => receivedAt <= now() - POINT_TTL),
+    });
     return true;
   };
 }

@@ -1,0 +1,43 @@
+# ===== Konfigurasi deteksi & perilaku sapaan AEROBOT =====
+# Semua nilai perlu disetel saat uji lapangan.
+
+model: models/yolov8n.pt        # .pt = PyTorch/Ultralytics. Alternatif tanpa PyTorch: models/yolov8n.onnx
+backend: auto                   # auto (.onnx -> opencv, .pt -> ultralytics) | opencv | ultralytics
+source: 1                       # index webcam (0,1,..) atau URL RTSP "rtsp://..."
+conf: 0.5                       # ambang confidence deteksi
+imgsz: 640
+tracker: auto                   # auto | bytetrack.yaml | simple (tanpa DLL, untuk Windows yang memblokir lap)
+
+behavior:
+  near_ratio: 0.45              # tinggi bbox / tinggi frame -> dianggap "dekat" (proxy jarak)
+  center_zone: [0.25, 0.75]     # rentang x (0-1) yang dianggap "di depan robot"
+  dwell_greet: 0.8              # detik harus dekat sebelum disapa (abaikan yang lewat cepat)
+  dwell_engage: 4.0             # detik berdiri di depan -> tawarkan info kualitas udara
+  global_cooldown: 15.0         # jeda minimal antar sapaan (penting di gang ramai)
+  track_timeout: 2.0            # detik hilang sebelum track dilupakan
+  presence_interval: 10.0       # interval laporan jumlah orang (detik)
+  present_hold: 1.5             # status "ada orang" ditahan N detik agar tidak berkedip
+
+robot:
+  # mode hub (disarankan): robot-display/start.mjs (AEROBOT_PRESENCE=camera) memutuskan bangun/tidur.
+  #   Kamera mengirim deteksi ke robot_display.url, lalu monitor dada mengikuti keputusan hub.
+  # mode standalone: program ini memutuskan sendiri (untuk simulator web/robot_sim.html).
+  mode: hub
+  idle_sleep_s: 300             # standalone: tidur setelah 5 menit tanpa orang. hub: jeda awal sebelum monitor mati
+  display_off_delay_s: 20       # hanya untuk display_control: auto
+  display_control: keep_on      # keep_on = layar & PC selalu menyala, tidur hanya animasi | auto = monitor standby | off
+
+robot_display:
+  # Hub robot-display di mini PC. Wajib 127.0.0.1 (bukan "localhost"). Kosongkan untuk standalone.
+  url: "http://127.0.0.1:4210/presence"
+  interval: 0.5                 # kirim status deteksi tiap N detik
+
+events:
+  # Stream untuk web app AERO-BOT (browser): new EventSource("http://127.0.0.1:8765/events")
+  sse_port: 8765                # 0 = matikan (dipakai simulator/mode standalone)
+  sse_host: 127.0.0.1           # 0.0.0.0 jika browser di perangkat lain (mis. tablet) perlu akses
+  sse_allow_origin: "*"         # sebaiknya isi origin web app, mis. "https://aerobot.lab.local"
+  # Opsional: kirim juga via HTTP POST ke backend (kosongkan jika tidak dipakai)
+  url: ""
+  timeout: 2.0
+  print_events: true            # cetak event ke terminal

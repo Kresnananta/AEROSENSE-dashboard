@@ -139,6 +139,9 @@ export function useHandsFreeVoice(options: {
       announce(text: string) {
         return engine.current?.announce(text) ?? Promise.resolve();
       },
+      greet(text: string) {
+        return engine.current?.greet(text) ?? Promise.resolve();
+      },
       stopSpeaking() {
         engine.current?.stopSpeaking();
       },

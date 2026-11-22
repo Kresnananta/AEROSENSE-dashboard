@@ -41,6 +41,7 @@ try {
       for (const metric of Object.keys(allowed)) {
         if (p.readings.length >= 8) break;
         if (
+          s.stale !== true &&
           s.quality?.invalid !== true &&
           Number.isFinite(s.metrics?.[metric]) &&
           (metric !== "pm25_ug_m3" || s.pm25_validated)
@@ -55,6 +56,7 @@ try {
         g.task !== "fault_detection" &&
         Object.hasOwn(allowed, g.target) &&
         Number.isFinite(g.value) &&
+        s.stale !== true &&
         s.quality?.invalid !== true &&
         (g.target !== "pm25_ug_m3" || s.pm25_validated)
       )
@@ -162,12 +164,13 @@ try {
       const s = context.find((s) => s.node_id === ref.node_id);
       if (!s || s.quality?.invalid === true || (ref.metric === "pm25_ug_m3" && !s.pm25_validated))
         throw new Error("Sensor tidak diizinkan");
+      if (s.stale === true) continue;
       const key = ref.node_id + ":" + ref.metric + ":" + ref.source;
       if (seen.has(key)) continue;
       seen.add(key);
       const value = ref.source === "gru" ? modelValue(s.gru, ref.metric) : s.metrics?.[ref.metric];
       if (!Number.isFinite(value)) throw new Error("Nilai sensor tidak tersedia");
-      addSource("Sensor AEROSENSE " + (s.name || s.node_id), s.observed_at, s.stale);
+      addSource("Sensor AEROSENSE " + (s.name || s.node_id), s.observed_at, false);
     }
     for (const id of p.environment_refs) {
       if (typeof id !== "string") throw new Error("Referensi lingkungan tidak valid");
@@ -208,9 +211,9 @@ try {
     else if (p.topic === "air_quality")
       lines.push(
         "",
-        context.some((s) => s.quality?.invalid === true)
+        context.some((s) => s.stale !== true && s.quality?.invalid === true)
           ? "Pembacaan sensor ditandai tidak valid. Periksa sensor."
-          : context.length
+          : context.some((s) => s.stale !== true)
             ? "Pembacaan lengkap tersedia di dashboard."
             : "Data sensor belum tersedia.",
       );

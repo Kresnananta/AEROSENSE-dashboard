@@ -23,6 +23,19 @@ body {
   transition: background-color 0.65s ease;
 }
 
+body[data-display] {
+  background: #000;
+}
+
+body[data-display] #screen {
+  transition: opacity 250ms ease, background-color 0.65s ease;
+}
+
+body[data-display="off"] #screen {
+  opacity: 0;
+  transition-delay: 750ms, 0ms;
+}
+
 #character {
   height: 100%;
   width: 100%;

@@ -1,0 +1,199 @@
+.aero-mascot { width: 240px; height: auto; max-width: 100%; }
+.aero-mascot.live-state-art { width: 96px; }
+
+.app-shell .app-topbar { padding-inline: clamp(12px, 3vw, 32px); }
+.app-shell .app-topbar button { width: 44px; height: 44px; }
+
+.landing-page .landing-management { background: #e5f5f4; }
+
+.chat-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 29%);
+  gap: clamp(14px, 2vw, 24px);
+  align-items: start;
+}
+
+.app-shell .chat-workspace .live-chat {
+  min-width: 0;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-panel-radius);
+  box-shadow: none;
+}
+.auth-status-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--aero-control-radius);
+  background: #dceeff;
+  color: #095cbf;
+}
+.app-shell .chat-workspace .chat-header-icon { width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; border-radius: var(--aero-control-radius); background: #dceeff; }
+.app-shell .chat-workspace .live-messages { min-height: 0; }
+.app-shell .chat-workspace .live-messages:has(.chat-welcome) {
+  background:
+    radial-gradient(ellipse at 70% 0%, var(--aero-lime-soft), transparent 52%),
+    radial-gradient(ellipse at 9% 18%, oklch(92% .055 223), transparent 56%), var(--card);
+}
+.chat-workspace .chat-welcome { padding-block: clamp(12px, 2.6vw, 32px); }
+.chat-welcome-heading { display: flex; align-items: center; justify-content: center; gap: clamp(8px, 2vw, 20px); }
+.chat-welcome-heading img { width: clamp(68px, 9vw, 112px); height: auto; flex: none; }
+.chat-workspace .chat-welcome h2 { font-size: clamp(1.25rem, 2vw, 1.7rem); }
+.chat-workspace .chat-welcome .chat-suggestions button {
+  min-height: 48px;
+  border-radius: var(--aero-control-radius);
+  background: var(--suggestion-fill, var(--muted));
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.chat-suggestions { --suggestion-fill: var(--muted); --suggestion-ink: var(--aero-link); }
+.chat-suggestions [data-topic="weather"] { --suggestion-fill: var(--aero-lime-soft); --suggestion-ink: var(--aero-lime-ink); }
+.chat-workspace .chat-welcome .chat-suggestions button svg { color: var(--suggestion-ink); }
+.chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--suggestion-fill), var(--suggestion-ink) 8%);
+}
+
+.robot-mood {
+  --mood-sky: #c3e8ff;
+  --mood-accent: #15539e;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--aero-rim);
+  border-radius: var(--aero-panel-radius);
+  background: #fff;
+}
+.robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-accent: #13634e; }
+.robot-mood[data-mood="warning"] {
+  --mood-sky: var(--aero-amber-soft);
+  --mood-accent: var(--aero-amber-ink);
+  --mood-mascot: hue-rotate(183deg) brightness(1.14);
+}
+.robot-mood[data-mood="danger"] {
+  --mood-sky: var(--aero-red-soft);
+  --mood-accent: var(--aero-red-ink);
+  --mood-mascot: hue-rotate(138deg) brightness(1.03);
+}
+.robot-mood-scene {
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  min-height: 152px;
+  background: url("../assets/images/aerobot-sky.svg") center bottom / cover no-repeat,
+    var(--mood-sky);
+}
+.robot-mood-bubble {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  max-width: calc(100% - 16px);
+  margin: 17px 8px -12px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--mood-accent);
+  font-size: clamp(.875rem, 1.3vw, 1.07rem);
+  font-weight: 750;
+  line-height: 1.23;
+  text-align: center;
+  text-wrap: balance;
+}
+.robot-mood-bubble::after {
+  position: absolute;
+  inset: auto 0 -4px;
+  content: "";
+  margin-inline: auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  rotate: 45deg;
+  background: inherit;
+  z-index: -1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .robot-mood-bubble { animation: mood-speak 280ms cubic-bezier(.2,.75,.28,1) both; transform-origin: center bottom; }
+  @keyframes mood-speak { from { opacity: 0; transform: translateY(4px) scale(.93); } }
+}
+.robot-mood-scene .aero-mascot {
+  width: clamp(150px, 80%, 246px);
+  filter: var(--mood-mascot, none);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .robot-mood-scene .aero-mascot { transition: filter 260ms ease-out; }
+}
+.robot-mood-body { display: grid; align-content: center; gap: 12px; padding: clamp(14px, 2vw, 20px); }
+.robot-mood-reading { display: grid; gap: 4px; color: var(--aero-muted); font-size: .8125rem; }
+.robot-mood-location { display: inline; overflow-wrap: anywhere; }
+.robot-mood-location svg { display: inline-block; vertical-align: -.16em; margin-right: 3px; }
+.robot-mood-tip { color: var(--aero-ink); font-size: .875rem; line-height: 1.5; }
+.robot-mood-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.robot-mood-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: #104e9c;
+  font-size: .8125rem;
+  font-weight: 700;
+}
+.robot-mood-actions a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.robot-mood-greet { padding-inline: 10px; border-radius: var(--aero-control-radius); background: #fff; border: 1px solid #bcd5ee; }
+.robot-mood-greet:hover { background: #e7f3ff; }
+
+.login-page .auth-result { display: grid; justify-items: start; gap: 14px; }
+.login-page .auth-result h1, .login-page .register-sent h1 { margin: 0; }
+.auth-result > p { color: var(--aero-muted); font-size: .9375rem; line-height: 1.55; }
+.auth-result-actions { display: grid; gap: 12px; width: 100%; margin-top: 4px; }
+.auth-result-actions .login-back { min-height: 44px; display: flex; align-items: center; justify-self: start; }
+.auth-result[data-result="confirmed"] .auth-status-icon { background: var(--aero-lime-soft); color: var(--aero-lime-ink); }
+.auth-result[data-result="failed"] .auth-status-icon { background: #fff0dd; color: #894715; }
+@media (prefers-reduced-motion: no-preference) {
+  .auth-result[data-result="checking"] .auth-status-icon svg { animation: auth-checking 1s linear infinite; }
+  @keyframes auth-checking { to { transform: rotate(360deg); } }
+}
+
+@media (max-width: 1100px) {
+  .chat-workspace { grid-template-columns: minmax(0, 1fr); }
+  .robot-mood { display: grid; grid-template-columns: minmax(118px, 34%) minmax(0, 1fr); }
+  .robot-mood-scene .aero-mascot { width: min(100%, 226px); }
+}
+@media (max-width: 420px) {
+  .robot-mood { grid-template-columns: minmax(104px, 33%) minmax(0, 1fr); }
+  .robot-mood-body { padding: 12px; }
+  .robot-mood-bubble { padding: 6px 8px; font-size: .8125rem; }
+}
+
+.app-shell .chat-workspace .live-chat { min-height: 530px; }
+.app-shell .page-heading,
+.app-shell .live-heading { gap: 12px 20px; }
+.login-page .login-form-inner h1 { text-wrap: balance; letter-spacing: -.025em; }
+.login-page .login-input input { min-height: 44px; }
+.register-profile { margin-top: 20px; }
+.register-profile summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--aero-control-radius);
+  background: #edf6ff;
+  color: var(--aero-ink);
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.register-profile summary::-webkit-details-marker { display: none; }
+.register-profile summary span { color: var(--aero-muted); font-weight: 500; }
+.register-profile summary svg { margin-inline-start: auto; flex: none; }
+.register-profile[open] summary svg { transform: rotate(180deg); }
+.register-profile fieldset { min-inline-size: 0; margin-top: 0; }
+
+@media (max-width: 680px) {
+  .app-shell .chat-workspace .live-chat { min-height: 0; }
+  .chat-workspace .chat-welcome .chat-suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .chat-workspace .chat-welcome .chat-suggestions button { padding: 8px 9px; gap: 6px; }
+}
+@media (max-width: 350px) {
+  .chat-workspace .chat-welcome .chat-suggestions { grid-template-columns: minmax(0, 1fr); }
+}

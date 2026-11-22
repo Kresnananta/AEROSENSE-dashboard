@@ -2,7 +2,7 @@ import { AuthStory } from "./AuthStory";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTES } from "@/lib/constants";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail } from "@/components/ui/aero-icons";
 import { authService } from "@/services/auth.service";
 import { apiRequest } from "@/services/api";
 import { DEMO_MODE } from "@/lib/demo-mode";

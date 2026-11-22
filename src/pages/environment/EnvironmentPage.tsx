@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -15,9 +15,11 @@ import {
   ShieldCheck,
   ChevronDown,
   Clock3,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { WeatherOutlook } from "@/components/weather/WeatherOutlook";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
 import { DisasterNews } from "@/components/environment/DisasterNews";
@@ -50,9 +52,10 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
     60000,
   );
+  const dayPeriod = useDayPeriod();
   const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
-  const topics = useRef<HTMLDivElement>(null);
+  const { rail: topicRail, ref: topics, edges: topicEdges } = useScrollEdges(categories.length);
   const [locationMode, setLocationMode] = useState<"node" | "device">("node");
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
   const [locating, setLocating] = useState(false);
@@ -78,14 +81,14 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     ? params.get("topic")!
     : "weather";
   useEffect(() => {
-    const row = topics.current;
+    const row = topicRail;
     const active = row?.querySelector('[aria-pressed="true"]');
     if (!row || !active) return;
     const tab = active.getBoundingClientRect();
     const strip = row.getBoundingClientRect();
     if (tab.left < strip.left) row.scrollLeft += tab.left - strip.left;
     if (tab.right > strip.right) row.scrollLeft += tab.right - strip.right;
-  }, [category]);
+  }, [category, topicRail]);
   const insights = data?.insights || [];
   const important =
     insights.find(
@@ -101,15 +104,13 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       f.category === (selected?.category || category) ||
       ((selected?.category || category) === "soil" && f.category === "soil_profile"),
   );
-  const glances = insights
-    .filter(
-      (i) =>
-        ["air_quality", "soil", "fire", "weather"].includes(i.category) &&
-        i.category !== selected?.category,
-    )
-    .slice(0, 3);
   const highlights = selected ? environmentHighlights(selected, facts) : [];
   const scene = selected ? conditionScene(selected, facts) : "cloudy";
+  const forecastSummary = selected?.category === "weather" && selected.period === "forecast";
+  const forecastSummaryDay = forecastSummary && selected.valid_at
+    ? new Date(selected.valid_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", timeZone: "Asia/Jakarta" })
+    : null;
+  const weatherUnavailable = selected?.category === "weather" && !selected.available;
   const activeCategory = categories.find((c) => c.id === selected?.category);
   function updateParams(changes: Record<string, string>) {
     const next = new URLSearchParams(params);
@@ -158,7 +159,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   }
   const actions = (
     <div className="live-actions">
-      {!compact && nodes.length > 0 && (
+      {nodes.length > 0 && (
         <label className="sensor-select sensor-select--light">
           <MapPin size={15} aria-hidden="true" />
           <span className="sr-only">Acuan lokasi</span>
@@ -183,11 +184,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
         </label>
       )}
       {locating && <span className="sr-only" role="status">Mencari lokasi…</span>}
-      {compact && (
-        <Link className="insight-text-link" to="/environment">
-          Buka Hub Lingkungan <ArrowUpRight size={16} />
-        </Link>
-      )}
       <button
         className="live-icon-button"
         onClick={() => {
@@ -206,21 +202,13 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       <header className="insights-heading">
         <div>
           <Heading>
-            {locationMode === "device" && userPoint ? (
-              <>
-                Lingkungan <span className="heading-accent">di sekitar Anda</span>
-              </>
-            ) : node ? (
-              <>
-                Lingkungan di <span className="heading-accent">{node.name}</span>
-              </>
-            ) : (
-              <>
-                Lingkungan <span className="heading-accent">sekitar</span>
-              </>
-            )}
+            {locationMode === "device" && userPoint
+              ? "Lingkungan di sekitar Anda"
+              : node
+                ? `Lingkungan di ${node.name}`
+                : "Cuaca dan lingkungan"}
           </Heading>
-          {((locationMode === "device" && userPoint && node) || !node) && (
+          {!compact && ((locationMode === "device" && userPoint && node) || !node) && (
             <p>
               <MapPin size={15} aria-hidden="true" />
               {locationMode === "device" && userPoint && node
@@ -234,35 +222,44 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             </p>
           )}
         </div>
-        {compact && actions}
+        {compact && (
+          <Link
+            className="insight-text-link"
+            to={node ? `/environment?node_id=${encodeURIComponent(node.id)}` : "/environment"}
+          >
+            Lihat prakiraan dan data wilayah <ArrowUpRight size={16} aria-hidden="true" />
+          </Link>
+        )}
       </header>
       {!compact && (
         <div className="environment-nav">
           {actions}
-          <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                data-topic={c.id}
-                aria-pressed={category === c.id}
-                onClick={(event) => {
-                  if (c.id === category) return;
-                  const bar = event.currentTarget.closest(".environment-nav");
-                  const panel = bar?.parentElement?.querySelector(".insight-lead");
-                  if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
-                    panel.scrollIntoView({ block: "start" });
-                  }
-                  updateParams({ topic: c.id });
-                }}
-              >
-                <c.icon size={17} aria-hidden="true" />
-                {c.label}
-              </button>
-            ))}
+          <div className="scroll-vignette topic-vignette" {...topicEdges}>
+            <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  data-topic={c.id}
+                  aria-pressed={category === c.id}
+                  onClick={(event) => {
+                    if (c.id === category) return;
+                    const bar = event.currentTarget.closest(".environment-nav");
+                    const panel = bar?.parentElement?.querySelector(".insight-lead");
+                    if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
+                      panel.scrollIntoView({ block: "start" });
+                    }
+                    updateParams({ topic: c.id });
+                  }}
+                >
+                  <c.icon size={17} aria-hidden="true" />
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}
-      {pageLoading && !data ? (
+      {compact && !selected ? null : pageLoading && !data ? (
         <DataState loading />
       ) : (dashboard.error || error) && !data ? (
         <DataState
@@ -299,15 +296,17 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           <article
             key={selected.category}
             className={`insight-lead panel-${scene} tone-${selected.tone}`}
+            data-day-period={dayPeriod}
           >
             <Atmosphere />
             <div className="insight-message">
               <span className={`insight-status ${selected.available ? "" : "status-pending"}`}>
-                <span />
-                {selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
+                {forecastSummary ? "Ringkasan prakiraan" : selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
-              <h2>{selected.title}</h2>
-              {selected.category !== "weather" && <p>{selected.body}</p>}
+              <h2>{weatherUnavailable ? "Informasi cuaca belum tersedia" : forecastSummary ? "Perkiraan cuaca hari ini" : selected.title}</h2>
+              {(selected.category !== "weather" || forecastSummary || weatherUnavailable) && (
+                <p>{forecastSummary ? "Data cuaca saat ini belum tersedia. Ringkasan ini memakai prakiraan harian yang masih berlaku." : selected.body}</p>
+              )}
               <div className="insight-action">
                 <ArrowRight size={18} aria-hidden="true" />
                 <strong>{selected.action}</strong>
@@ -320,11 +319,11 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                     : selected.period === "reference"
                     ? "Catatan sumber"
                     : selected.period === "forecast"
-                      ? "Berlaku pada"
+                      ? forecastSummary ? "Prakiraan untuk" : "Berlaku pada"
                       : "Waktu data"}{" "}
                   {selected.category === "flood" && selected.period === "forecast"
                     ? `${riverDayLabel(selected.valid_at)} UTC`
-                    : dateLabel(selected.valid_at)}
+                    : forecastSummaryDay ?? dateLabel(selected.valid_at)}
                 </small>
               )}
             </div>
@@ -347,37 +346,6 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             <SoilHistory
               history={selectedFacts.find((f) => selected.fact_ids.includes(f.id))?.soil_history}
             />
-          )}
-          {compact && (
-            <div className="insight-glances" aria-label="Sekilas lingkungan">
-              {glances.map((i) => {
-                const c = categories.find((c) => c.id === i.category)!;
-                return (
-                  <Link
-                    key={i.category}
-                    to={`/environment?topic=${i.category}`}
-                    className={`insight-glance tone-${i.tone}`}
-                  >
-                    <div className="glance-heading">
-                      <c.icon size={18} aria-hidden="true" />
-                      <span>{c.label}</span>
-                      <ArrowUpRight size={15} />
-                    </div>
-                    <ConditionScene scene={conditionScene(i, facts)} muted={!i.available} small />
-                    <h3>{i.title}</h3>
-                    {environmentHighlights(i, facts)
-                      .slice(0, 1)
-                      .map((h) => (
-                        <div className="glance-number" key={h.label}>
-                          <strong>{h.value}</strong>
-                          <span>{h.unit}</span>
-                        </div>
-                      ))}
-                    <small>{i.available ? periodLabel[i.period] : "Belum ada pembaruan"}</small>
-                  </Link>
-                );
-              })}
-            </div>
           )}
           {!compact && (
             <div className="insight-secondary">
@@ -546,12 +514,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           </details>
         </>
       )}
-      <WeatherOutlook
-        compact={compact}
-        place={locationMode === "device" && userPoint ? "lokasi Anda" : node?.name}
-        point={locationMode === "device" && userPoint ? userPoint : node && validPoint(node) ? node : undefined}
-      />
-      <DisasterNews compact={compact} />
+      {!compact && (
+        <>
+          <WeatherOutlook
+            fallbackFacts={locationMode === "node" ? facts : undefined}
+            place={locationMode === "device" && userPoint ? "lokasi Anda" : node?.name}
+            point={locationMode === "device" && userPoint ? userPoint : node && validPoint(node) ? node : undefined}
+          />
+          <DisasterNews />
+        </>
+      )}
     </section>
   );
 }

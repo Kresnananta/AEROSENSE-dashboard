@@ -27,10 +27,56 @@ test("disaster feed keeps recent Indonesia events and distinguishes model area f
   assert.throws(() => parseDisasterFeed("<rss><channel></rss>", NEWS_SOURCES[0], now));
 });
 
-test("ANTARA rejects foreign, ambiguous and unrelated headlines", () => {
+test("GDACS upgrades official RSS links and passes only supported map enclosures", () => {
+  const map = "https://www.gdacs.org/contentdata/resources/imgtemp/gdacs/fl/dfo2026_1104253.png";
+  const link = "http://www.gdacs.org/report.aspx?eventtype=FL&amp;eventid=1577920";
+  const event = item("IDN", at, link).replace(">WF<", ">FL<");
+  const withImage = (url) => event.replace("</item>", "<enclosure type=\"image/png\" url=\"" + url + "\"/></item>");
+  const [official] = parseDisasterFeed(rss(withImage(map)), NEWS_SOURCES[0], now);
+  assert.equal(official.url, "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1577920");
+  assert.equal(official.map_url, map);
+  for (const invalid of [map.replace("www.gdacs.org", "example.org"), "https://www.gdacs.org/images/gdacs-icon.png"]) {
+    const [article] = parseDisasterFeed(rss(withImage(invalid)), NEWS_SOURCES[0], now);
+    assert.equal(article.map_url, null);
+  }
+});
+
+test("GDACS earthquakes and legacy quake cache entries are omitted", async () => {
+  const quake = item().replace(">WF<", ">EQ<");
+  assert.deepEqual(parseDisasterFeed(rss(quake), NEWS_SOURCES[0], now), []);
+  const legacy = { type: "Gempa", country_code: "IDN", published_at: new Date(now).toISOString(),
+    url: "https://www.gdacs.org/report.aspx?eventtype=EQ&eventid=2" };
+  const cached = NEWS_SOURCES.map((source, index) => ({
+    provider: source.id,
+    refresh_after: new Date(now + 60_000).toISOString(),
+    last_success_at: new Date(now).toISOString(),
+    items: index === 0 ? [legacy, ...parseDisasterFeed(rss(item()), source, now)] : [],
+  }));
+  const response = await disasterNews({ db: async () => cached, clock: () => now }).read();
+  assert.deepEqual(response.items.map(({ type }) => type), ["Karhutla"]);
+});
+
+test("the disaster list keeps GDACS visible when ANTARA fills the page limit", async () => {
+  const sources = NEWS_SOURCES.map((source, index) => ({
+    provider: source.id,
+    refresh_after: new Date(now + 60_000).toISOString(),
+    last_success_at: new Date(now).toISOString(),
+    items: index === 0 ? parseDisasterFeed(rss(item()), source, now) : Array.from({ length: 30 }, (_, i) => ({
+      url: "https://www.antaranews.com/berita/" + i, country_code: "IDN", published_at: new Date(now).toISOString(), kind: "news",
+    })),
+  }));
+  const response = await disasterNews({ db: async () => sources, clock: () => now }).read();
+  assert.equal(response.items.length, 24);
+  assert.equal(response.items.at(-1).source, "GDACS");
+});
+
+test("ANTARA keeps Indonesian earthquake and landslide reports", () => {
   const xml = rss(
     [
       "Banjir di Surabaya mulai surut",
+      "Gempa M6,8 di Maluku Barat Daya",
+      "Warga Jawa Barat dievakuasi setelah longsor",
+      "Gempa di Jepang memicu tsunami",
       "Banjir di India memburuk",
       "Banjir meluas di sejumlah wilayah",
       "Cuaca ekstrem di Australia dan Indonesia",
@@ -43,7 +89,8 @@ test("ANTARA rejects foreign, ambiguous and unrelated headlines", () => {
       .join(""),
   );
   const result = parseDisasterFeed(xml, NEWS_SOURCES[1], now);
-  assert.equal(result.length, 1);
+  assert.deepEqual(result.map(({ type }) => type), ["Banjir", "Gempa", "Longsor"]);
+  assert.ok(result.every(({ source, kind }) => source === "ANTARA" && kind === "news"));
   assert.equal(result[0].location, "Surabaya");
 });
 

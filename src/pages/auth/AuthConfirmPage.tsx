@@ -1,109 +1,80 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CircleAlert, CircleCheck, Loader2 } from "lucide-react";
+import { ArrowRight, CircleAlert, CircleCheck, LoaderCircle, Mail } from "@/components/ui/aero-icons";
 import { ROUTES } from "@/lib/constants";
-import { getSupabase } from "@/services/supabase";
 import { apiRequest } from "@/services/api";
+import { getSupabase } from "@/services/supabase";
+import { AuthStory } from "./AuthStory";
 
-type Me = { profile?: { full_name?: string | null }; role_request?: { requested_role: string; status: string } | null };
-const ROLE_LABEL: Record<string, string> = {
-  operator: "Pengelola kawasan",
-  auditor: "Auditor / peneliti",
-  admin: "Admin lokasi",
+type Status = "checking" | "confirmed" | "missing" | "failed";
+const content = {
+  checking: { icon: LoaderCircle, title: "Memeriksa tautan…", text: "" },
+  confirmed: { icon: CircleCheck, title: "Email terkonfirmasi", text: "Selamat datang di AEROSENSE." },
+  missing: { icon: Mail, title: "Buka tautan dari email", text: "Gunakan tautan konfirmasi yang dikirim saat Anda mendaftar." },
+  failed: { icon: CircleAlert, title: "Tautan tidak bisa digunakan", text: "Tautannya mungkin kedaluwarsa atau sudah dipakai. Coba masuk jika akun Anda sudah aktif." },
 };
 
+async function checkLink(query: URLSearchParams, hash: URLSearchParams): Promise<Status> {
+  const errors = ["error", "error_code", "error_description"];
+  if (errors.some((key) => query.has(key) || hash.has(key))) return "failed";
+  const code = query.get("code");
+  const token = query.get("token_hash");
+  const accessToken = hash.get("access_token");
+  const type = query.get("type");
+  if (!code && !token && !accessToken) return "missing";
+  const client = await getSupabase();
+  if (token && (type === "signup" || type === "email")) {
+    const { error } = await client.auth.verifyOtp({ token_hash: token, type });
+    return error ? "failed" : "confirmed";
+  }
+  if (code) {
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
+    return !error && data.session ? "confirmed" : "failed";
+  }
+  const { data } = await client.auth.getSession();
+  return accessToken && data.session?.access_token === accessToken ? "confirmed" : "failed";
+}
+
 export function AuthConfirmPage() {
-  const [state, setState] = useState<"checking" | "ok" | "error">("checking");
-  const [message, setMessage] = useState("");
-  const [me, setMe] = useState<Me | null>(null);
-
+  const [state, setState] = useState<Status>("checking");
+  const [pendingRole, setPendingRole] = useState(false);
+  const callback = useRef<Promise<Status> | null>(null);
   useEffect(() => {
-    const hash = new URLSearchParams(window.location.hash.slice(1));
-    const query = new URLSearchParams(window.location.search);
-    const error = hash.get("error_description") || query.get("error_description");
-    if (error) {
-      setMessage(
-        /expired|invalid/i.test(error)
-          ? "Tautan konfirmasi sudah kedaluwarsa atau sudah dipakai. Coba masuk; bila belum bisa, daftar ulang untuk menerima tautan baru."
-          : error,
-      );
-      setState("error");
-      return;
-    }
-    (async () => {
-      const client = await getSupabase();
-      const code = query.get("code");
-      if (code) await client.auth.exchangeCodeForSession(code);
-      const { data } = await client.auth.getSession();
-      if (!data.session) throw new Error("Email sudah dikonfirmasi. Silakan masuk dengan email dan kata sandi Anda.");
-      window.history.replaceState(null, "", "/auth/confirm");
-      setState("ok");
-
-      setMe(await apiRequest<Me>("/v1/me").catch(() => null));
-    })().catch((e) => {
-      setMessage(e instanceof Error ? e.message : "Konfirmasi belum berhasil.");
-      setState("error");
+    let active = true;
+    callback.current ??= checkLink(new URLSearchParams(location.search), new URLSearchParams(location.hash.slice(1))).catch(() => "failed");
+    void callback.current.then((status) => {
+      if (!active) return;
+      if (status !== "missing") history.replaceState(history.state, "", "/auth/confirm");
+      setState(status);
+      if (status === "confirmed") {
+        void apiRequest<{ role_request?: { status: string } | null }>("/v1/me")
+          .then(({ role_request }) => { if (active) setPendingRole(role_request?.status === "pending"); })
+          .catch(() => {});
+      }
     });
+    return () => { active = false; };
   }, []);
 
-  const request = me?.role_request?.status === "pending" ? me.role_request : null;
+  const { icon: Icon, title, text } = content[state];
   return (
-    <div className="confirm-page">
-      <main className="confirm-card" aria-live="polite">
-        <Link to={ROUTES.HOME} className="login-brand confirm-brand" aria-label="AEROSENSE — Beranda">
-          <img src="/assets/brand/aerosense-mark.png" className="login-brand-icon" width="40" height="40" alt="" />
-          <span>
-            AERO<strong>SENSE</strong>
-          </span>
-        </Link>
-        {state === "checking" ? (
-          <>
-            <Loader2 className="confirm-icon spin" size={40} aria-hidden="true" />
-            <h1>Memeriksa tautan…</h1>
-          </>
-        ) : state === "ok" ? (
-          <>
-            <CircleCheck className="confirm-icon ok" size={44} aria-hidden="true" />
-            <h1>Email terkonfirmasi</h1>
-            <p>
-              {me?.profile?.full_name ? `Selamat datang, ${me.profile.full_name}. ` : "Selamat datang. "}
-              Akun Anda sudah aktif dan Anda sudah masuk.
-            </p>
-            {request && (
-              <p className="confirm-note">
-                Permintaan peran <strong>{ROLE_LABEL[request.requested_role] || request.requested_role}</strong>{" "}
-                sedang diverifikasi tim AEROSENSE. Sementara itu akun Anda aktif sebagai warga.
-              </p>
-            )}
-            <p className="confirm-sub">
-              Sebagai warga, Anda dapat melihat semua node publik, Hub Lingkungan, dan berlangganan peringatan
-              WhatsApp.
-            </p>
-            <div className="confirm-actions">
-              <Link to={ROUTES.DASHBOARD} className="login-submit">
-                Lihat kondisi udara <ArrowRight size={18} />
+    <div className="login-page">
+      <AuthStory confirmed={state === "confirmed"} />
+      <section className="login-form-panel" aria-labelledby="confirm-heading">
+        <div className="login-form-inner auth-result" data-result={state} aria-live="polite">
+          <span className="auth-status-icon"><Icon size={26} aria-hidden="true" /></span>
+          <h1 id="confirm-heading">{title}</h1>
+          {text && <p>{text}</p>}
+          {pendingRole && <p>Permintaan peran Anda sedang ditinjau. Untuk sementara, akun Anda aktif sebagai warga.</p>}
+          {state !== "checking" && (
+            <div className="auth-result-actions">
+              <Link to={state === "confirmed" ? ROUTES.DASHBOARD : ROUTES.LOGIN} className="login-submit">
+                {state === "confirmed" ? "Lihat kondisi udara" : "Masuk"}<ArrowRight size={18} aria-hidden="true" />
               </Link>
-              <Link to={ROUTES.ENVIRONMENT} className="confirm-secondary">
-                Buka Hub Lingkungan
-              </Link>
+              {state === "failed" && <Link className="login-back" to={ROUTES.REGISTER}>Daftar ulang</Link>}
             </div>
-          </>
-        ) : (
-          <>
-            <CircleAlert className="confirm-icon bad" size={44} aria-hidden="true" />
-            <h1>Konfirmasi belum berhasil</h1>
-            <p>{message}</p>
-            <div className="confirm-actions">
-              <Link to={ROUTES.LOGIN} className="login-submit">
-                Masuk <ArrowRight size={18} />
-              </Link>
-              <Link to={ROUTES.REGISTER} className="confirm-secondary">
-                Daftar ulang
-              </Link>
-            </div>
-          </>
-        )}
-      </main>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

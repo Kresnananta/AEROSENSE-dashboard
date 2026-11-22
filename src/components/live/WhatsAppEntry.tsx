@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { ArrowUpRight, MessageCircle, Send, X } from "lucide-react";
+import { ArrowUpRight, MessageCircle, Send, X } from "@/components/ui/aero-icons";
 import {
   Dialog,
   DialogClose,

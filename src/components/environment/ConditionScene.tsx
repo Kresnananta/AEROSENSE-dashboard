@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play } from "@/components/ui/aero-icons";
 import type { Scene } from "@/lib/environment-presentation";
 import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
 import { conditionArtUrl } from "@/lib/condition-art";
@@ -35,10 +35,11 @@ export function ConditionScene({
         </>
       )}
       <img
+        className="scene-art"
         src={conditionArtUrl(scene === "sensor" ? "sensor-node-v3" : scene)}
         alt=""
-        width="360"
-        height="360"
+        width={360}
+        height={360}
         decoding="async"
         loading={small ? "lazy" : "eager"}
       />

@@ -3,9 +3,11 @@ import { AeroMascot } from "@/components/environment/AeroMascot";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "lucide-react";
+import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "@/components/ui/aero-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
+import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { DataState } from "@/components/shared/DataState";
 import { ConditionScene } from "@/components/environment/ConditionScene";
 import { sensorSummary, TEMP_STATUS_PM25_ONLY, type SensorRule } from "@/lib/environment-presentation";
@@ -14,12 +16,14 @@ import "@/styles/insights.css";
 
 export function SensorOverview() {
   const { user, isLoading } = useAuth();
+  const dayPeriod = useDayPeriod();
   const dashboard = useLiveData<{ nodes: LiveNode[] }>(
     `/v1/dashboard?account=${encodeURIComponent(user?.id || "guest")}`,
   );
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState("");
   const nodes = dashboard.data?.nodes || [];
+  const { ref: nodeRail, edges: nodeEdges } = useScrollEdges(nodes.length);
   const node =
     nodes.find((n) => n.id === params.get("node_id")) ||
     nodes.find((n) => n.id === selected) ||
@@ -64,9 +68,6 @@ export function SensorOverview() {
           : summary.tone === "calm"
             ? "Udara dalam batas baik."
             : summary.title;
-  const titleParts = heroTitle.trim().split(/\s+/);
-  const titleAccent = titleParts.pop();
-
   const pm25 = reading?.metrics.pm25_ug_m3;
 
   const showPm25 = TEMP_STATUS_PM25_ONLY ||
@@ -76,9 +77,7 @@ export function SensorOverview() {
     <section className="insights-hub sensor-overview" aria-labelledby="sensor-heading">
       <header className="insights-heading">
         <div>
-          <h1 id="sensor-heading">
-            <span className="heading-accent">Kondisi udara</span> di titik sensor
-          </h1>
+          <h1 id="sensor-heading">Kondisi udara di titik sensor</h1>
         </div>
         <button
           className="live-icon-button"
@@ -98,21 +97,19 @@ export function SensorOverview() {
       ) : (
         <>
           <div className={`sensor-focus-grid${fresh ? "" : " sensor-focus-grid--unavailable"}`}>
-            <article className={`sensor-hero tone-${summary.tone}${fresh ? "" : " sensor-hero--unavailable"}`}>
+            <article
+              className={`sensor-hero tone-${summary.tone}${fresh ? "" : " sensor-hero--unavailable"}`}
+              data-day-period={dayPeriod}
+            >
               <div className="sensor-hero-copy">
                 <span className={`insight-status ${fresh ? "" : "status-pending"}`}>
-                  <span />
                   {summary.tone === "calm" ? "Estimasi sensor terbaru" : summary.label}
                 </span>
-                <h2 className="sensor-status-title">
-                  {titleParts.join(" ")}
-                  {titleParts.length > 0 && " "}
-                  <span>{titleAccent}</span>
-                </h2>
+                <h2 className="sensor-status-title">{heroTitle}</h2>
                 <p className="sensor-recommendation">
                   <ArrowRight size={17} aria-hidden="true" />
                   <span>
-                    {!node ? "Lihat estimasi wilayah di Hub Lingkungan." : recommendation}
+                    {!node ? "Cek prakiraan dan estimasi wilayah." : recommendation}
                   </span>
                 </p>
                 {hasReading && !fresh && (
@@ -144,7 +141,7 @@ export function SensorOverview() {
                     className="panel-link"
                     to={node ? `/nodes/${encodeURIComponent(node.id)}` : "/environment"}
                   >
-                    {node ? "Lihat detail sensor" : "Buka Hub Lingkungan"}
+                    {node ? "Lihat detail sensor" : "Lihat cuaca dan lingkungan"}
                     <ArrowUpRight size={16} />
                   </Link>
                 </div>
@@ -170,35 +167,20 @@ export function SensorOverview() {
                   })}
                 </dl>
               )}
-              {(fresh || node) && (
+              {fresh && (
                 <footer className="sensor-panel-footer">
-                  {fresh && (
-                    <span>
-                      <Radio size={13} />
-                      {dateLabel(lastReadingTime)}
-                    </span>
-                  )}
-                  {node && (
-                    <span>
-                      <MapPin size={13} aria-hidden="true" />
-                      {node.name}
-                    </span>
-                  )}
+                  <span>
+                    <Radio size={13} aria-hidden="true" />
+                    <time dateTime={lastReadingTime || undefined}>{dateLabel(lastReadingTime)}</time>
+                  </span>
                 </footer>
               )}
               <ConditionScene scene="sensor" />
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
               <div className="assist-copy">
-                <h2>
-                  {summary.tone === "danger"
-                    ? "Periksa titik ini sekarang."
-                    : summary.tone === "warning"
-                      ? "Ada yang perlu dicek."
-                      : "Tanya soal udara sekitar"}
-                </h2>
-                {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
-                {summary.tone === "warning" && <p>Cari tahu apa arti status ini.</p>}
+                <h2>Butuh penjelasan?</h2>
+                <p>Tanyakan arti pembacaan udara dan cuaca.</p>
               </div>
               <div className="assist-visual">
                 <AeroMascot pose={pose === "calm" ? "welcome" : pose} />
@@ -209,23 +191,24 @@ export function SensorOverview() {
             </aside>
           </div>
           {nodes.length > 1 && (
-            <div className="node-strip" aria-label="Status perangkat">
-              {nodes.map((n) => (
-                <button
-                  key={n.id}
-                  aria-pressed={n.id === node?.id}
-                  onClick={() => {
-                    setSelected(n.id);
-                    const next = new URLSearchParams(params);
-                    next.set("node_id", n.id);
-                    setParams(next);
-                  }}
-                >
-                  <span className={`node-dot dot-${sensorSummary(n).tone}`} />
-                  <strong>{n.name}</strong>
-                  <NodeStatus node={n} />
-                </button>
-              ))}
+            <div className="scroll-vignette" {...nodeEdges}>
+              <div ref={nodeRail} className="node-strip" aria-label="Status perangkat">
+                {nodes.map((n) => (
+                  <button
+                    key={n.id}
+                    aria-pressed={n.id === node?.id}
+                    onClick={() => {
+                      setSelected(n.id);
+                      const next = new URLSearchParams(params);
+                      next.set("node_id", n.id);
+                      setParams(next);
+                    }}
+                  >
+                    <strong>{n.name}</strong>
+                    <NodeStatus node={n} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {node?.rules && node.rules.length > 0 && (

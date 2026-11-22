@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { robotCondition } from "../api/robot-condition.mjs";
 import { moodFor, awakeHour, startRobotMood, MOOD_EVERY_MS } from "../api/robot-mood.mjs";
 
 const now = Date.parse("2026-11-12T03:00:00Z");
@@ -35,6 +36,17 @@ test("stale, invalid or missing readings stay silent", () => {
   assert.equal(moodFor({ latest: null, now }), null);
 });
 
+test("the dashboard and robot share thresholds and the ten-minute freshness limit", () => {
+  for (const [value, band] of [[34.9, "calm"], [35, "warning"], [75, "danger"]]) {
+    const input = { latest: latest(value), rules, pm25Validated: true, now };
+    assert.equal(robotCondition(input).band, band);
+    assert.equal(moodFor(input).band, band);
+  }
+  for (const reading of [latest(4, { stale: true }), latest(4, { observed_at: "not-a-date" }), latest(4, { observed_at: new Date(now - 600001).toISOString() })]) {
+    assert.equal(robotCondition({ latest: reading, pm25Validated: true, now }), null);
+  }
+});
+
 test("unvalidated nodes speak about dust, not PM2.5", () => {
   const m = moodFor({ latest: { ...latest(0), metrics: { dust_ug_m3: 20 } }, rules: [], pm25Validated: false, now });
   assert.match(m.text, /kadar debu di angka 20/);
@@ -44,7 +56,7 @@ test("quiet hours and offline robots are skipped; one command per robot per slot
   assert.equal(awakeHour(Date.parse("2026-11-12T15:00:00Z")), false);
   assert.equal(awakeHour(now), true);
   const spoken = [];
-  const db = async (table, q) =>
+  const db = async (table) =>
     table === "ae_robots"
       ? [
           { id: "r1", node_id: "n1", last_seen_at: new Date(now - 30000).toISOString() },

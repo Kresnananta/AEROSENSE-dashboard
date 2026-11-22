@@ -971,10 +971,6 @@ select,
   outline: 3px solid #76bcff;
   outline-offset: 3px;
 }
-.live-messages {
-  scrollbar-color: #bfd8f1 #f3f8ff;
-  scrollbar-width: thin;
-}
 .environment-hub ::selection,
 .live-chat ::selection {
   background: #bedcff;
@@ -1163,30 +1159,26 @@ select,
 .app-shell .live-chat > header {
   padding: 14px 20px;
 }
-.app-shell .live-chat > header img {
-  width: 44px;
-  height: 44px;
-  padding: 4px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.18);
-}
 .app-shell .live-chat > header strong {
   font-size: 0.95rem;
 }
 .app-shell .live-chat > header .live-tag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   border-radius: 999px;
-  padding: 5px 12px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 650;
+  background: #d8ebff;
+  color: #0752ad;
+  border: 0;
 }
-.app-shell .live-chat > header .live-tag::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+.live-state-art {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 12px;
+  object-fit: contain;
 }
 .chat-guest {
   display: flex;
@@ -1252,24 +1244,11 @@ select,
   padding: 8px 0;
   text-align: center;
 }
-.chat-welcome img {
-  width: 112px;
-  height: 112px;
-  object-fit: contain;
-  animation: chat-bob 3.2s ease-in-out infinite;
-}
 .chat-welcome h2 {
   margin: 4px 0 0;
   font-size: 1.35rem;
   font-weight: 800;
   color: #11223d;
-}
-.chat-welcome p {
-  max-width: 44ch;
-  margin: 0;
-  color: #4d6684;
-  font-size: 0.88rem;
-  line-height: 1.6;
 }
 .chat-welcome .chat-suggestions {
   display: grid;
@@ -1347,18 +1326,11 @@ select,
   .chat-welcome .chat-suggestions {
     grid-template-columns: 1fr;
   }
-  .chat-welcome img {
-    width: 88px;
-    height: 88px;
-  }
   .app-shell .live-messages {
     padding: 10px 14px 16px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .chat-welcome img {
-    animation: none;
-  }
   .chat-welcome .chat-suggestions button {
     transition: none;
   }

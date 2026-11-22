@@ -16,19 +16,28 @@ try {
 } catch (error) {
   if (error.code !== "ENOENT") throw error;
 }
-const ttsPython = process.env.AEROBOT_TTS_PYTHON;
-const ttsUrl = process.env.AEROBOT_LOCAL_TTS_URL || (ttsPython ? "http://127.0.0.1:4220/speak" : "");
+const offline = process.env.AEROBOT_OFFLINE === "1";
+const cameraMode = process.env.AEROBOT_PRESENCE === "camera";
+const sleepAfterMs = Number(process.env.AEROBOT_SLEEP_AFTER_MS || 300_000);
+if (!Number.isSafeInteger(sleepAfterMs) || sleepAfterMs < 1000)
+  throw new Error("AEROBOT_SLEEP_AFTER_MS must be an integer of at least 1000");
+const dashboardUrl = new URL(process.env.AEROBOT_DASHBOARD_URL || "https://aerosense.me/dashboard");
+if (!["http:", "https:"].includes(dashboardUrl.protocol) || dashboardUrl.username || dashboardUrl.password)
+  throw new Error("AEROBOT_DASHBOARD_URL must be an HTTP(S) URL without credentials");
+const ttsPython = offline ? "" : process.env.AEROBOT_TTS_PYTHON;
+const ttsUrl = offline ? "" : process.env.AEROBOT_LOCAL_TTS_URL || (ttsPython ? "http://127.0.0.1:4220/speak" : "");
 const ttsKey = process.env.AEROBOT_LOCAL_TTS_KEY || (ttsPython ? randomUUID() : "");
 let ttsProcess;
 const port = Number(process.env.AEROBOT_DISPLAY_PORT || 4210),
   host = "127.0.0.1",
   origin = `http://${host}:${port}`,
-  clients = new Set();
+  clients = new Set(),
+  bodyClients = new Set();
 if (!Number.isInteger(port) || port < 1024 || port > 65535)
   throw new Error("Invalid local display port");
 const api = (process.env.AEROSENSE_API_URL || "https://aerosense.me/api").replace(/\/$/, "");
-const device = process.env.AEROBOT_DEVICE_ID,
-  key = process.env.AEROBOT_DEVICE_KEY;
+const device = offline ? "" : process.env.AEROBOT_DEVICE_ID,
+  key = offline ? "" : process.env.AEROBOT_DEVICE_KEY;
 const headers = {
   "x-device-id": device || "",
   "x-device-key": key || "",
@@ -40,12 +49,58 @@ let state = { action: "sleep" },
   polling = false,
   closed = false,
   browserSession;
-const presence = createPresence();
+const presence = createPresence(cameraMode ? { sleepAfterMs } : undefined);
+// Chest screen: the AEROSENSE chat page (/aerobot) listens to GET /presence/events and greets
+// through the web voice. While it is connected, the presence event is not also sent to the API,
+// so the robot never greets twice.
+const chestOrigin = new URL(process.env.AEROBOT_CHAT_URL || "https://aerosense.me/aerobot").origin;
+const chestClients = new Set();
+let chestAwake = null;
+function chestPacket(type, data) {
+  return `event: ${type}\ndata: ${JSON.stringify({ type, ...data, ts: Date.now() })}\n\n`;
+}
+function syncChest(greet) {
+  const awake = screenState().awake;
+  if (awake === chestAwake) return;
+  chestAwake = awake;
+  const packet = awake
+    ? chestPacket("robot_wake", { greet: !!greet })
+    : chestPacket("robot_sleep", {});
+  for (const client of chestClients) client.write(packet);
+  console.log(`[chest] ${awake ? "robot_wake" + (greet ? " (greet)" : "") : "robot_sleep"}`);
+}
 let voiceBusyUntil = 0;
 let irReader = null,
   lastIrSample = null,
   lastIrAt = 0,
   presenceEvent = null;
+function screenState() {
+  return {
+    awake: cameraMode ? presence.state(performance.now()).awake : state.action !== "sleep",
+    dashboard: dashboardUrl.href,
+  };
+}
+// Team decision: the face and chest screens stay lit while the robot sleeps; sleep is shown by
+// the sleeping animation only. AEROBOT_DARK_WHEN_ASLEEP=1 restores the dark screens.
+const darkWhenAsleep = process.env.AEROBOT_DARK_WHEN_ASLEEP === "1";
+function sendDisplay(client) {
+  const display = screenState();
+  if (!darkWhenAsleep) display.awake = true;
+  client.write(`event: display\ndata: ${JSON.stringify(display)}\n\n`);
+}
+function updatePresence(detected, source) {
+  const now = performance.now();
+  const wasAwake = presence.state(now).awake;
+  const action = presence.update(detected, now, !!pending || Date.now() < voiceBusyUntil);
+  if (!action && cameraMode && !wasAwake && presence.state(now).awake) {
+    syncChest(false);
+    for (const client of clients) sendDisplay(client);
+    for (const client of bodyClients) sendDisplay(client);
+  }
+  if (!action) return;
+  emit({ action });
+  if (action === "wake") queuePresence(source);
+}
 function connectIr(portName) {
   irReader?.kill();
   const reader = readIr(
@@ -58,14 +113,7 @@ function connectIr(portName) {
           `[IR] OUT=${sample.raw} ${sample.detected ? "objek terdeteksi" : "tidak ada objek"}`,
         );
       lastIrSample = sample.detected;
-      const action = presence.update(
-        sample.detected,
-        Date.now(),
-        !!pending || Date.now() < voiceBusyUntil,
-      );
-      if (!action) return;
-      emit({ action });
-      if (action === "wake") queuePresence();
+      updatePresence(sample.detected, "ir");
     },
     () => {
       if (irReader === reader) {
@@ -78,15 +126,16 @@ function connectIr(portName) {
   irReader = reader;
   console.log("[IR] Membaca " + portName + " pada 115200 baud.");
 }
-function queuePresence() {
+function queuePresence(source = "ir") {
+  if (chestClients.size) return; // the chest page greets with the web voice
   if (device && key)
-    presenceEvent = { event_id: "ir-" + randomUUID(), type: "presence", created: Date.now() };
+    presenceEvent = { event_id: source + "-" + randomUUID(), type: "presence", created: Date.now() };
 }
 async function sendPresence() {
   if (!presenceEvent) return;
   if (Date.now() - presenceEvent.created > 30000) {
     presenceEvent = null;
-    console.error("[IR] Event kedaluwarsa sebelum diterima API.");
+    console.error("[presence] Event kedaluwarsa sebelum diterima API.");
     return;
   }
   const event = presenceEvent;
@@ -105,6 +154,11 @@ function emit(event) {
     event = { ...event, emotion: expressionFor(event.text, event.severity, event.emotion) };
   state = event;
   for (const client of clients) client.write(`data: ${JSON.stringify(event)}\n\n`);
+  if (event.action === "wake" || event.action === "sleep") {
+    syncChest(event.action === "wake");
+    if (cameraMode) for (const client of clients) sendDisplay(client);
+    for (const client of bodyClients) sendDisplay(client);
+  }
   console.log(`[face] ${event.action}${event.emotion ? " / " + event.emotion : ""}`);
 }
 async function remote(endpoint, options = {}) {
@@ -158,14 +212,58 @@ async function acknowledge(id, result) {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    const chestStream =
+      req.url.split("?")[0] === "/presence/events" && req.headers.origin === chestOrigin;
     if (
       req.headers.host !== `${host}:${port}` ||
-      (req.headers.origin && req.headers.origin !== origin)
+      (req.headers.origin && req.headers.origin !== origin && !chestStream)
     ) {
       res.writeHead(403);
       return res.end();
     }
     const url = new URL(req.url, origin);
+    if (url.pathname === "/presence/events") {
+      // Chrome checks a public page's request to this machine first (CORS / Local Network
+      // Access preflight); without this answer the chest page is never connected.
+      if (req.method === "OPTIONS" && chestStream) {
+        res.writeHead(204, {
+          "Access-Control-Allow-Origin": chestOrigin,
+          "Access-Control-Allow-Methods": "GET",
+          "Access-Control-Allow-Headers": "Cache-Control, Last-Event-ID",
+          "Access-Control-Allow-Private-Network": "true",
+          "Access-Control-Allow-Local-Network": "true",
+          "Access-Control-Max-Age": "600",
+          Vary: "Origin",
+        });
+        return res.end();
+      }
+      if (req.method !== "GET") {
+        res.writeHead(405);
+        return res.end();
+      }
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-store",
+        Connection: "keep-alive",
+        ...(chestStream
+          ? {
+              "Access-Control-Allow-Origin": chestOrigin,
+              "Access-Control-Allow-Private-Network": "true",
+              Vary: "Origin",
+            }
+          : {}),
+      });
+      chestClients.add(res);
+      chestAwake = screenState().awake;
+      res.write("retry: 2000\n");
+      res.write(chestPacket("robot_state", { awake: chestAwake }));
+      const pulse = setInterval(() => res.write(": keepalive\n\n"), 15000);
+      req.on("close", () => {
+        clearInterval(pulse);
+        chestClients.delete(res);
+      });
+      return;
+    }
     if (url.pathname === "/tts" && req.method === "POST") {
       if (!ttsUrl || !ttsKey) {
         res.writeHead(503);
@@ -224,6 +322,31 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(204);
       return res.end();
     }
+    if (cameraMode && url.pathname === "/presence" && req.method === "POST") {
+      if (req.headers["content-type"]?.split(";")[0] !== "application/json") {
+        res.writeHead(415);
+        return res.end();
+      }
+      let raw = "";
+      for await (const chunk of req) {
+        raw += chunk;
+        if (raw.length > 1000) {
+          res.writeHead(413);
+          return res.end();
+        }
+      }
+      let sample;
+      try {
+        sample = JSON.parse(raw);
+      } catch {}
+      if (typeof sample?.detected !== "boolean") {
+        res.writeHead(400);
+        return res.end();
+      }
+      updatePresence(sample.detected, "camera");
+      res.writeHead(204);
+      return res.end();
+    }
     if (url.pathname === "/events") {
       if (req.method !== "GET") {
         res.writeHead(405);
@@ -234,16 +357,18 @@ const server = http.createServer(async (req, res) => {
         "Cache-Control": "no-store",
         Connection: "keep-alive",
       });
-      clients.add(res);
-
-      res.write(
+      const isBody = url.searchParams.get("display") === "body";
+      const audience = isBody ? bodyClients : clients;
+      audience.add(res);
+      if (isBody || cameraMode) sendDisplay(res);
+      if (!isBody) res.write(
         `data: ${JSON.stringify(state.action === "speak" ? { action: "listening" } : state)}\n\n`,
       );
       const pulse = setInterval(() => res.write(": keepalive\n\n"), 20000);
       req.on("close", () => {
         clearInterval(pulse);
-        clients.delete(res);
-        if (!clients.size && pending) {
+        audience.delete(res);
+        if (!isBody && !clients.size && pending) {
           state = { action: "listening" };
           void acknowledge(pending.id, "failed").catch((error) =>
             console.error("[ack retry queued]", error.message),
@@ -274,7 +399,7 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(405);
       return res.end();
     }
-    const name = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname),
+    const name = decodeURIComponent(url.pathname === "/" ? "/index.html" : url.pathname === "/body" ? "/body.html" : url.pathname),
       file = path.resolve(root, "." + name);
     if (!file.startsWith(root + path.sep)) {
       res.writeHead(403);
@@ -387,15 +512,17 @@ server.listen(port, host, async () => {
   console.log(
     device && key
       ? "Device adapter enabled. Commands will be claimed only while this screen is connected."
-      : process.env.AEROBOT_OPEN_WINDOW === "0"
+      : offline || cameraMode || process.env.AEROBOT_OPEN_WINDOW === "0"
         ? "Local replay mode."
         : "Live web mode. Sign in to the AEROSENSE chat window opened by this app.",
   );
   console.log(
     "Commands: wake | sleep | think | neutral | happy | concerned | warning | danger | surprised | say TEXT | play PATH | TEXT | ports | ir COM5",
   );
-  if (process.env.AEROBOT_IR_PORT) connectIr(process.env.AEROBOT_IR_PORT);
-  if (process.env.AEROBOT_OPEN_WINDOW !== "0") {
+  if (cameraMode) console.log(`Camera presence: POST ${origin}/presence · sleep after ${sleepAfterMs / 1000}s`);
+  console.log(`Chest screen stream: ${origin}/presence/events (allowed page origin ${chestOrigin})`);
+  if (!cameraMode && !offline && process.env.AEROBOT_IR_PORT) connectIr(process.env.AEROBOT_IR_PORT);
+  if (!offline && !cameraMode && process.env.AEROBOT_OPEN_WINDOW !== "0") {
     const candidates =
       process.platform === "win32"
         ? [
@@ -442,7 +569,7 @@ input.on("line", async (line) => {
     listIrPorts();
     return;
   }
-  if (value.startsWith("ir ")) {
+  if (!cameraMode && value.startsWith("ir ")) {
     connectIr(value.slice(3).trim());
     return;
   }
@@ -496,6 +623,8 @@ function close() {
   browserSession?.close();
   clearInterval(interval);
   for (const client of clients) client.end();
+  for (const client of chestClients) client.end();
+  for (const client of bodyClients) client.end();
   input.close();
   server.close();
 }

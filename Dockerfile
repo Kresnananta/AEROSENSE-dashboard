@@ -4,7 +4,7 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
-RUN pnpm build
+RUN pnpm build && chmod -R a+rX dist
 
 FROM nginx:alpine
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf

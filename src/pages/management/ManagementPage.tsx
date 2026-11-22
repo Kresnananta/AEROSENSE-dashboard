@@ -9,7 +9,7 @@ import {
   Settings2,
   ArrowUpRight,
   Loader2,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccess } from "@/hooks/useAccess";
 import { ROUTES } from "@/lib/constants";

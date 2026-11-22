@@ -1,4 +1,4 @@
-import { ExternalLink, ChevronDown } from "lucide-react";
+import { ExternalLink, ChevronDown } from "@/components/ui/aero-icons";
 
 export function MonitoringScope() {
   return (

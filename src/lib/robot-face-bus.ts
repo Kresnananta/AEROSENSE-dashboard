@@ -21,7 +21,7 @@ export function configureRobotFace(
 export function publishRobotFace(
   userId: string | undefined,
   event: {
-    action: "speak" | "stop" | "thinking" | "expression";
+    action: "speak" | "stop" | "thinking" | "expression" | "wake" | "sleep";
     text?: string;
     audio?: Blob;
     emotion?: string;
@@ -48,7 +48,10 @@ export function publishRobotFace(
   queue = queue
     .then(async () => {
       if (cloudOwner !== userId || cloudRobot !== robot) return;
-      if (Date.now() - checkedAt > 5000) {
+      // wake/sleep are always sent: the server keeps the latest one for face screens that
+      // connect later. Other events only matter while a face screen is listening.
+      const robotState = event.action === "wake" || event.action === "sleep";
+      if (!robotState && (!cloudConnected || Date.now() - checkedAt > 5000)) {
         const status = await apiRequest<{ connected: boolean }>(
           "/v1/robot-face/status?robot_id=" + robot,
           { signal: AbortSignal.timeout(1500) },
@@ -56,7 +59,7 @@ export function publishRobotFace(
         cloudConnected = status.connected;
         checkedAt = Date.now();
       }
-      if (!cloudConnected || cloudOwner !== userId) return;
+      if ((!robotState && !cloudConnected) || cloudOwner !== userId) return;
       let audioBase64: string | undefined;
       if (event.audio) {
         if (event.audio.size > 1048576) return;
@@ -103,8 +106,8 @@ export async function prepareRobotFaceSpeech(
   if (!ready) return;
   if (signal.aborted || cloudOwner !== userId || robot !== cloudRobot) return;
   const statusRequest =
-    Date.now() - checkedAt < 5000
-      ? Promise.resolve({ connected: cloudConnected })
+    cloudConnected && Date.now() - checkedAt < 5000
+      ? Promise.resolve({ connected: true })
       : apiRequest<{ connected: boolean }>("/v1/robot-face/status?robot_id=" + robot, {
           signal: AbortSignal.any([signal, AbortSignal.timeout(1500)]),
         }).catch(() => null);

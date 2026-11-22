@@ -36,9 +36,13 @@ const recent = (t, now) =>
   Number.isFinite(Date.parse(t)) &&
   Date.parse(t) <= now + 30 * MINUTE &&
   Date.parse(t) >= now - 7 * DAY;
-const retainRecent = (items, now) =>
+const recentNews = (item, now, provider) =>
+  recent(item?.published_at, now) &&
+  (!["Gempa", "Longsor"].includes(item.type) ||
+    (provider.startsWith("antara_") && item.source === "ANTARA" && item.kind === "news"));
+const retainRecent = (items, now, provider) =>
   array(items)
-    .filter((item) => recent(item?.published_at, now))
+    .filter((item) => recentNews(item, now, provider))
     .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at))
     .slice(0, 40);
 function safeLink(value, provider) {
@@ -48,22 +52,30 @@ function safeLink(value, provider) {
       provider === "gdacs"
         ? ["www.gdacs.org", "gdacs.org"]
         : ["www.antaranews.com", "antaranews.com"];
-    return u.protocol === "https:" && hosts.includes(u.hostname) && !u.username && !u.password
-      ? u.href
-      : null;
+    if (!hosts.includes(u.hostname) || u.username || u.password || u.port) return null;
+    if (provider === "gdacs" && u.protocol === "http:") u.protocol = "https:";
+    return u.protocol === "https:" ? u.href : null;
   } catch {
     return null;
   }
+}
+function gdacsMapUrl(enclosures) {
+  for (const enclosure of array(enclosures)) {
+    if (enclosure?.["@_type"] !== "image/png") continue;
+    const url = safeLink(enclosure["@_url"], "gdacs");
+    if (url && /^\/contentdata\/resources\/imgtemp\/gdacs\/fl\/dfo\d+_\d+\.png$/i.test(new URL(url).pathname)) return url;
+  }
+  return null;
 }
 const domestic =
   /\b(indonesia|aceh|sumat(?:e)?ra|sumut|sumbar|sumsel|riau|jambi|bengkulu|lampung|bangka|belitung|jakarta|banten|jawa|jatim|jateng|jabar|yogyakarta|kalimantan|kaltim|kalteng|kalbar|kalsel|kaltara|sulawesi|sulsel|sulteng|sulut|sultra|sulbar|gorontalo|bali|nusa tenggara|ntb|ntt|maluku|papua|surabaya|semarang|bandung|bogor|bekasi|depok|tangerang|medan|padang|palembang|pekanbaru|pontianak|palangkaraya|palangka raya|samarinda|balikpapan|banjarmasin|makassar|manado|palu|kendari|denpasar|mataram|kupang|ambon|ternate|jayapura|merauke|banda aceh|solok|agam|lumajang|malang|jember|banyuwangi|banyumas|cilacap|garut|sukabumi|cianjur|buleleng|lombok|sumbawa|flores|sikka|pesisir selatan|tanah datar|kapuas|ketapang|kubu raya|mempawah|sambas|sintang|sanggau|kotawaringin|seruyan|pulang pisau|barito|berau|kutai|penajam|bengkalis|pelalawan|siak|indragiri|rokan|dumai|hulu sungai selatan|hulu sungai tengah|hulu sungai utara|lawu|merapi|bromo)\b/i;
 const foreign =
   /\b(amerika|china|tiongkok|filipina|thailand|vietnam|myanmar|jepang|australia|india|pakistan|nepal|bangladesh|turki|rusia|ukraina|portugal|spanyol|yunani|kanada|malaysia|singapura|kamboja|taiwan|korea|sri lanka)\b/i;
 function typeOf(title) {
+  if (/gempa|earthquake|tsunami/i.test(title)) return "Gempa";
   if (/karhutla|kebakaran hutan|kebakaran lahan|forest fire/i.test(title)) return "Karhutla";
   if (/banjir|flood/i.test(title)) return "Banjir";
   if (/longsor|landslide/i.test(title)) return "Longsor";
-  if (/gempa|earthquake/i.test(title)) return "Gempa";
   if (/erupsi|letusan|volcan/i.test(title)) return "Erupsi";
   if (/kekeringan|drought/i.test(title)) return "Kekeringan";
   if (/puting beliung|angin kencang|cuaca ekstrem|badai|cyclone/i.test(title))
@@ -91,7 +103,6 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
         if (text(item["gdacs:iso3"]) !== "IDN") return [];
         type = {
           WF: "Karhutla",
-          EQ: "Gempa",
           FL: "Banjir",
           VO: "Erupsi",
           TC: "Cuaca ekstrem",
@@ -104,8 +115,6 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
         if (Number.isFinite(value) && value >= 0 && value < 1e9) {
           if (type === "Karhutla" && severity?.["@_unit"] === "ha")
             metrics.push({ value, unit: "ha", label: "Estimasi area GDACS" });
-          if (type === "Gempa" && severity?.["@_unit"] === "M")
-            metrics.push({ value, unit: "M", label: "Magnitudo" });
         }
       } else {
 
@@ -138,6 +147,7 @@ export function parseDisasterFeed(xml, source, now = Date.now()) {
           location,
           country_code: "IDN",
           metrics,
+          ...(source.id === "gdacs" ? { map_url: gdacsMapUrl(item.enclosure) } : {}),
         },
       ];
     })
@@ -174,7 +184,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
         NEWS_SOURCES.map(async (source) => {
           const old = previous.find((x) => x.provider === source.id);
           if (Date.parse(old?.refresh_after) > clock()) return;
-          let items = retainRecent(old?.items, clock()),
+          let items = retainRecent(old?.items, clock(), source.id),
             error = null,
             success = old?.last_success_at || null;
           try {
@@ -182,6 +192,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
             items = retainRecent(
               [...new Map([...items, ...incoming].map((i) => [i.url, i])).values()],
               clock(),
+              source.id,
             );
             success = new Date(clock()).toISOString();
           } catch {
@@ -222,7 +233,7 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
     for (const row of rows.filter((r) => NEWS_SOURCES.some((s) => s.id === r.provider))) {
       for (const item of row.items || []) {
         if (
-          !recent(item.published_at, clock()) ||
+          !recentNews(item, clock(), row.provider) ||
           item.country_code !== "IDN" ||
           !safeLink(item.url, row.provider)
         )
@@ -240,15 +251,12 @@ export function disasterNews({ db, fetcher = fetch, clock = Date.now }) {
           });
       }
     }
+    const sorted = [...byUrl.values()].sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+    const monitoring = sorted.filter((item) => item.kind === "monitoring");
+    const headlines = sorted.filter((item) => item.kind !== "monitoring").slice(0, 24 - Math.min(monitoring.length, 3));
     return {
       scope: "Indonesia",
-      items: [...byUrl.values()]
-        .sort(
-          (a, b) =>
-            Number(a.kind === "monitoring") - Number(b.kind === "monitoring") ||
-            Date.parse(b.published_at) - Date.parse(a.published_at),
-        )
-        .slice(0, 24),
+      items: headlines.concat(monitoring).slice(0, 24),
       status: byUrl.size
         ? "available"
         : rows.some((r) => r.last_success_at && !r.last_error)

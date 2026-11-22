@@ -1,3 +1,9 @@
+import {
+  currentDayPeriod,
+  dayPeriodFromHour,
+  weatherSceneForPeriod,
+  wibHour,
+} from "./time-of-day.ts";
 import type {
   EnvironmentFact,
   EnvironmentInsight,
@@ -26,9 +32,12 @@ export type Scene =
   | "storm"
   | "storm-night"
   | "air"
+  | "air-night"
   | "haze"
+  | "haze-night"
   | "soil"
   | "fire"
+  | "fire-night"
   | "flood"
   | "earthquake"
   | "sensor";
@@ -36,12 +45,80 @@ export type Highlight = { label: string; value: string; unit: string };
 
 const number = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
 const riverDay = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "UTC" });
-const weatherHour = new Intl.DateTimeFormat("id-ID", {
-  hour: "numeric",
-  hourCycle: "h23",
-  timeZone: "Asia/Jakarta",
-});
 export const riverDayLabel = (at: string) => riverDay.format(new Date(at));
+
+const REGION_EXPAND: Record<string, string> = {
+  NTT: "NTT",
+  NTB: "NTB",
+  DIY: "DIY",
+  DKI: "DKI Jakarta",
+  NAD: "Aceh",
+  SUMUT: "Sumatera Utara",
+  SUMBAR: "Sumatera Barat",
+  SUMSEL: "Sumatera Selatan",
+  JABAR: "Jawa Barat",
+  JATENG: "Jawa Tengah",
+  JATIM: "Jawa Timur",
+  KALBAR: "Kalimantan Barat",
+  KALTENG: "Kalimantan Tengah",
+  KALSEL: "Kalimantan Selatan",
+  KALTIM: "Kalimantan Timur",
+  KALTARA: "Kalimantan Utara",
+  SULUT: "Sulawesi Utara",
+  SULTENG: "Sulawesi Tengah",
+  SULSEL: "Sulawesi Selatan",
+  SULTRA: "Sulawesi Tenggara",
+  SULBAR: "Sulawesi Barat",
+  MALUT: "Maluku Utara",
+  MALUKUBRTDAYA: "Maluku Barat Daya",
+  PAPUABRT: "Papua Barat",
+  PAPUAPGNGN: "Papua Pegunungan",
+  KEPSERIBU: "Kepulauan Seribu",
+  LABUANBAJO: "Labuan Bajo",
+  LOMBOKBARAT: "Lombok Barat",
+  BABEL: "Bangka Belitung",
+  KEPRI: "Kepulauan Riau",
+};
+
+export function formatQuakeRegion(raw: string): string {
+  return raw
+    .replace(/\bKAB[.\s-]+(?=[A-Za-z])/gi, "Kab. ")
+    .replace(/\bKEP\.\s*(?=[A-Za-z])/gi, "Kep. ")
+    .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
+    .replace(/\bSERAMBAGIANBARAT\b/gi, "Seram Bagian Barat")
+    .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
+    .replace(/\bPAPUABRT\b/gi, "Papua Barat")
+    .replace(/(Barat|Timur|Utara|Selatan)(Laut|Daya|Timur|Barat)\b/gi, "$1 $2")
+    .replace(/(?<=[A-Za-z]{3})(Utara|Selatan|Timur|Barat|Tengah|Tenggara)\b/gi, " $1")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\s*-\s*/g, " · ")
+    .replace(/\b[A-Za-z]{2,}\b/g, (word) => {
+      const upper = word.toUpperCase();
+      if (REGION_EXPAND[upper]) return REGION_EXPAND[upper];
+      if (word.length >= 3 && word === upper) {
+        return word[0] + word.slice(1).toLowerCase();
+      }
+      return word;
+    })
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+const quakeNumber = new Intl.NumberFormat("id-ID", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+const quakeDate = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
+});
+
+export function formatQuakeMagnitude(value: number | null | undefined) {
+  return value != null && Number.isFinite(value) ? quakeNumber.format(value) : "";
+}
+
+export function formatQuakeTime(at: string | null | undefined) {
+  return at && Number.isFinite(Date.parse(at)) ? quakeDate.format(new Date(at)) + " WIB" : "";
+}
 
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
   return facts
@@ -63,42 +140,46 @@ export function conditionScene(
   now = Date.now(),
 ): Scene {
   if (insight.category === "weather") {
-    if (!insight.available) return "cloudy";
+    const nowPeriod = currentDayPeriod(now);
+    if (!insight.available) return nowPeriod === "night" ? "cloudy-night" : "cloudy";
     const weather = currentFacts(facts, now).find(
       (f) => f.category === "weather" && /WMO|weather.?code/i.test(f.label),
     );
-    const timestamp = Date.parse(weather?.valid_at || insight.valid_at || "");
-    const hour = Number.isFinite(timestamp) ? Number(weatherHour.format(timestamp)) : NaN;
-    const night = hour < 5 || hour >= 18;
-    const code = weather?.value;
+    const validTs = Date.parse(weather?.valid_at || insight.valid_at || "");
+    const useValidTs = Number.isFinite(validTs) && Math.abs(now - validTs) <= 90 * 60 * 1000;
+    const period = useValidTs ? dayPeriodFromHour(wibHour(validTs)) : nowPeriod;
+    const code = typeof weather?.value === "number" ? weather.value : null;
+    const title = insight.title || "";
+    const night = period === "night";
+
     if (typeof code === "number") {
       if ([95, 96, 97, 99].includes(code)) return night ? "storm-night" : "storm";
       if ([51, 53, 55, 56, 57].includes(code)) return night ? "drizzle-night" : "drizzle";
       if ([61, 66, 80].includes(code)) return night ? "light-rain-night" : "light-rain";
-      if ([63, 65, 67, 81, 82].includes(code))
-        return night ? "rain-night" : "steady-rain";
+      if ([63, 65, 67, 81, 82].includes(code)) return night ? "rain-night" : "steady-rain";
       if (code === 45 || code === 48) return night ? "fog-night" : "fog";
     }
-    if (/petir/i.test(insight.title)) return night ? "storm-night" : "storm";
-    if (/gerimis/i.test(insight.title)) return night ? "drizzle-night" : "drizzle";
-    if (/hujan/i.test(insight.title)) return night ? "rain-night" : "steady-rain";
-    if (/terasa hangat/i.test(insight.title)) return night ? "warm-night" : "sunny-dusk";
-    if (!night && /terasa panas/i.test(insight.title)) return "sunny";
-    if (code === 0 || code === 1 || code === 2) {
-      if (night) return "sunny-night";
-      if (hour < 11) return "sunny-morning";
-      if (hour >= 17) return "sunny-dusk";
-      return code === 0 ? "sunny" : "partly-cloudy";
-    }
-    return night ? "cloudy-night" : "cloudy";
+    if (/petir/i.test(title)) return night ? "storm-night" : "storm";
+    if (/gerimis/i.test(title)) return night ? "drizzle-night" : "drizzle";
+    if (/hujan/i.test(title)) return night ? "rain-night" : "steady-rain";
+
+    return weatherSceneForPeriod({
+      code,
+      period,
+      warm: /terasa hangat/i.test(title),
+      hot: /terasa panas/i.test(title),
+    }) as Scene;
   }
+  const night = currentDayPeriod(now) === "night";
   if (insight.category === "air_quality") {
-    return insight.available && ["notice", "warning", "danger"].includes(insight.tone)
-      ? "haze"
-      : "air";
+    const hazy = insight.available && ["notice", "warning", "danger"].includes(insight.tone);
+    return hazy ? (night ? "haze-night" : "haze") : night ? "air-night" : "air";
+  }
+  if (insight.category === "fire") {
+    return night ? "fire-night" : "fire";
   }
   return (
-    ["soil", "fire", "flood", "earthquake"].includes(insight.category) ? insight.category : "cloudy"
+    ["soil", "flood", "earthquake"].includes(insight.category) ? insight.category : night ? "cloudy-night" : "cloudy"
   ) as Scene;
 }
 

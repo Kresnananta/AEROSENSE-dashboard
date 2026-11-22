@@ -5,10 +5,12 @@ import {
   Flame,
   Waves,
   Activity,
+  Mountain,
   HeartHandshake,
   RefreshCw,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
+import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { dateLabel } from "@/types/live.types";
 
 interface DisasterItem {
@@ -23,6 +25,7 @@ interface DisasterItem {
   published_at: string;
   stale: boolean;
   event_started_at?: string | null;
+  map_url?: string | null;
   metrics: { value: number; unit: string; label: string }[];
 }
 interface DisasterResponse {
@@ -33,8 +36,12 @@ const filters = [
   { value: "Semua", label: "Semua" },
   { value: "Karhutla", label: "Kebakaran hutan & lahan" },
   { value: "Banjir", label: "Banjir" },
-  { value: "Gempa", label: "Gempa" },
+  { value: "gempa-longsor", label: "Gempa & longsor" },
 ];
+
+function isGempaLongsor(item: DisasterItem) {
+  return item.type === "Gempa" || item.type === "Longsor";
+}
 
 export function DisasterNews({ compact = false }: { compact?: boolean }) {
   const { data, error, loading, refresh } = useLiveData<DisasterResponse>(
@@ -44,7 +51,12 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
   );
   const [filter, setFilter] = useState("Semua");
   const [expanded, setExpanded] = useState(false);
-  const items = (data?.items || []).filter((i) => filter === "Semua" || i.type === filter);
+  const entries = (data?.items ?? []).filter((item) =>
+    !isGempaLongsor(item) || (item.kind === "news" && item.source === "ANTARA"),
+  );
+  const items = entries.filter((item) =>
+    filter === "Semua" || item.type === filter || (filter === "gempa-longsor" && isGempaLongsor(item)),
+  );
   const shown = items.slice(0, expanded ? 24 : compact ? 2 : 3);
   return (
     <section className="disaster-section" id="kabar-bencana" aria-labelledby="disaster-heading">
@@ -63,7 +75,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
         </button>
       </header>
       <div className="disaster-toolbar">
-        <div className="disaster-filters" role="group" aria-label="Jenis bencana">
+        <div className="disaster-filters" role="group" aria-label="Filter kabar bencana">
           {filters.map(({ value, label }) => (
             <button
               type="button"
@@ -78,9 +90,14 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             </button>
           ))}
         </div>
-        {data && data.status !== "unavailable" && (
-          <span className="disaster-result-count" role="status">{items.length} kabar</span>
-        )}
+        <div className="disaster-toolbar-meta">
+          {data && data.status !== "unavailable" && (
+            <span className="disaster-result-count" role="status">{items.length} kabar</span>
+          )}
+          <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
+            Data gempa BMKG <ArrowUpRight size={15} aria-hidden="true" />
+          </a>
+        </div>
       </div>
       {loading && !data ? (
         <p className="disaster-empty" role="status">
@@ -102,7 +119,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
             <div className={`disaster-grid ${compact ? "disaster-compact" : ""}`}>
               {shown.map((item) => {
                 const Icon =
-                  item.type === "Karhutla" ? Flame : item.type === "Banjir" ? Waves : Activity;
+                  item.type === "Karhutla" ? Flame : item.type === "Banjir" ? Waves : item.type === "Longsor" ? Mountain : Activity;
                 const metric = item.metrics[0];
                 return (
                   <article
@@ -127,6 +144,24 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                         <ArrowUpRight size={17} />
                       </a>
                     </h3>
+                    {item.map_url && item.kind === "monitoring" && (
+                      <figure className="disaster-map" key={item.map_url}>
+                        <a href={item.map_url} target="_blank" rel="noreferrer">
+                          <img
+                            src={item.map_url}
+                            alt={"Buka peta pantauan " + item.type.toLowerCase() + " GDACS"}
+                            loading="lazy"
+                            decoding="async"
+                            referrerPolicy="no-referrer"
+                            onError={(event) => event.currentTarget.closest("figure")?.setAttribute("hidden", "")}
+                          />
+                        </a>
+                        <figcaption>
+                          © Uni Eropa · EC-JRC/GDACS ·{" "}
+                          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>
+                        </figcaption>
+                      </figure>
+                    )}
                     {item.event_started_at && (
                       <small className="disaster-note disaster-event-date">
                         Mulai dipantau{" "}
@@ -149,7 +184,7 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                     )}
                     <footer>
                       <a href={item.url} target="_blank" rel="noreferrer">
-                        {item.source}
+                        {item.source === "ANTARA" ? "Lihat di ANTARA" : item.source}
                         <ArrowUpRight size={12} />
                       </a>
                       <time dateTime={item.published_at}>{dateLabel(item.published_at)}</time>
@@ -172,7 +207,9 @@ export function DisasterNews({ compact = false }: { compact?: boolean }) {
                 ? "Sumber berita belum berhasil diperbarui. Coba lagi nanti."
                 : filter === "Semua"
                   ? "Belum ada kabar dari sumber yang dipantau."
-                  : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dari sumber yang dipantau.`}
+                  : filter === "gempa-longsor"
+                    ? "Belum ada kabar gempa atau longsor dalam 7 hari terakhir."
+                    : `Belum ada kabar ${filters.find(({ value }) => value === filter)?.label.toLowerCase()} dalam 7 hari terakhir.`}
             </p>
           )}
           {items.length > shown.length && (

@@ -1,0 +1,726 @@
+:root {
+  color-scheme: only light;
+  --background: oklch(96% .022 242);
+  --foreground: oklch(30% .089 251);
+  --card: oklch(99.5% .004 243);
+  --card-foreground: var(--foreground);
+  --popover: oklch(99.5% .004 243);
+  --popover-foreground: var(--foreground);
+  --muted: oklch(95.5% .024 246);
+  --muted-foreground: oklch(39% .081 248);
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --primary: oklch(52% .194 255);
+  --ring: oklch(53% .196 255);
+  --accent: oklch(91% .063 249);
+  --accent-foreground: oklch(42% .149 254);
+  --border: oklch(37% .077 247 / .22);
+  --input: oklch(37% .077 247 / .25);
+  --sidebar: oklch(98.5% .011 241);
+  --sidebar-foreground: var(--muted-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --aero-link: oklch(44% .161 254);
+  --aero-heading: oklch(39% .133 253);
+  --aero-focus-lime: oklch(92% .19 122);
+  --aero-focus-lime-hover: oklch(86% .184 122);
+  --aero-lime-soft: oklch(96% .07 122);
+  --aero-lime-ink: oklch(34% .087 129);
+  --aero-focus-ink: oklch(24% .084 257);
+  --aero-cobalt: oklch(39% .162 264);
+  --aero-landscape-scene: url("../assets/images/east-java-sky.webp");
+  --aero-hero-text: oklch(99% .007 240);
+  --aero-hero-muted: oklch(95% .027 240);
+  --aero-amber-ink: oklch(46% .112 64);
+  --aero-amber-soft: oklch(95% .065 86);
+  --aero-red-ink: oklch(44% .152 22);
+  --aero-red-soft: oklch(94% .042 19);
+  --aero-atmosphere: radial-gradient(ellipse at 94% 0%, oklch(86% .107 238 / .63), transparent 46%),
+    linear-gradient(152deg, oklch(97% .024 235), oklch(92% .058 240) 64%, oklch(94% .055 232));
+  --aero-sheet: linear-gradient(143deg, oklch(100% 0 0 / .9), oklch(96% .035 231 / .62));
+  --aero-material: linear-gradient(119deg, oklch(99% .013 229 / .76), oklch(91% .066 233 / .54));
+  --aero-material-raised: linear-gradient(145deg, oklch(99.8% .005 235 / .95), oklch(95% .04 235 / .79));
+  --aero-glass-rim: oklch(56% .092 241 / .26);
+  --aero-depth: 0 8px 24px oklch(33% .05 248 / .07);
+  --aero-frame: 24px;
+  --aero-frame-hero: 32px;
+  --aero-frame-control: 14px;
+  --aero-frame-inset: 12px;
+  accent-color: var(--ring);
+  --aero-scrollbar-size: 14px;
+  --aero-scrollbar-track: oklch(95.5% .024 244);
+  --aero-scrollbar-thumb: oklch(54% .107 252);
+  --aero-scrollbar-hover: oklch(46% .133 253);
+}
+
+@media (any-pointer: fine) and (forced-colors: none) and (prefers-contrast: no-preference) {
+  :root { scrollbar-color: var(--aero-scrollbar-thumb) var(--aero-scrollbar-track); }
+
+  @supports selector(::-webkit-scrollbar) {
+    :root { scrollbar-color: auto; }
+    ::-webkit-scrollbar { width: var(--aero-scrollbar-size); height: var(--aero-scrollbar-size); }
+    ::-webkit-scrollbar-track { background: var(--aero-scrollbar-track); border-radius: var(--radius-pill); }
+    ::-webkit-scrollbar-thumb {
+      background: var(--aero-scrollbar-thumb);
+      border: 3px solid var(--aero-scrollbar-track);
+      border-radius: var(--radius-pill);
+    }
+    ::-webkit-scrollbar-thumb:hover,
+    ::-webkit-scrollbar-thumb:active { background: var(--aero-scrollbar-hover); }
+    ::-webkit-scrollbar-button { display: none; }
+    ::-webkit-scrollbar-corner { background: var(--aero-scrollbar-track); }
+  }
+}
+
+body {
+  --aero-canvas-soft: var(--background);
+  --aero-surface: var(--card);
+  --aero-ink: var(--foreground);
+  --aero-muted: var(--muted-foreground);
+  --aero-rim: var(--border);
+  --aero-blue: var(--primary);
+  --aero-blue-hover: oklch(46% .171 255);
+  --aero-panel-radius: var(--aero-frame);
+  --aero-hero-radius: var(--aero-frame-hero);
+  --aero-card-radius: 16px;
+  --aero-control-radius: var(--aero-frame-control);
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+#root, .app-shell, .login-page, .landing-page { min-block-size: 100vh; min-block-size: 100dvh; }
+#mobile-navigation, .app-shell .app-sidebar { block-size: 100vh; block-size: 100dvh; }
+.app-shell .app-sidebar { background: var(--aero-sheet); border-color: var(--aero-glass-rim); }
+#mobile-navigation { overscroll-behavior: contain; }
+#mobile-navigation .app-sidebar { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.app-shell .app-content { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
+
+.app-shell .app-topbar,
+.app-shell .environment-hub > .environment-nav,
+.monitoring-options[data-slot="select-content"],
+:is(.wx-detail, .wa-start-dialog, .role-dialog, .quake-group-dialog)[data-slot="dialog-content"],
+dialog.role-dialog {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.app-shell .app-topbar { padding-top: env(safe-area-inset-top); }
+.app-shell .environment-hub > .environment-nav {
+  --frame-radius: 20px;
+  --frame-inset: 6px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+}
+.app-shell .environment-hub .environment-nav .insight-topics button,
+.app-shell .environment-nav .monitoring-select[data-slot="select-trigger"],
+.app-shell .environment-nav .live-icon-button {
+  border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset)));
+}
+
+@supports (backdrop-filter: blur(12px)) {
+  @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+    .app-shell .app-topbar {
+      background: var(--aero-material);
+      border-color: var(--aero-glass-rim);
+      backdrop-filter: blur(14px) saturate(128%);
+    }
+    .app-shell .environment-hub > .environment-nav {
+      background: var(--aero-material);
+      border-color: var(--aero-glass-rim);
+      backdrop-filter: blur(15px) saturate(135%);
+      box-shadow: inset 0 1px oklch(100% 0 0 / .8), var(--aero-depth);
+    }
+    .monitoring-options[data-slot="select-content"],
+    :is(.wx-detail, .wa-start-dialog, .role-dialog, .quake-group-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+      background: var(--aero-material-raised);
+      backdrop-filter: blur(14px) saturate(125%);
+      box-shadow: var(--aero-depth);
+    }
+    .login-page .login-form-panel {
+      backdrop-filter: blur(12px) saturate(118%);
+    }
+  }
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  :root {
+    --aero-atmosphere: var(--background);
+    --aero-sheet: var(--card);
+    --aero-material: var(--popover);
+    --aero-material-raised: var(--popover);
+    --aero-glass-rim: var(--border);
+  }
+  .app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
+  .monitoring-options[data-slot="select-content"],
+  .wa-start-dialog, .wx-detail, .quake-group-dialog, dialog.role-dialog {
+    background: var(--popover);
+    backdrop-filter: none;
+  }
+}
+
+.app-shell :is(.wx-panel, .live-panel, .live-table-wrap, .insight-disclosure, .disaster-card,
+  .nearby-location, .nearby-map-panel, .management-location, .management-access,
+  .management-rules, .sprinkler-section, .management-side > section, .wa-alert-entry) {
+  background-color: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.app-shell :is(.live-panel, .insight-disclosure, .nearby-location, .nearby-map-panel,
+  .management-location, .management-access, .management-rules, .management-side > section, .wa-alert-entry) {
+  background: var(--aero-sheet);
+  border-color: var(--aero-glass-rim);
+}
+.app-shell .live-panel:has(.recharts-wrapper) { background: var(--card); }
+
+.app-shell :is(.wx-panel, .robot-mood, .live-chat, .map-controls, .sensor-toolbar),
+.login-page .login-form-panel {
+  --frame-radius: var(--aero-frame);
+  border-radius: var(--frame-radius);
+  background: var(--aero-sheet);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.login-page .login-form-panel { background: var(--aero-material-raised); }
+.app-shell .wx-panel { --frame-inset: 16px; padding: var(--frame-inset); }
+.app-shell .wx-panel.wx-hazard-panel {
+  --frame-inset: clamp(16px, 2vw, 24px);
+  background: var(--card);
+}
+.app-shell .wx-panel :is(.wx-card, .disaster-card) { border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset))); }
+.app-shell .chat-workspace .live-chat > header {
+  background: var(--aero-material-raised);
+  border-color: var(--aero-glass-rim);
+}
+.app-shell .chat-workspace .live-chat > header :is(strong, small) { color: var(--foreground); }
+.app-shell .chat-workspace .chat-guest, .app-shell .chat-workspace .chat-scope,
+.app-shell .robot-mood-greet,
+.login-page :is(.login-input, .register-profile summary) {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+.app-shell .robot-mood-greet:hover { background: var(--accent); }
+.app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
+.app-shell :is(.sidebar-account small, .chat-scope summary, .robot-mood-reading),
+.login-page :is(label, legend, .register-hint, .login-register) { color: var(--muted-foreground); }
+.app-shell .sidebar-account strong,
+.login-page :is(.login-input input, .register-select, .register-note) { color: var(--foreground); }
+.app-shell :is(.chat-guest, .robot-mood-actions) a,
+.login-page :is(.login-back, .login-register a) { color: var(--aero-link); }
+.app-shell .nav-entry { color: var(--muted-foreground); }
+.app-shell .nav-entry.active { color: white; background: var(--aero-cobalt); }
+.app-shell .nav-entry.active svg { color: currentColor; }
+.app-shell .app-topbar :is(.topbar-breadcrumb, .topbar-icon) { color: var(--muted-foreground); }
+.app-shell .app-topbar .topbar-breadcrumb strong { color: var(--aero-heading); }
+.app-shell .app-topbar :is(.account-link, .topbar-icon:hover) { color: var(--aero-link); background: var(--muted); border-color: var(--border); }
+.app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
+.landing-hero-stage, .login-story { color-scheme: light; }
+
+svg.aero-icon, .map-pin-glyph {
+  stroke-width: var(--aero-icon-stroke, 1.75);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:is(.nav-entry.active, .account-link, .landing-button, .landing-nav-login, .login-submit,
+  .live-button:not(.secondary), .wx-close) { --aero-icon-stroke: 2; }
+:is(.landing-brand, .app-brand, .login-brand) > span {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+:is(.landing-brand, .app-brand, .login-brand) strong {
+  color: inherit;
+  font-weight: 800;
+}
+
+.scroll-vignette {
+  position: relative;
+  min-inline-size: 0;
+  --vignette-width: clamp(30px, 5vw, 72px);
+}
+.topic-vignette { flex: 1; --vignette-width: 32px; }
+.scroll-vignette::before,
+.scroll-vignette::after {
+  content: "";
+  position: absolute;
+  inset-block: 0 var(--aero-scrollbar-size);
+  z-index: 1;
+  inline-size: var(--vignette-width);
+  background: radial-gradient(ellipse 115% 80% at var(--vignette-origin) center,
+    oklch(58% .11 245 / .30), transparent 82%),
+    linear-gradient(to var(--vignette-direction), oklch(93% .042 235 / .95), transparent 92%);
+  opacity: 0;
+  pointer-events: none;
+}
+.scroll-vignette::before {
+  left: 0;
+  --vignette-origin: left;
+  --vignette-direction: right;
+}
+.scroll-vignette::after {
+  right: 0;
+  --vignette-origin: right;
+  --vignette-direction: left;
+}
+.scroll-vignette[data-edge-start="true"]:not(:has(:focus-visible))::before,
+.scroll-vignette[data-edge-end="true"]:not(:has(:focus-visible))::after { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-vignette::before, .scroll-vignette::after { transition: opacity 160ms ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-vignette::before, .scroll-vignette::after { transition-property: none; }
+}
+@supports (backdrop-filter: blur(4px)) {
+  @media (prefers-reduced-transparency: no-preference) {
+    .scroll-vignette::before, .scroll-vignette::after {
+      backdrop-filter: blur(4px);
+      mask-image: linear-gradient(to var(--vignette-direction), #000, transparent 96%);
+    }
+  }
+}
+@media (prefers-contrast: more), (forced-colors: active) {
+  .scroll-vignette::before, .scroll-vignette::after { display: none; }
+}
+
+@media (max-width: 680px) {
+  .app-shell .app-topbar .topbar-actions { gap: 4px; }
+  .app-shell .app-topbar .account-link { padding-inline: 9px; }
+  .app-shell .app-topbar .account-link svg { display: none; }
+  .app-shell .app-topbar .topbar-breadcrumb strong { overflow-wrap: anywhere; }
+}
+
+
+:root {
+  --ui-ink: var(--foreground);
+  --ui-muted: var(--muted-foreground);
+  --ui-line: var(--border);
+  --aero-panel-depth: 0 8px 24px transparent;
+}
+.app-shell {
+  background: var(--aero-atmosphere);
+  color: var(--foreground);
+  --ui-surface-gradient: var(--muted);
+}
+.app-shell :is(.robot-mood, .wx-panel), .app-shell .chat-workspace .live-chat {
+  box-shadow: var(--aero-panel-depth);
+}
+.app-navigation .nav-tools {
+  border-block-start: 1px solid var(--border);
+  padding-block-start: 8px;
+}
+.app-navigation .nav-tools summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding-inline: 14px;
+  border-radius: var(--aero-frame-inset);
+  color: var(--muted-foreground);
+  font-size: .8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.app-navigation .nav-tools summary::-webkit-details-marker { display: none; }
+.app-navigation .nav-tools summary:hover { background: var(--muted); }
+.app-navigation .nav-tools[open] summary svg { rotate: 180deg; }
+.app-shell .insights-compact > .insights-heading { flex-wrap: wrap; gap: 4px 20px; }
+.app-shell .insights-compact > .insights-heading .insight-text-link {
+  min-height: 44px;
+  font-size: .875rem;
+}
+.app-shell :is(.sensor-hero, .insight-lead).tone-warning .insight-status:not(.status-pending) {
+  color: var(--aero-amber-ink);
+  background: var(--aero-amber-soft);
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.app-shell :is(.sensor-hero, .insight-lead).tone-danger .insight-status:not(.status-pending) {
+  color: var(--aero-red-ink);
+  background: var(--aero-red-soft);
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+@media (max-width: 767px) {
+  #mobile-navigation .app-sidebar { max-width: calc(100vw - 60px); }
+  .app-shell .app-topbar { gap: 8px; }
+  .app-shell .topbar-actions { gap: 4px; flex-shrink: 0; }
+  .app-shell .app-topbar button.topbar-icon { flex: 0 0 44px; }
+}
+@media (max-width: 600px) {
+  .app-shell .sensor-overview .sensor-hero[data-day-period]:not([data-day-period="night"]) {
+    background: var(--aero-sheet);
+  }
+  .app-shell .sensor-overview .sensor-hero[data-day-period="night"] {
+    background: linear-gradient(136deg, #102843, #193d61);
+  }
+  .app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub.insights-compact .insight-lead {
+    padding: 20px;
+  }
+  .app-shell :is(.sensor-overview .sensor-hero, .insights-compact .insight-lead) > .condition-scene {
+    display: none;
+  }
+  .app-shell .sensor-overview .sensor-hero .sensor-panel-footer {
+    padding-block: 12px 0;
+  }
+}
+@media (min-width: 360px) and (max-width: 600px) {
+  .app-shell .sensor-overview .sensor-hero .sensor-key-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .app-shell .sensor-overview .sensor-hero .sensor-key-metrics > div:first-child {
+    grid-column: auto;
+  }
+  .app-shell .sensor-overview .sensor-key-metrics dt {
+    min-block-size: 2lh;
+  }
+  .app-shell .sensor-overview .sensor-key-metrics dd {
+    font-size: 24px;
+  }
+}
+
+.app-shell .environment-nav .insight-topics button[aria-pressed="false"] { color: var(--muted-foreground); }
+.app-shell .environment-nav .insight-topics button[aria-pressed="false"]:hover { background: var(--muted); color: var(--foreground); }
+.app-shell .environment-nav :is(.monitoring-select, .live-icon-button) {
+  background: var(--card);
+  color: var(--aero-link);
+  border-color: var(--border);
+}
+.app-shell .chat-workspace .live-chat > form {
+  --frame-radius: 20px;
+  --frame-inset: 6px;
+  padding: var(--frame-inset);
+  border: 2px solid var(--ring);
+  border-radius: var(--frame-radius);
+  background: var(--card);
+}
+.app-shell .chat-workspace .live-chat > form:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.app-shell .chat-workspace .live-chat > form:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.app-shell .chat-workspace .live-chat > form input:focus-visible { outline: none; }
+.app-shell .chat-workspace .live-chat > form button {
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+}
+.app-shell .chat-workspace .live-chat > form input {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+.app-shell .chat-workspace .live-chat .chat-send {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  min-width: 44px;
+  height: 44px;
+  padding-inline: 14px;
+  background: var(--primary);
+  color: white;
+  font-size: .875rem;
+  font-weight: 700;
+}
+.app-shell .chat-workspace .live-chat .chat-send:disabled {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  cursor: default;
+}
+@media (max-width: 540px) {
+  .app-shell .chat-workspace .live-chat .chat-send { padding-inline: 10px; }
+  .chat-send span { display: none; }
+}
+.app-shell .chat-workspace .live-message:not(.user) { background: var(--muted); color: var(--foreground); }
+.app-shell .chat-workspace :is(.chat-progress, .chat-note) { color: var(--muted-foreground); }
+.login-page :is(.register-select, .register-note) { background: var(--card); border-color: var(--input); }
+.login-page :is(.auth-result, .login-form-panel) p { color: var(--muted-foreground); }
+
+.landing-page {
+  --landing-ink: var(--foreground);
+  --landing-muted: var(--muted-foreground);
+  --landing-blue: var(--primary);
+}
+.landing-page .landing-management {
+  background: linear-gradient(128deg, var(--aero-cobalt) 20%, oklch(49% .162 249));
+  border-color: transparent;
+  color: white;
+}
+.landing-page .landing-management :is(h2, .landing-management-link) { color: white; }
+.landing-page .landing-management :is(p, .landing-management-details span) { color: #e1edff; }
+.landing-page .landing-management .landing-management-details p { border-color: rgb(255 255 255 / .22); }
+.landing-page .landing-management :is(.landing-management-details svg, .landing-management-details strong) { color: var(--aero-focus-lime); }
+.landing-page .landing-workflow-steps li > span { color: var(--aero-link); }
+.landing-page .landing-management a:focus-visible { outline-color: white; }
+
+:is(.landing-page :is(.landing-hero, .landing-management) .landing-button, .login-page .login-submit,
+  .app-shell .sensor-overview .sensor-hero .panel-link,
+  .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
+  .app-shell .chat-workspace .live-chat .chat-send:not(:disabled)) {
+  background-color: var(--aero-focus-lime);
+  color: var(--aero-focus-ink);
+}
+:is(.landing-page :is(.landing-hero, .landing-management) .landing-button, .login-page .login-submit,
+  .app-shell .sensor-overview .sensor-hero .panel-link,
+  .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
+  .app-shell .chat-workspace .live-chat .chat-send):hover:not(:disabled) {
+  background-color: var(--aero-focus-lime-hover);
+}
+.app-shell .sensor-overview .sensor-node-controls .panel-link,
+.app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link {
+  min-height: 44px;
+  width: fit-content;
+  padding-inline: 14px;
+  border-radius: var(--aero-frame-control);
+  text-decoration: none;
+}
+:is(.wx-detail, .wa-start-dialog, .quake-group-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+  max-block-size: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+  border-radius: var(--aero-frame);
+  overflow-y: auto;
+}
+dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-description) { color: var(--foreground); }
+@media (prefers-contrast: more) {
+  :root { --border: oklch(44% .05 244); }
+}
+
+.app-shell :is(.disaster-filters, .nearby-radius > div) {
+  --frame-radius: 18px;
+  --frame-inset: 4px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+  background: var(--muted);
+  border-color: var(--border);
+}
+.app-shell :is(.disaster-filters, .nearby-radius > div) button {
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+}
+.app-shell .environment-nav .insight-topics button[aria-pressed="true"] {
+  --aero-icon-stroke: 2;
+  background: var(--aero-cobalt);
+  color: white;
+}
+
+.app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
+.landing-page :is(.landing-section-heading h2, .landing-workflow h2),
+.login-page .login-form-inner h1 { color: var(--aero-heading); }
+.app-shell :is(.live-state strong, .disaster-card h3) { color: var(--foreground); }
+.app-shell :is(.page-heading p, .disaster-heading p, .live-state p) { color: var(--muted-foreground); }
+.app-shell :is(.disaster-filters button[aria-pressed="false"], .disaster-card a, .disaster-heading a) { color: var(--aero-link); }
+.app-shell .disaster-section, .app-shell .sidebar-account { border-color: var(--border); }
+.app-shell :is(.wx-skeleton, .live-state), .app-shell .live-panel > .live-state {
+  background: var(--muted);
+  border-color: var(--border);
+  color: var(--muted-foreground);
+}
+.login-page .login-input input::placeholder, .app-shell .chat-workspace .live-chat > form input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
+}
+.wx-detail-head { color-scheme: light; }
+
+.app-shell .sensor-workspace .map-controls {
+  --frame-radius: 28px;
+  --frame-inset: 16px;
+  margin-block-end: 16px;
+  padding: var(--frame-inset);
+  border-radius: var(--frame-radius);
+  border-color: var(--aero-glass-rim);
+}
+.app-shell .map-controls-main { gap: 12px 16px; }
+.app-shell .map-filter { gap: 7px; }
+.app-shell .map-controls-meta {
+  margin-block-start: 12px;
+  padding-block-start: 2px;
+  min-height: 40px;
+  border-top: 1px solid var(--border);
+  font-size: .8125rem;
+}
+.app-shell .map-info summary { min-height: 40px; }
+@media (max-width: 620px) {
+  .app-shell .sensor-workspace .map-controls { --frame-radius: 24px; --frame-inset: 12px; }
+  .app-shell .map-controls-main { gap: 10px; }
+  .app-shell .map-controls-meta { margin-block-start: 10px; gap: 8px; }
+}
+.app-shell .map-controls :is(.map-reference, .monitoring-select[data-slot="select-trigger"]) {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--frame-radius) - var(--frame-inset));
+  background: var(--muted);
+  color: var(--foreground);
+  box-shadow: none;
+}
+.app-shell .map-controls .monitoring-select[data-state="open"] { border-color: var(--ring); }
+.app-shell .map-controls .map-reference { background: var(--card); }
+.app-shell .map-controls-meta,
+.app-shell .map-info-content :is(p, .map-event-legend > span),
+.app-shell .map-event-notice { color: var(--muted-foreground); }
+.app-shell .map-info summary { color: var(--aero-link); }
+.app-shell .map-info-content {
+  background: var(--popover);
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: var(--aero-depth);
+}
+.monitoring-options [data-slot="select-item"][data-highlighted] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.monitoring-options [data-slot="select-item"][data-state="checked"]:not([data-highlighted]) {
+  color: var(--aero-link);
+}
+.app-shell .live-heading .live-icon-button,
+.app-shell .live-map .map-location-control button {
+  background: var(--popover);
+  color: var(--aero-link);
+  border-color: var(--border);
+}
+.app-shell .live-heading .live-icon-button:hover:not(:disabled),
+.app-shell .live-map .map-location-control button:hover:not(:disabled) { background: var(--accent); }
+.app-shell .live-map .map-location-control button:disabled { color: var(--muted-foreground); }
+.app-shell .live-map :is(.map-location-message, .leaflet-control-attribution) {
+  background: var(--popover);
+  color: var(--muted-foreground);
+}
+.app-shell .live-map .map-location-message { border: 1px solid var(--aero-glass-rim); }
+.app-shell .sensor-workspace .live-map { border-color: var(--aero-glass-rim); }
+.app-shell .map-figure .heat-legend {
+  background: var(--aero-sheet);
+  border-color: var(--aero-glass-rim);
+}
+.app-shell .live-map .leaflet-container { background-color: oklch(93% .035 233); }
+.app-shell .live-map .leaflet-popup-content-wrapper,
+.app-shell .live-map .leaflet-popup-tip {
+  background: var(--popover);
+  color: var(--foreground);
+}
+.app-shell .live-map .leaflet-popup-content-wrapper {
+  border-radius: var(--aero-frame-control);
+  border: 1px solid var(--aero-glass-rim);
+  box-shadow: var(--aero-depth);
+}
+.app-shell .live-map .leaflet-popup-tip { box-shadow: none; }
+
+@supports (backdrop-filter: blur(8px)) {
+  @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+    .app-shell .map-info-content,
+    .app-shell .live-map :is(.map-location-control button, .map-location-message,
+      .leaflet-control-attribution, .leaflet-popup-content-wrapper) {
+      background: var(--aero-material-raised);
+      backdrop-filter: blur(8px) saturate(126%);
+    }
+    .app-shell .live-map .map-location-control button:hover:not(:disabled) { background: var(--accent); }
+    .app-shell .live-map .leaflet-popup-tip { background: oklch(96% .03 235 / .94); }
+  }
+}
+
+@media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+  .app-shell .wx-panel:not(.wx-hazard-panel) {
+    background: var(--aero-landscape) right bottom / min(42rem, 84%) auto no-repeat,
+      var(--aero-sheet);
+  }
+  .app-shell .chat-workspace .live-messages:has(.chat-welcome) {
+    background: var(--aero-landscape) right bottom / min(29rem, 90%) auto no-repeat,
+      radial-gradient(ellipse at 76% 14%, var(--aero-lime-soft), transparent 58%),
+      var(--aero-sheet);
+  }
+  .app-shell :is(.sensor-workspace .map-controls, .nearby-location, .management-location) {
+    background: linear-gradient(105deg, oklch(99% .014 230 / .82), oklch(96% .046 235 / .58)),
+      url("../assets/images/land-contours.svg") right 46% / min(31rem, 64%) auto no-repeat,
+      var(--aero-material);
+  }
+}
+
+.login-page .login-story {
+  overflow: hidden;
+  border: 1px solid oklch(88% .075 241 / .6);
+  background:
+    linear-gradient(180deg, oklch(31% .15 260 / .88), transparent 39%, transparent 56%, oklch(26% .12 259 / .91)),
+    var(--aero-landscape-scene) 60% center / cover no-repeat,
+    var(--aero-cobalt);
+}
+.login-page :is(.login-story p.login-story-copy, .login-story .login-brand) { color: var(--aero-hero-text); }
+.login-story-copy strong { color: var(--aero-focus-lime); font-weight: inherit; }
+.login-page .login-story .login-brand img { filter: brightness(0) invert(1); }
+.login-page .login-story .login-brand:focus-visible { outline-color: white; }
+
+@media (max-width: 767px) {
+  .login-page .login-story {
+    background:
+      linear-gradient(90deg, var(--aero-cobalt) 24%, oklch(38% .15 256 / .46) 78%),
+      var(--aero-landscape-scene) center 78% / cover no-repeat,
+      var(--aero-cobalt);
+  }
+}
+
+.landing-page .landing-hero-stage {
+  position: relative;
+  isolation: isolate;
+  border-bottom: 0;
+  color: var(--aero-hero-text);
+}
+.landing-hero-stage::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - clamp(52px, 8vw, 120px)), transparent);
+  background:
+    linear-gradient(180deg, oklch(30% .15 260 / .82), transparent 24%),
+    linear-gradient(90deg, oklch(30% .15 260 / .94), oklch(36% .15 258 / .43) 47%, transparent 72%),
+    var(--aero-landscape-scene) center bottom / cover no-repeat,
+    var(--aero-cobalt);
+}
+.landing-hero-stage .landing-hero { position: relative; z-index: 1; }
+.landing-page .landing-hero-stage .landing-brand { color: var(--aero-hero-text); }
+.landing-hero-stage .landing-brand img { filter: brightness(0) invert(1); }
+.landing-page .landing-hero-copy > p { color: var(--aero-hero-muted); }
+.landing-page .landing-hero-copy h1 span { color: var(--aero-focus-lime); }
+.landing-page .landing-hero-stage :is(.landing-brand, .landing-button):focus-visible { outline-color: white; }
+
+@media (min-width: 761px) {
+  .landing-page .landing-hero-stage .landing-header nav a:not(.landing-nav-login) { color: var(--aero-hero-text); }
+  .landing-page .landing-hero-stage .landing-header nav a:focus-visible { outline-color: white; }
+  .landing-page .landing-header nav .landing-nav-login {
+    background: oklch(100% 0 0 / .92);
+    border-color: oklch(100% 0 0 / .36);
+    color: var(--aero-link);
+  }
+}
+
+@media (max-width: 760px) {
+  .landing-hero-stage::before {
+    background:
+      linear-gradient(180deg, var(--aero-cobalt) 0%, oklch(39% .16 253 / .87) 48%, transparent 84%),
+      var(--aero-landscape-scene) 74% bottom / cover no-repeat,
+      var(--aero-cobalt);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .login-page .login-story,
+  .landing-page .landing-hero-stage { background: var(--aero-cobalt); }
+  .landing-hero-stage::before { content: none; }
+}
+@media (forced-colors: active) {
+  .landing-hero-stage .landing-brand img,
+  .login-page .login-story .login-brand img { filter: none; }
+}
+
+.landing-management { position: relative; isolation: isolate; }
+.landing-management::before {
+  position: absolute;
+  inset: 0 0 0 46%;
+  content: "";
+  pointer-events: none;
+  z-index: -1;
+  border-radius: inherit;
+  background: url("../assets/images/land-contours.svg") right center / cover no-repeat;
+  mask-image: linear-gradient(90deg, transparent, #000);
+  opacity: .16;
+}

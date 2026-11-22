@@ -45,6 +45,30 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
     assert.equal((await request("/status")).status, 401);
     assert.equal((await request("/events", "viewer")).status, 403);
     assert.equal((await request("/status", "robot")).status, 200);
+    const robotStream = await fetch(base + "/events?robot_id=robot-2", {
+      headers: { Authorization: "robot" },
+      signal: abort.signal,
+    });
+    assert.equal(robotStream.status, 200);
+    const robotReader = robotStream.body.getReader();
+    assert.equal(new TextDecoder().decode((await robotReader.read()).value), ": connected\n\n");
+    assert.equal(
+      (await (await request("/status?robot_id=robot-2", "robot")).json()).connected,
+      true,
+    );
+    const robotSent = await request("/events?robot_id=robot-2", "robot", {
+      owner_id: "robot",
+      action: "expression",
+      text: "Udara cerah.",
+      emotion: "happy",
+    });
+    assert.equal(robotSent.status, 202);
+    assert.equal((await robotSent.json()).screens, 1);
+    const robotEvent = JSON.parse(
+      new TextDecoder().decode((await robotReader.read()).value).slice(6),
+    );
+    assert.equal(robotEvent.action, "expression");
+    assert.equal(robotEvent.emotion, "happy");
     const stream = await fetch(base + "/events", {
       headers: { Authorization: "owner" },
       signal: abort.signal,
@@ -118,6 +142,37 @@ test("face relay isolates accounts, restricts roles and never replays or accepts
       ).status,
       400,
     );
+    for (const action of ["wake", "sleep"]) {
+      // (state events are remembered for screens that connect later; see below)
+      assert.equal((await request("/events", "owner", { owner_id: "owner", action })).status, 202);
+      const face = JSON.parse(new TextDecoder().decode((await reader.read()).value).slice(6));
+      assert.equal(face.action, action);
+      assert.equal(face.monitorOnly, true);
+    }
+    assert.equal(
+      (
+        await request("/events", "owner", {
+          owner_id: "owner",
+          action: "wake",
+          audioBase64: audio.toString("base64"),
+        })
+      ).status,
+      400,
+    );
+    // A face screen that connects later gets the robot's latest wake/sleep once, marked replay;
+    // speech and other events are never replayed.
+    const late = await fetch(base + "/events", {
+      headers: { Authorization: "owner" },
+      signal: abort.signal,
+    });
+    const lateReader = late.body.getReader();
+    let lateText = "";
+    while (!lateText.includes("replay"))
+      lateText += new TextDecoder().decode((await lateReader.read()).value);
+    assert.match(lateText, /^: connected\n\n/);
+    const replayed = JSON.parse(lateText.split("data: ")[1]);
+    assert.deepEqual(replayed, { action: "sleep", monitorOnly: true, replay: true });
+    assert.equal(lateText.includes("Bahaya"), false);
     abort.abort();
   } finally {
     abort.abort();

@@ -1,3 +1,4 @@
+import { AeroMascot } from "@/components/environment/AeroMascot";
 import { Link } from "react-router-dom";
 export function DataState({
   loading,
@@ -14,6 +15,9 @@ export function DataState({
 }) {
   return (
     <div className="live-state" role={error ? "alert" : "status"}>
+      {!loading && (
+        <AeroMascot pose={error ? "guide" : "calm"} className="live-state-art" animated={false} />
+      )}
       <strong>
         {loading
           ? "Memuat data…"
