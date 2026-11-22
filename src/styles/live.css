@@ -971,10 +971,6 @@ select,
   outline: 3px solid #76bcff;
   outline-offset: 3px;
 }
-.live-messages {
-  scrollbar-color: #5c7388 #edf1ee;
-  scrollbar-width: auto;
-}
 .environment-hub ::selection,
 .live-chat ::selection {
   background: #bedcff;

@@ -414,8 +414,6 @@ svg.lucide {
   border: 0;
   border-radius: 14px;
   background: none;
-  scrollbar-width: auto;
-  scrollbar-color: #5c7388 #edf1ee;
 }
 
 .app-shell .environment-nav .insight-topics button {

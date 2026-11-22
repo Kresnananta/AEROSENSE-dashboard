@@ -7,6 +7,7 @@
 - Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor selalu menggunakan tema terang. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor memakai jarak yang konsisten; jumlah node dan legenda dikelompokkan di bawah filter. Toolbar Hub Lingkungan memakai kaca saat menggulir dan kembali solid pada preferensi aksesibilitas.
 
 - Kartu prakiraan per jam dan tujuh hari memakai proporsi potret dan ilustrasi yang lebih besar. Tepi daftar per jam memudar selama masih ada kartu di arah tersebut.
+- Bilah gulir halaman, prakiraan cuaca, navigasi, chat, dan tabel memakai warna biru yang sama. Seret, navigasi Tab, sapuan ponsel, dan mode kontras tinggi diuji di Chrome.
 - Judul utama dan angka prakiraan memakai biru yang lebih kuat. Bilah navigasi, menu, dan dialog menggunakan kaca yang lebih bening dengan cadangan solid untuk pengaturan aksesibilitas.
 - Latar kartu prakiraan mengikuti waktu WIB. Kartu siang memakai rona langit cerah, dan kartu malam memakai biru laut yang lebih dalam.
 - Kabar Bencana menampilkan peta pantauan GDACS untuk lampiran gempa dan banjir yang tersedia. Kartu ANTARA membuka artikel sumber untuk melihat dokumentasi. Rilis membutuhkan pembaruan API dan web.

@@ -53,8 +53,6 @@
 :root {
   color-scheme: light;
   accent-color: #0868dc;
-  scrollbar-color: #6b8fae #eaf3fc;
-  scrollbar-width: auto;
   --radius: 0.75rem;
 
   --background: #f3f8ff;

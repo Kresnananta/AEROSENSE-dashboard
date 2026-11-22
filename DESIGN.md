@@ -90,7 +90,7 @@ AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The
 
 - Declare `color-scheme: light` and `accent-color: var(--aero-blue)` on `:root`.
 - Style `::selection` with `#D7E8FC` background and `#102A47` ink for clear reading contrast.
-- Keep scrollbars accessible: `scrollbar-color: #6B8FAE #EAF3FC` (>= 3:1 contrast) with `scrollbar-width: auto`.
+- Use the shared blue scrollbar colors and a rounded thumb where supported. Preserve default scrollbars for touch-only and high-contrast settings.
 - Use `:user-invalid` and `:user-valid` for native form validation feedback.
 - Respect `prefers-reduced-motion: reduce` by disabling ambient float and pulse animations.
 

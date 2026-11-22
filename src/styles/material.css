@@ -31,7 +31,29 @@
   --aero-frame-control: 14px;
   --aero-frame-inset: 12px;
   accent-color: var(--ring);
-  scrollbar-color: var(--muted-foreground) var(--muted);
+  --aero-scrollbar-size: 14px;
+  --aero-scrollbar-track: oklch(95.5% .024 244);
+  --aero-scrollbar-thumb: oklch(54% .107 252);
+  --aero-scrollbar-hover: oklch(46% .133 253);
+}
+
+@media (any-pointer: fine) and (forced-colors: none) and (prefers-contrast: no-preference) {
+  :root { scrollbar-color: var(--aero-scrollbar-thumb) var(--aero-scrollbar-track); }
+
+  @supports selector(::-webkit-scrollbar) {
+    :root { scrollbar-color: auto; }
+    ::-webkit-scrollbar { width: var(--aero-scrollbar-size); height: var(--aero-scrollbar-size); }
+    ::-webkit-scrollbar-track { background: var(--aero-scrollbar-track); border-radius: var(--radius-pill); }
+    ::-webkit-scrollbar-thumb {
+      background: var(--aero-scrollbar-thumb);
+      border: 3px solid var(--aero-scrollbar-track);
+      border-radius: var(--radius-pill);
+    }
+    ::-webkit-scrollbar-thumb:hover,
+    ::-webkit-scrollbar-thumb:active { background: var(--aero-scrollbar-hover); }
+    ::-webkit-scrollbar-button { display: none; }
+    ::-webkit-scrollbar-corner { background: var(--aero-scrollbar-track); }
+  }
 }
 
 body {
@@ -150,8 +172,6 @@ dialog.role-dialog {
 .app-shell .app-topbar :is(.account-link, .topbar-icon:hover) { color: var(--aero-link); background: var(--muted); border-color: var(--border); }
 .app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
 .landing-hero-stage, .login-story { color-scheme: light; }
-.app-shell .wx-panel :is(.wx-hours, .wx-days),
-.app-shell .environment-hub .environment-nav .insight-topics { scrollbar-color: var(--muted-foreground) var(--muted); }
 
 :is(.app-topbar, .landing-header, .app-navigation, .live-panel, .live-chat, .robot-mood, .login-page, .wx-panel) svg.lucide { stroke-width: 1.65; }
 :is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close) svg.lucide { stroke-width: 2; }

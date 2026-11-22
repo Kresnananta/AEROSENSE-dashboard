@@ -446,8 +446,6 @@ input {
   flex-wrap: nowrap;
   overflow-x: auto;
   padding: 4px 2px 12px;
-  scrollbar-width: auto;
-  scrollbar-color: #5c7388 #edf1ee;
   scroll-snap-type: x proximity;
 }
 .app-shell .node-strip button {

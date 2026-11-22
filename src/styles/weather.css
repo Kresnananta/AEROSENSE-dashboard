@@ -209,8 +209,6 @@
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x proximity;
-  scrollbar-width: auto;
-  scrollbar-color: #6b8fae #eaf3fc;
 }
 .wx-hours {
   grid-auto-flow: column;
@@ -633,7 +631,7 @@
 .wx-hour-rail::after {
   content: "";
   position: absolute;
-  inset-block: 0 13px;
+  inset-block: 0 var(--aero-scrollbar-size, 14px);
   z-index: 1;
   width: clamp(24px, 4vw, 56px);
   pointer-events: none;
