@@ -556,11 +556,6 @@ body:has(.login-page) {
   letter-spacing: -.035em;
 }
 
-.login-page .login-brand strong {
-  color: inherit;
-  font-weight: 800;
-}
-
 .login-page .login-story-copy {
   margin: 0;
   grid-row: 3;
@@ -717,12 +712,6 @@ body:has(.login-page) {
 
   .login-page .demo-login button {
     flex: 1 1 76px;
-  }
-
-  .landing-page .landing-header nav {
-    border-radius: var(--aero-card-radius);
-    background: #eef8ff;
-    box-shadow: none;
   }
 }
 
@@ -949,7 +938,7 @@ body:has(.login-page) {
   aspect-ratio: 1.16;
 }
 
-.landing-page :is(.landing-nav-login, .landing-button) {
+.landing-page .landing-button {
   border-radius: var(--aero-control-radius);
 }
 
@@ -1115,7 +1104,6 @@ body:has(.login-story[data-day-period="night"]) .login-story .login-brand {
   color: #cddfeb;
 }
 
-.landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login),
 .landing-page .landing-hero-stage[data-day-period="night"] .landing-brand {
   color: #dcebf7;
 }

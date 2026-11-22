@@ -47,7 +47,7 @@
   border-color: var(--border);
   color: var(--foreground);
 }
-.chat-suggestions [data-topic="weather"] { --suggestion-fill: oklch(96% .044 83); --suggestion-ink: oklch(46% .125 61); }
+.chat-suggestions [data-topic="weather"] { --suggestion-fill: var(--aero-amber-soft); --suggestion-ink: var(--aero-amber-ink); }
 .chat-suggestions [data-topic="rain"] { --suggestion-fill: oklch(95% .038 241); --suggestion-ink: var(--aero-link); }
 .chat-suggestions [data-topic="activity"] { --suggestion-fill: oklch(96% .038 50); --suggestion-ink: oklch(46% .132 43); }
 .chat-suggestions [data-topic="air"] { --suggestion-fill: oklch(96% .042 169); --suggestion-ink: oklch(43% .104 158); }
@@ -68,13 +68,13 @@
 }
 .robot-mood[data-mood="calm"] { --mood-sky: #baeadd; --mood-accent: #13634e; }
 .robot-mood[data-mood="warning"] {
-  --mood-sky: #ffebba;
-  --mood-accent: #7c4c10;
+  --mood-sky: var(--aero-amber-soft);
+  --mood-accent: var(--aero-amber-ink);
   --mood-mascot: hue-rotate(183deg) brightness(1.14);
 }
 .robot-mood[data-mood="danger"] {
-  --mood-sky: #ffded0;
-  --mood-accent: #842f27;
+  --mood-sky: var(--aero-red-soft);
+  --mood-accent: var(--aero-red-ink);
   --mood-mascot: hue-rotate(138deg) brightness(1.03);
 }
 .robot-mood-scene {

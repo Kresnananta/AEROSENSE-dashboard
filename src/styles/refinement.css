@@ -72,21 +72,6 @@ input {
 .app-brand > span {
   font-size: 20px;
   line-height: 1.1;
-  font-weight: 500;
-  letter-spacing: -0.06em;
-}
-.app-brand strong {
-  font-weight: 750;
-  color: #086bea;
-}
-.app-brand small {
-  display: block;
-  font-size: 10px;
-  line-height: 1.3;
-  font-weight: 450;
-  letter-spacing: 0;
-  color: #58718a;
-  margin-top: 2px;
 }
 .sidebar-intro {
   display: flex;
@@ -503,10 +488,6 @@ input {
   letter-spacing: -0.05em;
   font-size: 22px;
   text-decoration: none;
-}
-.login-brand strong {
-  color: #fff;
-  font-weight: 700;
 }
 .login-brand-icon {
   flex-shrink: 0;

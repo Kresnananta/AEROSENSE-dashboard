@@ -46,8 +46,6 @@
   margin-bottom: clamp(40px, 6vw, 78px);
 }
 .landing-header {
-  width: min(1280px, calc(100% - 64px));
-  margin: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,30 +60,29 @@
   gap: 10px;
   color: #1b6ed2;
   font-size: 24px;
-  font-weight: 450;
-  letter-spacing: -0.035em;
   text-decoration: none;
   flex-shrink: 0;
 }
 .landing-brand img {
   object-fit: contain;
 }
-.landing-brand strong {
-  font-weight: 800;
-}
 .landing-header nav {
   display: flex;
-  gap: 30px;
+  gap: clamp(16px, 2.1vw, 30px);
   align-items: center;
 }
 .landing-header nav a {
-  color: var(--landing-muted);
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--landing-ink);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
 }
-.landing-header nav a:hover {
-  color: #075bca;
+.landing-header nav a:not(.landing-nav-login):hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .landing-header nav .landing-nav-login {
   display: inline-flex;
@@ -99,6 +96,16 @@
 }
 .landing-menu-button {
   display: none;
+}
+
+@media (min-width: 761px) {
+  .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login) {
+    color: #eaf6ff;
+  }
+  .landing-hero-stage[data-day-period="night"] .landing-header nav a:focus-visible {
+    outline: 2px solid #eaf6ff;
+    outline-offset: 4px;
+  }
 }
 .landing-hero {
   display: grid;
@@ -417,7 +424,6 @@
     width: calc(100% - 40px);
   }
   .landing-header {
-    width: calc(100% - 40px);
     min-height: 78px;
   }
   .landing-brand {
@@ -439,9 +445,9 @@
     top: 70px;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--popover);
     padding: 18px;
-    border: 1px solid #d9e9f6;
+    border: 1px solid var(--border);
     border-radius: 16px;
     gap: 5px;
     align-items: stretch;

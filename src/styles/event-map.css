@@ -40,10 +40,9 @@
 }
 .map-pin.is-active .map-pin-shape { stroke-width: 2.3; }
 .sensor-pin-mark { filter: brightness(0) invert(1); }
-.map-pin-cut { stroke: var(--pin-color); }
 .map-pin.pin-watersense { --pin-color: #087367; }
-.map-pin.pin-fire { --pin-color: #aa4318; }
-.map-pin.pin-earthquake { --pin-color: #ac2d55; }
+.map-pin.pin-fire { --pin-color: var(--aero-amber-ink); }
+.map-pin.pin-earthquake { --pin-color: var(--aero-red-ink); }
 .map-quake-number {
   fill: currentColor;
   font-size: 11px;

@@ -88,7 +88,6 @@ body {
 
 .app-shell .app-topbar,
 .app-shell .environment-hub > .environment-nav,
-.landing-page .landing-header nav,
 .monitoring-options[data-slot="select-content"],
 :is(.wx-detail, .wa-start-dialog, .role-dialog)[data-slot="dialog-content"],
 dialog.role-dialog {
@@ -97,19 +96,6 @@ dialog.role-dialog {
   color: var(--foreground);
 }
 .app-shell .app-topbar { padding-top: env(safe-area-inset-top); }
-.landing-page .landing-header nav { border-radius: var(--aero-frame-control); }
-.landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav {
-  background: var(--aero-material-raised);
-}
-.landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login) {
-  color: var(--foreground);
-}
-@media (min-width: 761px) {
-  .landing-page .landing-header nav {
-    padding: 5px 6px 5px 14px;
-    border: 1px solid var(--aero-glass-rim);
-  }
-}
 .app-shell .environment-hub > .environment-nav {
   --frame-radius: 20px;
   --frame-inset: 6px;
@@ -128,30 +114,6 @@ dialog.role-dialog {
       background: var(--aero-material);
       border-color: var(--aero-glass-rim);
       backdrop-filter: blur(14px) saturate(128%);
-    }
-    .landing-page .landing-header nav {
-      background: oklch(98% .018 233 / .27);
-      border-color: oklch(100% 0 0 / .43);
-      backdrop-filter: blur(10px);
-    }
-    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav {
-      background: oklch(25% .055 245 / .38);
-      border-color: oklch(100% 0 0 / .25);
-    }
-    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login) {
-      color: oklch(98% .014 234);
-    }
-    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:focus-visible {
-      outline: 2px solid oklch(98% .014 234);
-      outline-offset: 3px;
-    }
-    @media (max-width: 760px) {
-      .landing-page .landing-header nav {
-        background: oklch(98% .018 233 / .9);
-      }
-      .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav {
-        background: oklch(29% .062 245 / .88);
-      }
     }
     .app-shell .environment-hub > .environment-nav {
       background: var(--aero-material);
@@ -179,7 +141,7 @@ dialog.role-dialog {
     --aero-glass-rim: var(--border);
   }
   .app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
-  .landing-page .landing-header nav, .monitoring-options[data-slot="select-content"],
+  .monitoring-options[data-slot="select-content"],
   .wa-start-dialog, .wx-detail, dialog.role-dialog {
     background: var(--popover);
     backdrop-filter: none;
@@ -241,8 +203,22 @@ dialog.role-dialog {
 .app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
 .landing-hero-stage, .login-story { color-scheme: light; }
 
-:is(.app-topbar, .landing-header, .app-navigation, .live-panel, .live-chat, .robot-mood, .login-page, .wx-panel) svg.lucide { stroke-width: 1.65; }
-:is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close) svg.lucide { stroke-width: 2; }
+svg.lucide, .map-pin-glyph {
+  stroke-width: var(--aero-icon-stroke, 1.75);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+:is(.nav-entry.active, .account-link, .landing-button, .landing-nav-login, .login-submit,
+  .live-button:not(.secondary), .wx-close) { --aero-icon-stroke: 2; }
+:is(.landing-brand, .app-brand, .login-brand) > span {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+:is(.landing-brand, .app-brand, .login-brand) strong {
+  color: inherit;
+  font-weight: 800;
+}
 
 .scroll-vignette {
   position: relative;
@@ -336,6 +312,14 @@ dialog.role-dialog {
 .app-navigation .nav-tools summary:hover { background: var(--muted); }
 .app-navigation .nav-tools[open] summary svg { rotate: 180deg; }
 .app-shell .nav-entry[data-destination="/environment"] svg { color: var(--aero-amber-ink); }
+.app-shell .nav-entry.active[data-destination="/environment"] {
+  background: var(--aero-amber-soft);
+  color: var(--aero-amber-ink);
+}
+.app-shell .nav-entry.active[data-destination="/alerts"] {
+  background: var(--aero-red-soft);
+  color: var(--aero-red-ink);
+}
 .app-shell .nav-entry[data-destination="/alerts"] svg,
 .app-shell .app-topbar .topbar-alert-link {
   color: var(--aero-red-ink);
@@ -446,7 +430,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   :root { --border: oklch(44% .05 244); }
 }
 
-.app-shell .wx-panel .wx-alerts li { border: 1px solid var(--border); }
 .app-shell :is(.disaster-filters, .nearby-radius > div) {
   --frame-radius: 18px;
   --frame-inset: 4px;
@@ -458,7 +441,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 .app-shell :is(.disaster-filters, .nearby-radius > div) button {
   border-radius: calc(var(--frame-radius) - var(--frame-inset));
 }
-.app-shell .environment-nav .insight-topics button[aria-pressed="true"] svg.lucide { stroke-width: 2; }
+.app-shell .environment-nav .insight-topics button[aria-pressed="true"] { --aero-icon-stroke: 2; }
 
 .app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
 .landing-page :is(.landing-section-heading h2, .landing-workflow h2, .landing-management h2),
@@ -473,6 +456,11 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   color: var(--muted-foreground);
 }
 .login-page .login-story:not([data-day-period="night"]) .login-story-copy { color: oklch(28% .062 251); }
+.login-story-copy strong {
+  color: var(--aero-amber-ink);
+  font-weight: inherit;
+}
+.login-story[data-day-period="night"] .login-story-copy strong { color: var(--aero-amber-soft); }
 .login-page .login-input input::placeholder, .app-shell .chat-workspace .live-chat > form input::placeholder {
   color: var(--muted-foreground);
   opacity: 1;

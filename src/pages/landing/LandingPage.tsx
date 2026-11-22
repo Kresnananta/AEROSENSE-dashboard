@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -47,6 +47,7 @@ const features = [
 
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const { user } = useAuth();
   const dayPeriod = useDayPeriod();
 
@@ -57,7 +58,15 @@ export function LandingPage() {
       </a>
       <div className="landing-hero-stage" data-day-period={dayPeriod}>
         <span className="landing-hero-fade" aria-hidden="true" />
-        <header className="landing-header">
+        <header
+          className="landing-header landing-container"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && menuOpen) {
+              setMenuOpen(false);
+              menuButton.current?.focus();
+            }
+          }}
+        >
           <Link to="/" className="landing-brand" aria-label="AEROSENSE — Halaman utama">
             <img src="/assets/brand/aerosense-mark.png" alt="" width="40" height="40" />
             <span>
@@ -65,6 +74,8 @@ export function LandingPage() {
             </span>
           </Link>
           <button
+            type="button"
+            ref={menuButton}
             className="landing-menu-button"
             aria-label={menuOpen ? "Tutup navigasi" : "Buka navigasi"}
             aria-expanded={menuOpen}

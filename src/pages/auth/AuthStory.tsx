@@ -11,7 +11,7 @@ export function AuthStory({ confirmed = false }: { confirmed?: boolean }) {
         <img src="/assets/brand/aerosense-mark.png" width="38" height="38" alt="" />
         <span>AERO<strong>SENSE</strong></span>
       </Link>
-      <p className="login-story-copy">Pahami lingkungan sekitar.</p>
+      <p className="login-story-copy">Pahami <strong>lingkungan sekitar.</strong></p>
       <AeroMascot pose={confirmed ? "success" : "welcome"} className="login-scene" />
     </aside>
   );

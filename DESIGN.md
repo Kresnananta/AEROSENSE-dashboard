@@ -63,7 +63,7 @@ AEROSENSE uses a two-family pairing that combines geometric display warmth with 
 Pages share a blue canvas, translucent panel edges, and solid reading areas when information is dense.
 
 - **Outer panels**: Light blue gradient sheets with an alpha border and the shared panel radius. Tables, charts, and semantic data colors retain a stable reading surface.
-- **Frosted surfaces**: Sticky navigation, account forms, menus, and map overlays use layered blue tints and bounded blur. Reduced transparency and high contrast preferences use opaque surfaces.
+- **Frosted surfaces**: Dashboard navigation, account forms, menus, and map overlays use layered blue tints and bounded blur. On the landing page, desktop links sit directly on the sky and the sign-in button uses a white pill. Reduced transparency and high contrast preferences use opaque surfaces.
 - **Illustrated hero frames**: `32px` radius (`--aero-hero-radius`) with time-matched 2D sky backdrops.
 - **Inner cards & controls**: `16px` card radius (`--aero-card-radius`), `14px` control radius (`--aero-control-radius`).
 - **Borderless tonal rows**: Items inside a panel (hazard lists, earthquake logs, weather alerts, status chips) use soft borderless tonal fills (`#F1F8FF`, `#EAF7F0`, `#FFF4DF`) without outer colored border outlines.
@@ -88,7 +88,7 @@ AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The
 ## 6. Uniform Icon System
 
 - **Library**: `lucide-react` exclusively for all interface icons (plus matching custom map glyphs in `MapSymbol`).
-- **Stroke geometry**: Uniform `stroke-width: 1.75`, `stroke-linecap: round`, `stroke-linejoin: round` applied globally via CSS.
+- **Stroke geometry**: Controls and map glyphs use round caps and joins with a 1.75 stroke. Primary and selected controls use a 2 stroke. The official AEROSENSE mark and wordmark typography carry the brand across the header, sidebar, and account pages.
 - **No decorative clutter**: Do not use emojis as UI icons, decorative sparkle clusters, or glowing/pulsing status dots.
 
 ## 7. Browser UI Theming & Accessibility
