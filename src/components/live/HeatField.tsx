@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImageOverlay, Marker, Pane, useMap } from "react-leaflet";
 import { divIcon, Point, type LayerEvent, type Map as LeafletMap } from "leaflet";
 import { apiRequest } from "@/services/api";
+import referencePoints from "@/lib/indonesia-reference-points.json";
 import { HEAT_LAYERS, type HeatLayerKey, type Stop } from "./heat-layers";
 
 type Grid = {
@@ -393,8 +394,21 @@ type Label = {
   position: [number, number];
   text: string;
   color: string;
+  name?: string;
+  shift: Point;
 };
 
+export type HeatScope = "province" | "district" | "detail";
+const heatScope = (zoom: number): HeatScope => zoom <= 7 ? "province" : zoom <= 10 ? "district" : "detail";
+const scopeText = {
+  province: "Titik acuan provinsi",
+  district: "Titik acuan kota dan kabupaten",
+  detail: "Detail warna",
+};
+const regionLabelShifts = [
+  new Point(0, 0), new Point(0, 42), new Point(0, -42),
+  new Point(-52, 0), new Point(52, 0), new Point(0, 66), new Point(0, -66),
+];
 const VALUE_PANE = "weatherValues";
 const REGION = { south: -13, west: 92, north: 8, east: 143 };
 const clip = (b: {
@@ -417,46 +431,61 @@ type WeatherPoint = {
   band: number;
   text: string;
   cloud?: boolean;
+  name?: string;
 };
 
-function weatherRegions(map: LeafletMap, { g, v, uv }: Field, layer: HeatLayerKey) {
+function weatherPoint(
+  { g, v, uv }: Field,
+  layer: HeatLayerKey,
+  point: Point,
+  position: [number, number],
+  name?: string,
+): WeatherPoint | null {
+  const [lat, lng] = position;
+  const raw = sample(g, v, lat, lng, layer === "rain");
+  if (raw == null || !Number.isFinite(raw)) return null;
+  const value = layer === "temperature" ? raw : Math.max(0, raw);
+  const row = (lat - g.south) / g.step;
+  const col = (lng - g.west) / g.step;
+  const opacity = coverage(g, layer, value, row, col);
+  const cfg = HEAT_LAYERS[layer];
+
+  if (layer === "cloud") {
+    if (!name && coverage(g, layer, 100, row, col) < 0.12) return null;
+    const u = uv ? sample(g, uv.u, lat, lng) ?? 0 : 0;
+    const vv = uv ? sample(g, uv.v, lat, lng) ?? 0 : 0;
+    const speed = Math.round(Math.hypot(u, vv));
+    const cloud = opacity >= 0.12;
+    if (!name && !cloud && speed < 3) return null;
+    const wind = uv ? `${speed}${speed ? " " + arrow(u, vv) : ""}` : "";
+    const cloudText = name || cloud ? cfg.format(Math.min(100, value)) : "";
+    const text = [wind, cloudText].filter(Boolean).join(" · ");
+    const band = cloud ? 100 + Math.round(value / 10) : Math.floor(speed / 8);
+    return { point, position, value, band, text, cloud, name };
+  }
+
+  if (!name && opacity < 0.12) return null;
+  const band = layer === "rain"
+    ? HEAT_LAYERS.rain.stops.slice(1).reduce((index, [stop], i) => {
+        const midpoint = (stop + HEAT_LAYERS.rain.stops[i][0]) / 2;
+        return index + Number(value >= midpoint) + Number(value >= stop);
+      }, 0)
+    : Math.round(value / (layer === "pm25" ? 5 : 1));
+  return { point, position, value, band, text: cfg.format(value), name };
+}
+
+function weatherRegions(map: LeafletMap, field: Field, layer: HeatLayerKey) {
   const { x: width, y: height } = map.getSize();
-  const stride = 16;
+  const stride = 12;
   const origin = map.getPixelBounds().getTopLeft();
   const startX = ((-origin.x % stride) + stride) % stride;
   const startY = ((-origin.y % stride) + stride) % stride;
   const cols = Math.ceil((width - startX) / stride);
   const rows = Math.ceil((height - startY) / stride);
-  const cfg = HEAT_LAYERS[layer];
   const cells = Array.from({ length: Math.max(0, cols * rows) }, (_, i): WeatherPoint | null => {
     const point = new Point(startX + (i % cols) * stride, startY + Math.floor(i / cols) * stride);
     const { lat, lng } = map.containerPointToLatLng(point);
-    const raw = sample(g, v, lat, lng, layer === "rain");
-    if (raw == null || !Number.isFinite(raw)) return null;
-    const value = layer === "temperature" ? raw : Math.max(0, raw);
-    const row = (lat - g.south) / g.step;
-    const col = (lng - g.west) / g.step;
-    const opacity = coverage(g, layer, value, row, col);
-    const position: [number, number] = [lat, lng];
-
-    if (layer === "cloud") {
-      if (coverage(g, layer, 100, row, col) < 0.12) return null;
-      const u = uv ? sample(g, uv.u, lat, lng) ?? 0 : 0;
-      const vv = uv ? sample(g, uv.v, lat, lng) ?? 0 : 0;
-      const speed = Math.round(Math.hypot(u, vv));
-      const cloud = opacity >= 0.12;
-      if (!cloud && speed < 3) return null;
-      const direction = speed ? " " + arrow(u, vv) : "";
-      const text = `${speed}${direction}${cloud ? " · " + cfg.format(Math.min(100, value)) : ""}`;
-      const band = cloud ? 100 + Math.round(value / 15) : Math.floor(speed / 8);
-      return { point, position, value, band, text, cloud };
-    }
-
-    if (opacity < 0.12) return null;
-    const band = layer === "rain"
-      ? HEAT_LAYERS.rain.stops.filter(([stop]) => value >= stop).length
-      : Math.round(value / (layer === "pm25" ? 5 : 1));
-    return { point, position, value, band, text: cfg.format(value) };
+    return weatherPoint(field, layer, point, [lat, lng]);
   });
 
   const regions: WeatherPoint[][] = [];
@@ -487,16 +516,19 @@ function weatherRegions(map: LeafletMap, { g, v, uv }: Field, layer: HeatLayerKe
   return regions;
 }
 
-function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[] {
+function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey, scope: HeatScope): Label[] {
   const size = map.getSize();
   const container = map.getContainer();
   const viewport = container.getBoundingClientRect();
   const obstacles = Array.from(container.querySelectorAll(
     ".aerosense-map-marker, .leaflet-tooltip, .leaflet-popup, .leaflet-control, .map-location-dot",
   ), (el) => el.getBoundingClientRect());
-  const fitsMap = ({ point, text }: WeatherPoint) => {
-    const halfWidth = (text.length * 8 + 26) / 2;
-    const halfHeight = 16;
+  const labelSize = ({ text, name }: WeatherPoint) => name
+    ? { halfWidth: Math.min(75, Math.max(text.length * 4 + 13, name.length * 3.3 + 10)),
+        halfHeight: name.length > 22 ? 26 : 20 }
+    : { halfWidth: text.length * 4 + 13, halfHeight: 14 };
+  const fitsMap = (candidate: WeatherPoint, point = candidate.point) => {
+    const { halfWidth, halfHeight } = labelSize(candidate);
     if (point.x < halfWidth || point.x > size.x - halfWidth ||
         point.y < halfHeight || point.y > size.y - halfHeight) return false;
     const x = viewport.left + point.x;
@@ -507,19 +539,42 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[
     );
   };
 
-  const regions = weatherRegions(map, field, layer).map((area) => ({
-    center: area.reduce((sum, { point }) => sum.add(point), new Point(0, 0)).divideBy(area.length),
-    candidates: area.filter(fitsMap),
-  })).filter((region) => region.candidates.length > 0);
-  const ordered = new Set(regions);
-  if (layer === "temperature" && regions.length) {
-    const coolest = regions.reduce((a, b) => a.candidates[0].band <= b.candidates[0].band ? a : b);
-    const warmest = regions.reduce((a, b) => a.candidates[0].band >= b.candidates[0].band ? a : b);
-    ordered.clear();
-    for (const region of [coolest, warmest, ...regions]) ordered.add(region);
+  const areas: WeatherPoint[][] = [];
+  if (scope === "detail") {
+    areas.push(...weatherRegions(map, field, layer));
+  } else {
+    const bounds = map.getBounds();
+    for (const [name, lat, lng] of referencePoints[scope] as [string, number, number][]) {
+      const position: [number, number] = [lat, lng];
+      if (!bounds.contains(position)) continue;
+      const label = weatherPoint(field, layer, map.latLngToContainerPoint(position), position,
+        name.replace(/^Kabupaten /, "Kab. "));
+      if (label) areas.push([label]);
+    }
   }
+  const regions = areas.map((area) => ({
+    center: area.reduce((sum, { point }) => sum.add(point), new Point(0, 0)).divideBy(area.length),
+    candidates: scope === "detail" ? area.filter((candidate) => fitsMap(candidate)) : area,
+  })).filter((region) => region.candidates.length > 0);
+  const firstByColor = new Map<number, (typeof regions)[number]>();
+  if (scope === "detail") {
+    for (const region of regions) {
+      const { band } = region.candidates[0];
+      if (!firstByColor.has(band)) firstByColor.set(band, region);
+    }
+  }
+  const colorRegions = [...firstByColor.values()];
+  const priority = layer === "temperature" && colorRegions.length
+    ? [
+        colorRegions.reduce((a, b) => a.candidates[0].band <= b.candidates[0].band ? a : b),
+        colorRegions.reduce((a, b) => a.candidates[0].band >= b.candidates[0].band ? a : b),
+      ]
+    : [];
+  const ordered = new Set([...priority, ...colorRegions, ...regions]);
 
-  const maxLabels = Math.max(2, Math.min(10, Math.ceil((size.x * size.y) / 45000)));
+  const maxLabels = scope === "detail"
+    ? Math.max(5, Math.min(22, Math.ceil((size.x * size.y) / 21000)))
+    : referencePoints[scope].length;
   const placed: WeatherPoint[] = [];
   const labels: Label[] = [];
 
@@ -529,17 +584,29 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[
       a.point.distanceTo(center) - b.point.distanceTo(center),
     );
     for (const candidate of candidates) {
-      const { point, position, text, value, cloud } = candidate;
-      if (placed.some((other) => point.distanceTo(other.point) < (other.text === text ? 180 : 88)))
-        continue;
+      const { point, position, text, value, cloud, name, band } = candidate;
+      const { halfWidth, halfHeight } = labelSize(candidate);
+      const shift = (scope === "detail" ? regionLabelShifts.slice(0, 1) : regionLabelShifts).find((offset) => {
+        const target = point.add(offset);
+        return fitsMap(candidate, target) && !placed.some((other) => {
+          if (scope === "detail" && target.distanceTo(other.point) < (other.band === band ? 108 : 50))
+            return true;
+          const otherSize = labelSize(other);
+          return Math.abs(target.x - other.point.x) < halfWidth + otherSize.halfWidth &&
+            Math.abs(target.y - other.point.y) < halfHeight + otherSize.halfHeight;
+        });
+      });
+      if (!shift) continue;
 
       const tone = cloud === false ? [64, 122, 168] : colorAt(HEAT_LAYERS[layer].stops, value);
-      placed.push(candidate);
+      placed.push({ ...candidate, point: point.add(shift) });
       labels.push({
         key: position.map((coordinate) => coordinate.toFixed(6)).join(","),
         position,
         text,
         color: `rgb(${tone.join(" ")})`,
+        name,
+        shift,
       });
       break;
     }
@@ -551,9 +618,11 @@ function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[
 export function HeatField({
   layer,
   onInfo,
+  onScope,
 }: {
   layer: HeatLayerKey;
   onInfo: (i: HeatInfo) => void;
+  onScope: (scope: HeatScope) => void;
 }) {
   const map = useMap();
   const [overlay, setOverlay] = useState<Overlay | null>(null);
@@ -578,7 +647,9 @@ export function HeatField({
       cancelAnimationFrame(layoutFrame);
       layoutFrame = requestAnimationFrame(() => {
         const active = field.current;
-        setLabels(active ? fieldLabels(map, active, layer) : []);
+        const scope = heatScope(map.getZoom());
+        onScope(scope);
+        setLabels(active ? fieldLabels(map, active, layer, scope) : []);
       });
     };
     const relabelOnLayer = (event: LayerEvent) => {
@@ -671,18 +742,43 @@ export function HeatField({
       map.off("layeradd layerremove", relabelOnLayer);
       map.off("popupopen popupclose tooltipopen tooltipclose", relabel);
     };
-  }, [map, layer]);
+  }, [map, layer, onScope]);
   const icons = useMemo(
     () =>
       new Map(
-        labels.map((l) => [
-          l.key,
-          divIcon({
+        labels.map((label) => {
+          const chip = document.createElement("div");
+          chip.className = label.name ? "heat-chip heat-place" : "heat-chip";
+          if (label.name) {
+            const name = document.createElement("b");
+            name.textContent = label.name;
+            chip.append(name);
+          }
+          const value = document.createElement("span");
+          value.className = "heat-value";
+          value.style.setProperty("--value-color", label.color);
+          value.textContent = label.text;
+          chip.append(value);
+          const { x, y } = label.shift;
+          const length = Math.hypot(x, y);
+          let html: HTMLElement = chip;
+          if (length) {
+            html = document.createElement("div");
+            const leader = document.createElement("i");
+            leader.className = "heat-leader";
+            leader.style.width = length + "px";
+            leader.style.transform = `rotate(${Math.atan2(y, x)}rad)`;
+            leader.setAttribute("aria-hidden", "true");
+            chip.style.left = x + "px";
+            chip.style.top = y + "px";
+            html.append(leader, chip);
+          }
+          return [label.key, divIcon({
             className: "heat-label",
-            html: `<span style="--value-color:${l.color}">${l.text}</span>`,
+            html,
             iconSize: [0, 0],
-          }),
-        ]),
+          })];
+        }),
       ),
     [labels],
   );
@@ -709,7 +805,7 @@ export function HeatField({
   );
 }
 
-export function HeatLegend({ layer, info }: { layer: HeatLayerKey; info: HeatInfo }) {
+export function HeatLegend({ layer, info, scope }: { layer: HeatLayerKey; info: HeatInfo; scope: HeatScope }) {
   const l = HEAT_LAYERS[layer];
   const stopPosition = (i: number) => (i / (l.stops.length - 1)) * 100 + "%";
   const gradient = l.stops
@@ -736,11 +832,14 @@ export function HeatLegend({ layer, info }: { layer: HeatLayerKey; info: HeatInf
           ))}
         </div>
       </div>
-      <p role="status">
-        {info?.error || (info
-          ? `${info.source}${time ? " · " + time : ""}. Estimasi model.`
-          : "Memuat estimasi model…")}
-      </p>
+      <div className="heat-legend-context">
+        <strong>{scopeText[scope]}</strong>
+        <p role="status">
+          {info?.error || (info
+            ? `${info.source}${time ? " · " + time : ""}. Estimasi model di ${scope === "detail" ? "titik label" : "titik acuan wilayah"}.`
+            : "Memuat estimasi model…")}
+        </p>
+      </div>
     </div>
   );
 }

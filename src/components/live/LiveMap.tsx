@@ -3,7 +3,7 @@ import { formatQuakeRegion, sensorSummary } from "@/lib/environment-presentation
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
 import { mapIcon } from "./map-icons";
-import { HeatField, HeatLegend, type HeatInfo } from "./HeatField";
+import { HeatField, HeatLegend, type HeatInfo, type HeatScope } from "./HeatField";
 import type { HeatLayerKey } from "./heat-layers";
 import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
@@ -237,6 +237,7 @@ export function LiveMap({
 }) {
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
   const [heatInfo, setHeatInfo] = useState<{ layer: HeatLayerKey; data: HeatInfo } | null>(null);
+  const [heatScope, setHeatScope] = useState<HeatScope>("detail");
   const hazardPoints = (hazards?.quakes || [])
     .filter((q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude))
     .map((q) => ({ latitude: q.latitude, longitude: q.longitude }) as EnvironmentEvent);
@@ -361,7 +362,12 @@ export function LiveMap({
           </>
         )}
         {heat !== "off" && (
-          <HeatField key={heat} layer={heat} onInfo={(data) => setHeatInfo({ layer: heat, data })} />
+          <HeatField
+            key={heat}
+            layer={heat}
+            onInfo={(data) => setHeatInfo({ layer: heat, data })}
+            onScope={setHeatScope}
+          />
         )}
         {hazards && (
           <HazardMarkers data={hazards} showCyclones={showCyclones} />
@@ -501,7 +507,7 @@ export function LiveMap({
     <div className="map-figure">
       {map}
       {heat !== "off" && (
-        <HeatLegend layer={heat} info={heatInfo?.layer === heat ? heatInfo.data : null} />
+        <HeatLegend layer={heat} info={heatInfo?.layer === heat ? heatInfo.data : null} scope={heatScope} />
       )}
     </div>
   );
