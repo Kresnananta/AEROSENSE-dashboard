@@ -564,11 +564,47 @@
   margin-top: 18px;
   scroll-margin-top: 90px;
 }
-.wx-hazard-panel h3 {
-  font-size: 18px;
-  line-height: 1.35;
+.wx-quake-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 16px;
 }
+.wx-quake-heading > .aero-icon {
+  flex: none;
+  color: var(--aero-link);
+  margin-top: 2px;
+}
+.wx-quake-heading h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+.wx-quake-heading p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: .8125rem;
+}
+.wx-quake-more > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding-inline: 12px;
+  margin-block: 2px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--aero-frame-inset);
+  background: var(--accent);
+  color: var(--accent-foreground);
+  font-size: .875rem;
+  font-weight: 700;
+  list-style: none;
+  cursor: pointer;
+}
+.wx-quake-more > summary::-webkit-details-marker { display: none; }
+.wx-quake-more > summary:hover { background: var(--aero-lime-soft); color: var(--aero-lime-ink); }
+.wx-quake-more[open] > summary svg { rotate: 180deg; }
 .wx-hazards .wx-quake {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

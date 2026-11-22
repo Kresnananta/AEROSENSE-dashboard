@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAccess } from "@/hooks/useAccess";
 import { useLocation } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
-import { Menu, ChevronRight, Bell } from "lucide-react";
+import { Menu, ChevronRight, Bell } from "@/components/ui/aero-icons";
 import type { Ref } from "react";
 
 interface TopbarProps {

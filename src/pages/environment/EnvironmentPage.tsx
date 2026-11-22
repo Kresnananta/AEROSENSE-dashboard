@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   ChevronDown,
   Clock3,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { WeatherOutlook } from "@/components/weather/WeatherOutlook";
 import { useScrollEdges } from "@/hooks/useScrollEdges";

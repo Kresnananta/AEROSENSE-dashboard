@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { Pause, Play } from "@/components/ui/aero-icons";
 import type { Scene } from "@/lib/environment-presentation";
 import { useIllustrationMotion } from "@/hooks/useIllustrationMotion";
 import { conditionArtUrl } from "@/lib/condition-art";

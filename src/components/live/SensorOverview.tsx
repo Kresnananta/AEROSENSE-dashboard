@@ -3,7 +3,7 @@ import { AeroMascot } from "@/components/environment/AeroMascot";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "lucide-react";
+import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "@/components/ui/aero-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useScrollEdges } from "@/hooks/useScrollEdges";

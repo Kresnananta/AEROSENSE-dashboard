@@ -29,6 +29,20 @@ export function earthquakeIcon(magnitude: number | null | undefined) {
   return icons.get(key)!;
 }
 
+export function earthquakeGroupIcon(count: number) {
+  const key = "quake-group-" + count;
+  if (!icons.has(key)) {
+    icons.set(key, divIcon({
+      className: "aerosense-map-marker quake-group-marker",
+      html: `<span class="map-pin pin-earthquake map-quake-group" aria-hidden="true">${count}</span>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18],
+    }));
+  }
+  return icons.get(key)!;
+}
+
 export function mapIcon(kind: MapPinKind, tone: string = kind, active = false) {
   const key = `${kind}-${tone}-${active}`;
   const showStatus = kind === "sensor" && sensorTones.has(tone);

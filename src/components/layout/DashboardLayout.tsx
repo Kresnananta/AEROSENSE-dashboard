@@ -5,7 +5,7 @@ import { Topbar } from "./Topbar";
 import { AccessProvider } from "./AccessProvider";
 import { DEMO_MODE } from "@/lib/demo-mode";
 import { DemoBanner } from "@/components/shared/DemoBanner";
-import { X } from "lucide-react";
+import { X } from "@/components/ui/aero-icons";
 import { RoleRequestDialog } from "@/components/account/RoleRequestDialog";
 const AeroBotPage = lazy(() =>
   import("@/pages/aerobot/AeroBotPage").then((m) => ({ default: m.AeroBotPage })),

@@ -1,7 +1,7 @@
 import { AuthStory } from "./AuthStory";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowRight, Building2, ChevronDown, Lock, Mail, MapPin, Phone, Search, User } from "lucide-react";
+import { ArrowRight, Building2, ChevronDown, Lock, Mail, MapPin, Phone, Search, User } from "@/components/ui/aero-icons";
 import { MapContainer, TileLayer, CircleMarker, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { ROUTES } from "@/lib/constants";

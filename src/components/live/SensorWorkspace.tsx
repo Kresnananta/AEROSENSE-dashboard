@@ -4,7 +4,7 @@ import "@/styles/event-map.css";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "lucide-react";
+import { RefreshCw, Download, MapPin, ArrowUpRight, ChevronDown } from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import type { WatersensePoint } from "./LiveMap";
 import type { Hazards } from "@/types/weather.types";
@@ -114,12 +114,13 @@ export function SensorWorkspace({
   const showHazards = mode === "map" && (eventType === "all" || eventType === "earthquake");
   const hazards = useLiveData<Hazards>(showHazards ? "/v1/hazards" : null, 600000, false);
   const hazardData = showHazards ? hazards.data : null;
-  const hasBmkgFeed = Array.isArray(hazardData?.quakes);
+  const mapQuakes = hazardData?.national_quakes ?? hazardData?.quakes;
+  const hasBmkgFeed = Array.isArray(mapQuakes);
   const events = (environment.data?.events || []).filter(
     (e) => (eventType === "all" || e.category === eventType) &&
       !(hasBmkgFeed && e.category === "earthquake"),
   );
-  const totalEventCount = events.length + (hazardData?.quakes?.length ?? 0);
+  const totalEventCount = events.length + (mapQuakes?.length ?? 0);
   const watersense = useLiveData<{ actuators: WatersensePoint[] }>(
     user && mode === "map" ? `/v1/actuators/map?account=${encodeURIComponent(user.id)}` : null,
   );
@@ -414,8 +415,11 @@ export function SensorWorkspace({
                               mengonfirmasi kebakaran.
                             </p>
                             <p>
-                              Gempa: daftar BMKG M5+ dalam 7 hari terakhir di Indonesia. Tidak
-                              mencakup seluruh gempa atau menunjukkan radius dampak.
+                              Gempa: {hazardData?.quake_feed === "bmkg_web"
+                                ? "hingga 30 kejadian M5,0+ dari daftar nasional BMKG"
+                                : hazardData?.quake_feed === "bmkg_json"
+                                  ? "hingga 15 kejadian M5,0+ dari umpan BMKG"
+                                  : "catatan BMKG M5,0+ dalam 7 hari terakhir"}. Pin menandai episenter, lingkaran menunjukkan jumlah gempa berdekatan.
                             </p>
                             <p>Diperiksa {dateLabel(dashboard.data?.refreshed_at)}</p>
                             <p>Perbesar dengan mencubit layar, klik dua kali, atau tekan +/− saat peta terfokus.</p>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CircleAlert, CircleCheck, LoaderCircle, Mail } from "lucide-react";
+import { ArrowRight, CircleAlert, CircleCheck, LoaderCircle, Mail } from "@/components/ui/aero-icons";
 import { ROUTES } from "@/lib/constants";
 import { apiRequest } from "@/services/api";
 import { getSupabase } from "@/services/supabase";

@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown } from "@/components/ui/aero-icons";
 import { NearbyAlerts } from "@/components/live/NearbyAlerts";
 import { WhatsAppSettings } from "@/components/live/WhatsAppSettings";
 import { useAuth } from "@/hooks/useAuth";

@@ -2,15 +2,16 @@ import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { formatQuakeMagnitude, formatQuakeRegion, formatQuakeTime, sensorSummary } from "@/lib/environment-presentation";
 import { NodeStatus } from "./NodeStatus";
 import { NodeReadings } from "./NodeReadings";
-import { earthquakeIcon, mapIcon } from "./map-icons";
+import { earthquakeGroupIcon, earthquakeIcon, mapIcon } from "./map-icons";
 import { HeatField, HeatLegend, type HeatInfo, type HeatScope } from "./HeatField";
 import type { HeatLayerKey } from "./heat-layers";
 import { DeviceLocation } from "./DeviceLocation";
 import { Link } from "react-router-dom";
 import type { GeoPoint } from "@/lib/nearby-nodes";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "@/components/ui/aero-icons";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useRef, useState } from "react";
-import type { Hazards } from "@/types/weather.types";
+import type { Hazards, Quake } from "@/types/weather.types";
 import {
   MapContainer,
   TileLayer,
@@ -96,9 +97,24 @@ function HazardMarkers({
   data: Hazards | null;
   showCyclones: boolean;
 }) {
-  const quakes = (data?.quakes ?? []).filter(
-    (q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude),
-  );
+  const [selectedGroup, setSelectedGroup] = useState<Quake[] | null>(null);
+  const groupTrigger = useRef<HTMLElement | null>(null);
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+  useEffect(() => {
+    const syncZoom = () => setZoom(map.getZoom());
+    map.on("zoomend", syncZoom);
+    syncZoom();
+    return () => { map.off("zoomend", syncZoom); };
+  }, [map]);
+  const groups: { quakes: Quake[]; x: number; y: number }[] = [];
+  for (const quake of data?.national_quakes ?? data?.quakes ?? []) {
+    if (!Number.isFinite(quake.latitude) || !Number.isFinite(quake.longitude)) continue;
+    const { x, y } = map.project([quake.latitude, quake.longitude], zoom);
+    const group = groups.find((spot) => Math.abs(spot.x - x) < 36 && Math.abs(spot.y - y) < 42);
+    if (group) group.quakes.push(quake);
+    else groups.push({ quakes: [quake], x, y });
+  }
   return (
     <>
       {showCyclones &&
@@ -120,17 +136,65 @@ function HazardMarkers({
             </Tooltip>
           </Circle>
         ))}
-      {quakes.map((q) => (
-        <EarthquakeMarker
-          key={q.id}
-          position={[q.latitude, q.longitude]}
-          place={q.region}
-          magnitude={q.magnitude}
-          depth={q.depth}
-          time={q.time}
-          potential={q.potential}
-        />
-      ))}
+      {groups.map(({ quakes }) => {
+        const [first] = quakes;
+        const position: [number, number] = [first.latitude, first.longitude];
+        if (quakes.length === 1) {
+          return (
+            <EarthquakeMarker
+              key={first.id}
+              position={position}
+              place={first.region}
+              magnitude={first.magnitude}
+              depth={first.depth}
+              time={first.time}
+              potential={first.potential}
+            />
+          );
+        }
+        const title = `${quakes.length} gempa berdekatan`;
+        return (
+          <Marker
+            key={first.id + "-group"}
+            position={position}
+            icon={earthquakeGroupIcon(quakes.length)}
+            title={title}
+            alt={title}
+            eventHandlers={{
+              click: (event) => {
+                groupTrigger.current = event.target.getElement();
+                setSelectedGroup(quakes);
+              },
+            }}
+          />
+        );
+      })}
+      <Dialog open={selectedGroup !== null} onOpenChange={(open) => { if (!open) setSelectedGroup(null); }}>
+        <DialogContent
+          className="quake-group-dialog"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            groupTrigger.current?.focus();
+          }}
+        >
+          <DialogTitle>{selectedGroup?.length} gempa berdekatan</DialogTitle>
+          <DialogDescription>Gempa M5,0+ dari BMKG</DialogDescription>
+          <ol className="quake-group-list">
+            {selectedGroup?.map((q) => (
+              <li key={q.id}>
+                <details>
+                  <summary>M {formatQuakeMagnitude(q.magnitude)} · {formatQuakeRegion(q.region)}</summary>
+                  <p>{formatQuakeTime(q.time)}{q.depth && ` · Kedalaman ${q.depth}`}</p>
+                  {q.potential && <p>{q.potential}</p>}
+                </details>
+              </li>
+            ))}
+          </ol>
+          <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
+            Data BMKG <ArrowUpRight size={15} />
+          </a>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -265,7 +329,7 @@ export function LiveMap({
   const [devicePoint, setDevicePoint] = useState<GeoPoint | null>(null);
   const [heatInfo, setHeatInfo] = useState<{ layer: HeatLayerKey; data: HeatInfo } | null>(null);
   const [heatScope, setHeatScope] = useState<HeatScope>("detail");
-  const hazardPoints = (hazards?.quakes || [])
+  const hazardPoints = (hazards?.national_quakes ?? hazards?.quakes ?? [])
     .filter((q) => Number.isFinite(q.latitude) && Number.isFinite(q.longitude))
     .map((q) => ({ latitude: q.latitude, longitude: q.longitude }) as EnvironmentEvent);
   const locationPoint = userLocation || devicePoint;

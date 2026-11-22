@@ -16,7 +16,7 @@ import {
   RefreshCw,
   Square,
   Volume2,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { conditionArtUrl } from "@/lib/condition-art";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";

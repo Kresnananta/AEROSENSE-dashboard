@@ -173,6 +173,19 @@
   background: none;
 }
 
+.landing-hero-art::before {
+  position: absolute;
+  inset: -6% 0;
+  z-index: -1;
+  content: "";
+  background: radial-gradient(ellipse at 50% 47%, oklch(99% .024 122 / .9), oklch(94% .069 180 / .5) 29%, transparent 67%);
+  pointer-events: none;
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+  .landing-hero-art::before { content: none; }
+}
+
 .landing-page .landing-hero-mascot {
   position: absolute;
   inset: 0;

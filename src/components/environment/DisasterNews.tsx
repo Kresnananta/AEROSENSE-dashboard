@@ -8,7 +8,7 @@ import {
   Mountain,
   HeartHandshake,
   RefreshCw,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { dateLabel } from "@/types/live.types";

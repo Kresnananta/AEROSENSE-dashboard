@@ -88,7 +88,7 @@ AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The
 
 ## 6. Uniform Icon System
 
-- **Library**: `lucide-react` exclusively for all interface icons (plus matching custom map glyphs in `MapSymbol`).
+- **Icon set**: AEROSENSE interface icons use a shared 24 × 24 grid. Weather and hazard icons carry the same shapes on the Hub, news cards, and map legend.
 - **Stroke geometry**: Controls and map glyphs use round caps and joins with a 1.75 stroke. Primary and selected controls use a 2 stroke. The official AEROSENSE mark and wordmark typography carry the brand across the header, sidebar, and account pages.
 - **No decorative clutter**: Do not use emojis as UI icons, decorative sparkle clusters, or glowing/pulsing status dots.
 

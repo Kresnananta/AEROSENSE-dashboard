@@ -19,7 +19,7 @@
   border: 0;
 }
 .map-pin {
-  --pin-color: #195fae;
+  --pin-color: var(--aero-cobalt);
   display: block;
   flex: none;
   width: 36px;
@@ -41,8 +41,41 @@
 .map-pin.is-active .map-pin-shape { stroke-width: 2.3; }
 .sensor-pin-mark { filter: brightness(0) invert(1); }
 .map-pin.pin-watersense { --pin-color: #087367; }
-.map-pin.pin-fire { --pin-color: var(--aero-amber-ink); }
-.map-pin.pin-earthquake { --pin-color: var(--aero-red-ink); }
+.map-pin.pin-fire { --pin-color: oklch(51% .153 53); }
+.map-pin.pin-earthquake { --pin-color: oklch(48% .194 23); }
+.map-quake-group {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--pin-color);
+  box-shadow: 0 2px 4px rgb(21 44 66 / .24);
+  font-size: .875rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.quake-group-dialog[data-slot="dialog-content"] {
+  max-inline-size: 450px;
+  border-color: var(--aero-glass-rim);
+  border-radius: var(--aero-frame);
+}
+.quake-group-dialog > a { justify-self: start; min-block-size: 44px; }
+.quake-group-list {
+  max-block-size: min(320px, 48dvh);
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+.quake-group-list li { border-block-start: 1px solid var(--border); }
+.quake-group-list summary {
+  align-content: center;
+  min-block-size: 44px;
+  padding: 8px 2px;
+  cursor: pointer;
+}
+.quake-group-list p { margin-block: 2px 6px; color: var(--muted-foreground); font-size: .875rem; }
 .map-quake-number {
   fill: currentColor;
   font-size: 11px;

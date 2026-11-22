@@ -16,7 +16,7 @@ import {
   Settings,
   Settings2,
   UserRound,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 const ICONS: Record<string, React.ElementType> = {
   LayoutGrid,
   Map,

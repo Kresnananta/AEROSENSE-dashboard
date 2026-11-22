@@ -7,14 +7,14 @@
   --popover: oklch(99.5% .004 243);
   --popover-foreground: var(--foreground);
   --muted: oklch(95.5% .024 246);
-  --muted-foreground: oklch(43% .077 246);
+  --muted-foreground: oklch(39% .081 248);
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
   --primary: oklch(52% .194 255);
   --ring: oklch(53% .196 255);
-  --accent: oklch(93% .041 248);
+  --accent: oklch(91% .063 249);
   --accent-foreground: oklch(42% .149 254);
-  --border: oklch(37% .077 247 / .17);
+  --border: oklch(37% .077 247 / .22);
   --input: oklch(37% .077 247 / .25);
   --sidebar: oklch(98.5% .011 241);
   --sidebar-foreground: var(--muted-foreground);
@@ -99,7 +99,7 @@ body {
 .app-shell .app-topbar,
 .app-shell .environment-hub > .environment-nav,
 .monitoring-options[data-slot="select-content"],
-:is(.wx-detail, .wa-start-dialog, .role-dialog)[data-slot="dialog-content"],
+:is(.wx-detail, .wa-start-dialog, .role-dialog, .quake-group-dialog)[data-slot="dialog-content"],
 dialog.role-dialog {
   background: var(--popover);
   border-color: var(--border);
@@ -132,7 +132,7 @@ dialog.role-dialog {
       box-shadow: inset 0 1px oklch(100% 0 0 / .8), var(--aero-depth);
     }
     .monitoring-options[data-slot="select-content"],
-    :is(.wx-detail, .wa-start-dialog, .role-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+    :is(.wx-detail, .wa-start-dialog, .role-dialog, .quake-group-dialog)[data-slot="dialog-content"], dialog.role-dialog {
       background: var(--aero-material-raised);
       backdrop-filter: blur(14px) saturate(125%);
       box-shadow: var(--aero-depth);
@@ -152,7 +152,7 @@ dialog.role-dialog {
   }
   .app-shell .app-topbar, .app-shell .environment-hub > .environment-nav,
   .monitoring-options[data-slot="select-content"],
-  .wa-start-dialog, .wx-detail, dialog.role-dialog {
+  .wa-start-dialog, .wx-detail, .quake-group-dialog, dialog.role-dialog {
     background: var(--popover);
     backdrop-filter: none;
   }
@@ -216,7 +216,7 @@ dialog.role-dialog {
 .app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
 .landing-hero-stage, .login-story { color-scheme: light; }
 
-svg.lucide, .map-pin-glyph {
+svg.aero-icon, .map-pin-glyph {
   stroke-width: var(--aero-icon-stroke, 1.75);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -478,7 +478,7 @@ svg.lucide, .map-pin-glyph {
   border-radius: var(--aero-frame-control);
   text-decoration: none;
 }
-:is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+:is(.wx-detail, .wa-start-dialog, .quake-group-dialog)[data-slot="dialog-content"], dialog.role-dialog {
   max-block-size: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
   border-radius: var(--aero-frame);
   overflow-y: auto;
@@ -499,7 +499,11 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 .app-shell :is(.disaster-filters, .nearby-radius > div) button {
   border-radius: calc(var(--frame-radius) - var(--frame-inset));
 }
-.app-shell .environment-nav .insight-topics button[aria-pressed="true"] { --aero-icon-stroke: 2; }
+.app-shell .environment-nav .insight-topics button[aria-pressed="true"] {
+  --aero-icon-stroke: 2;
+  background: var(--aero-cobalt);
+  color: white;
+}
 
 .app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
 .landing-page :is(.landing-section-heading h2, .landing-workflow h2),

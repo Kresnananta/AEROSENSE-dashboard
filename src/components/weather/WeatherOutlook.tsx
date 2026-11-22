@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Activity,
   ArrowUpRight,
   CloudLightning,
   CloudRainWind,
   CloudSnow,
   CloudOff,
   Clock3,
+  ChevronDown,
   ChevronRight,
   Droplets,
   Map as MapIcon,
@@ -14,11 +16,10 @@ import {
   Thermometer,
   Tornado,
   Umbrella,
-  Waves,
   Wind,
   X,
-  type LucideIcon,
-} from "lucide-react";
+  type AeroIcon,
+} from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
@@ -35,7 +36,7 @@ import {
   type DayPeriod,
 } from "@/lib/time-of-day";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from "@/types/weather.types";
+import type { WeatherOutlook as Outlook, Hazards, Quake, WeatherDay, WeatherHour } from "@/types/weather.types";
 import "@/styles/weather.css";
 
 function weatherPeriod(weather: WeatherDay | WeatherHour | Outlook["current"], fallback: DayPeriod): DayPeriod {
@@ -93,7 +94,7 @@ function WeatherArt({
     />
   );
 }
-const ALERT_ICON: Record<string, LucideIcon> = {
+const ALERT_ICON: Record<string, AeroIcon> = {
   thunder: CloudLightning,
   heavy_rain: CloudRainWind,
   wind: Wind,
@@ -449,38 +450,56 @@ function RainTimes({ hours }: { hours: WeatherHour[] }) {
 }
 
 function HazardList({ hazards }: { hazards: Hazards | null }) {
-  const quakeData = hazards?.quakes ?? null;
+  const quakes = hazards?.national_quakes ?? hazards?.quakes ?? [];
   const cyclones = hazards?.cyclones ?? null;
-  const quakes = [...(quakeData ?? [])].sort((a, b) => b.magnitude - a.magnitude).slice(0, 3);
+  const hasQuakeData = Array.isArray(hazards?.national_quakes ?? hazards?.quakes);
+  const scope = hazards?.quake_feed === "bmkg_web"
+    ? "Daftar nasional"
+    : hazards?.quake_feed === "bmkg_json"
+      ? "Umpan cadangan BMKG"
+      : "7 hari terakhir";
   const allQuakesWithoutTsunami = quakes.length > 0 && quakes.every(
     (q) => /^tidak berpotensi tsunami[.!]?$/i.test(q.potential?.trim() ?? ""),
   );
+  const renderQuake = (quake: Quake) => {
+    const location = formatQuakeRegion(quake.region || "");
+    const when = formatQuakeTime(quake.time);
+    const magnitude = formatQuakeMagnitude(quake.magnitude);
+    return (
+      <li key={quake.id} className="wx-quake">
+        <div className="wx-quake-content">
+          <strong>{location || "Lokasi belum tersedia"}</strong>
+          <div className="wx-quake-meta">
+            {when && <time dateTime={quake.time}>{when}</time>}
+            {quake.depth && <span>Kedalaman {quake.depth}</span>}
+          </div>
+          {!allQuakesWithoutTsunami && quake.potential && <p>{quake.potential}</p>}
+        </div>
+        {magnitude && <span className="wx-magnitude">M {magnitude}</span>}
+      </li>
+    );
+  };
   return (
     <div className="wx-panel wx-hazard-panel">
-      <h3>Gempa M5+ · BMKG</h3>
+      <header className="wx-quake-heading">
+        <Activity size={22} />
+        <div>
+          <h3>Gempa M5,0+ · BMKG</h3>
+          {hasQuakeData && <p>{quakes.length} kejadian · {scope}</p>}
+        </div>
+      </header>
       <ul className="wx-hazards">
-        {quakeData === null && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Data gempa belum tersedia.</span></li>}
-        {quakeData?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ di data terbaru.</span></li>}
-        {quakes.map((q) => {
-          const location = formatQuakeRegion(q.region || "");
-          const when = formatQuakeTime(q.time);
-          const magnitude = formatQuakeMagnitude(q.magnitude);
-          return (
-            <li key={q.id} className="wx-quake">
-              <div className="wx-quake-content">
-                <strong>{location || "Lokasi belum tersedia"}</strong>
-                <div className="wx-quake-meta">
-                  {when && <time dateTime={q.time}>{when}</time>}
-                  {q.depth && <span>Kedalaman {q.depth}</span>}
-                </div>
-                {!allQuakesWithoutTsunami && q.potential && <p>{q.potential}</p>}
-              </div>
-              {magnitude && <span className="wx-magnitude">M {magnitude}</span>}
-            </li>
-          );
-        })}
+        {!hasQuakeData && <li className="is-muted">Data gempa belum tersedia.</li>}
+        {hasQuakeData && quakes.length === 0 && <li className="is-muted">Belum ada gempa M5,0+ dalam daftar ini.</li>}
+        {quakes.slice(0, 3).map(renderQuake)}
       </ul>
-      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Seluruh gempa di atas tidak berpotensi tsunami.</p>}
+      {quakes.length > 3 && (
+        <details className="wx-quake-more">
+          <summary>Lihat {quakes.length - 3} gempa lainnya <ChevronDown size={16} /></summary>
+          <ul className="wx-hazards">{quakes.slice(3).map(renderQuake)}</ul>
+        </details>
+      )}
+      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Menurut BMKG, seluruh kejadian dalam daftar ini tidak berpotensi tsunami.</p>}
       <div className="wx-foot">
         <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
           Data BMKG <ArrowUpRight size={15} aria-hidden="true" />

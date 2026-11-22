@@ -12,7 +12,7 @@ import {
   Settings2,
   LockKeyhole,
   FileSpreadsheet,
-} from "lucide-react";
+} from "@/components/ui/aero-icons";
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { useAuth } from "@/hooks/useAuth";
 import "@/styles/landing.css";

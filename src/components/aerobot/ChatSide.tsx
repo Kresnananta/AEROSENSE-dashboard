@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, Hand, MapPin } from "lucide-react";
+import { ArrowUpRight, Hand, MapPin } from "@/components/ui/aero-icons";
 import { Link } from "react-router-dom";
 import { AeroMascot, GREETING_MS, type MascotPose } from "@/components/environment/AeroMascot";
 import type { LiveNode } from "@/types/live.types";

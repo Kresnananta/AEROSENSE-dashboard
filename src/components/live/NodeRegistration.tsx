@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import "./node-registration.css";

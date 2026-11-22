@@ -1,4 +1,4 @@
-import { CheckCircle2, TriangleAlert, OctagonAlert, Clock3 } from "lucide-react";
+import { CheckCircle2, TriangleAlert, OctagonAlert, Clock3 } from "@/components/ui/aero-icons";
 import { sensorSummary } from "@/lib/environment-presentation";
 import type { LiveNode } from "@/types/live.types";
 
