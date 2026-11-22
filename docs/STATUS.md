@@ -6,6 +6,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 
 - Halaman utama memakai foto lanskap [Clouds in the sky landscape](https://commons.wikimedia.org/wiki/File:Clouds_in_the_sky_landscape.jpg) oleh Aammell (CC0), dengan rona biru dan garis kontur dekoratif. Foto tidak mewakili kondisi live. Ilustrasi memudar ke latar bagian fitur; awan yang melintasi matahari dihapus hanya dari skyline landing.
 
+- Ilustrasi Cara kerja memudar ke latar di desktop. Di ponsel, daftar langkah langsung mengikuti pengantar. Tata letak diperiksa di Chrome pada lebar 390, 820, 900, dan 1440 px.
 - Gradasi biru dan batas alfa dipakai di beranda, dasbor, Hub Lingkungan, AERO-BOT, dan alur akun. Langit dan garis kontur dipakai di sekitar panel fitur, prakiraan, dan peta. Legenda, kontrol lokasi, dan pop-up peta memakai permukaan kaca dengan cadangan solid. Warna skala model tetap melekat pada data peta.
 - Tampilan diperiksa di Chrome pada lebar 390 dan 1440 px. Pemeriksaan mencakup menu beranda, formulir akun, chat, kelola kawasan, dialog prakiraan, dan pembacaan titik peta. Kontrol kembali solid dalam mode kontras tinggi.
 

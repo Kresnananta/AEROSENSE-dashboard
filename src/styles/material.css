@@ -487,10 +487,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
       url("../assets/images/land-contours.svg") right 46% / min(31rem, 64%) auto no-repeat,
       var(--aero-material);
   }
-  .landing-page .landing-workflow-intro {
-    padding-block-end: clamp(48px, 8vw, 114px);
-    background: var(--aero-landscape) right bottom / min(28rem, 100%) auto no-repeat;
-  }
 }
 
 .landing-page .landing-hero-stage {

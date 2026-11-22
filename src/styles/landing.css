@@ -390,6 +390,28 @@
   align-items: start;
   padding-bottom: var(--landing-section-gap);
 }
+@media (min-width: 900px) and (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+  @supports (mask-image: radial-gradient(black, transparent)) {
+    .landing-workflow-intro {
+      position: relative;
+    }
+
+    .landing-workflow-intro::after {
+      content: "";
+      position: absolute;
+      inset-block-start: calc(100% + 8px);
+      inset-inline-start: 0;
+      width: min(100%, 26rem);
+      aspect-ratio: 32 / 15;
+      background: var(--aero-landscape) center / contain no-repeat;
+      mask-image: linear-gradient(to right, transparent 10%, black 52% 76%, transparent),
+        linear-gradient(to bottom, black 68%, transparent);
+      mask-composite: intersect;
+      pointer-events: none;
+    }
+  }
+}
+
 .landing-workflow-steps {
   list-style: none;
   margin: 0;
