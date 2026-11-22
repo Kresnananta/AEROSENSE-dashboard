@@ -436,7 +436,14 @@ svg.aero-icon, .map-pin-glyph {
   color: var(--accent-foreground);
   cursor: default;
 }
-.app-shell .chat-workspace .live-message:not(.user) { background: var(--muted); color: var(--foreground); }
+.app-shell .chat-workspace .live-message:not(.user) {
+  background: var(--accent);
+  color: var(--foreground);
+}
+.app-shell .chat-workspace .live-message.user {
+  background: var(--aero-lime-soft);
+  color: var(--aero-lime-ink);
+}
 .app-shell .chat-workspace :is(.chat-progress, .chat-note) { color: var(--muted-foreground); }
 .login-page :is(.register-select, .register-note) { background: var(--card); border-color: var(--input); }
 .login-page :is(.auth-result, .login-form-panel) p { color: var(--muted-foreground); }
