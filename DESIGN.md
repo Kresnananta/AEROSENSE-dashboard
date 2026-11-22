@@ -10,7 +10,7 @@ AEROSENSE is a public and operational environmental observatory for Indonesian c
 
 ## 2. Color System
 
-The palette uses AEROSENSE's signature airy sky-blue canvas, crisp white data sheets, deep maritime ink, and a single disciplined cobalt accent. **Lavender, violet, and purple hues are strictly forbidden across all surfaces, badges, illustrations, and charts.**
+The palette uses AEROSENSE's signature airy sky-blue canvas, crisp white data sheets, deep maritime ink, and cobalt for navigation. Saturated gold lifts the main action within a page or section. **Lavender, violet, and purple hues are strictly forbidden across all surfaces, badges, illustrations, and charts.**
 
 ### Core Tokens
 
@@ -25,6 +25,7 @@ The palette uses AEROSENSE's signature airy sky-blue canvas, crisp white data sh
 | Heading blue | `--aero-heading` | `oklch(39% .133 253)` | Page titles, section headings, and forecast values |
 | Secondary ink | `--aero-muted` | `oklch(43% .077 246)` | Descriptions, metadata, and timestamps |
 | Primary accent | `--aero-blue` | `#0868DC` | Primary actions, links, active navigation state |
+| Featured action | `--aero-focus-gold` | `oklch(86% .172 87)` | Main landing, sensor detail, forecast, account and chat actions with dark ink |
 | Primary accent hover | `--aero-blue-hover` | `#0758BE` | Hover and active feedback for primary actions |
 | Accent tint | `--accent` | `#E7F2FF` | Active sidebar item and selected option surface |
 

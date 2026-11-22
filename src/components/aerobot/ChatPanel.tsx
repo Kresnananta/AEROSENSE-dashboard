@@ -603,7 +603,7 @@ export function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             maxLength={2000}
             disabled={isLoading || busy || !!pending || voice.recording || voice.transcribing}
-            placeholder="Tanyakan tentang lingkungan…"
+            placeholder="Tulis pertanyaan Anda…"
             autoComplete="off"
           />
           {voice.configured && (
@@ -634,6 +634,8 @@ export function ChatPanel() {
             </button>
           )}
           <button
+            type="submit"
+            className="chat-send"
             aria-label="Kirim pesan"
             title="Kirim pesan"
             disabled={
@@ -645,7 +647,8 @@ export function ChatPanel() {
               voice.transcribing
             }
           >
-            <ArrowUp size={18} />
+            <span>Kirim</span>
+            <ArrowUp size={18} aria-hidden="true" />
           </button>
         </form>
         {(voice.recording || voice.transcribing) && (

@@ -23,6 +23,10 @@
   --sidebar-border: var(--border);
   --aero-link: oklch(44% .161 254);
   --aero-heading: oklch(39% .133 253);
+  --aero-focus-gold: oklch(86% .172 87);
+  --aero-focus-gold-hover: oklch(82% .166 83);
+  --aero-focus-ink: oklch(24% .084 257);
+  --aero-cobalt: oklch(39% .162 264);
   --aero-amber-ink: oklch(46% .112 64);
   --aero-amber-soft: oklch(95% .065 86);
   --aero-red-ink: oklch(44% .152 22);
@@ -195,7 +199,7 @@ dialog.role-dialog {
 .app-shell :is(.chat-guest, .robot-mood-actions) a,
 .login-page :is(.login-back, .login-register a) { color: var(--aero-link); }
 .app-shell .nav-entry { color: var(--muted-foreground); }
-.app-shell .nav-entry.active { color: var(--accent-foreground); background: var(--accent); }
+.app-shell .nav-entry.active { color: white; background: var(--aero-cobalt); }
 .app-shell .nav-entry.active svg { color: currentColor; }
 .app-shell .app-topbar :is(.topbar-breadcrumb, .topbar-icon) { color: var(--muted-foreground); }
 .app-shell .app-topbar .topbar-breadcrumb strong { color: var(--aero-heading); }
@@ -394,15 +398,48 @@ svg.lucide, .map-pin-glyph {
   --frame-radius: 20px;
   --frame-inset: 6px;
   padding: var(--frame-inset);
+  border: 2px solid var(--ring);
   border-radius: var(--frame-radius);
-  background: var(--muted);
-  border-color: var(--input);
+  background: var(--card);
 }
-.app-shell .chat-workspace .live-chat > form:focus-within { border-color: var(--ring); background: var(--card); }
+.app-shell .chat-workspace .live-chat > form:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.app-shell .chat-workspace .live-chat > form:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.app-shell .chat-workspace .live-chat > form input:focus-visible { outline: none; }
 .app-shell .chat-workspace .live-chat > form button {
   border-radius: calc(var(--frame-radius) - var(--frame-inset));
 }
-.app-shell .chat-workspace .live-chat > form input { color: var(--foreground); }
+.app-shell .chat-workspace .live-chat > form input {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+.app-shell .chat-workspace .live-chat .chat-send {
+  display: inline-flex;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  min-width: 44px;
+  height: 44px;
+  padding-inline: 14px;
+  background: var(--primary);
+  color: white;
+  font-size: .875rem;
+  font-weight: 700;
+}
+.app-shell .chat-workspace .live-chat .chat-send:disabled {
+  background: var(--accent);
+  color: var(--accent-foreground);
+  cursor: default;
+}
+@media (max-width: 540px) {
+  .app-shell .chat-workspace .live-chat .chat-send { padding-inline: 10px; }
+  .chat-send span { display: none; }
+}
 .app-shell .chat-workspace .live-message:not(.user) { background: var(--muted); color: var(--foreground); }
 .app-shell .chat-workspace :is(.chat-progress, .chat-note) { color: var(--muted-foreground); }
 .login-page :is(.register-select, .register-note) { background: var(--card); border-color: var(--input); }
@@ -414,11 +451,37 @@ svg.lucide, .map-pin-glyph {
   --landing-blue: var(--primary);
 }
 .landing-page .landing-management {
-  background: var(--aero-sheet);
-  border-color: var(--aero-glass-rim);
+  background: var(--aero-cobalt);
+  border-color: transparent;
+  color: white;
 }
-.landing-page :is(.landing-management-link, .landing-management-details svg, .landing-workflow-steps li > span) {
-  color: var(--aero-link);
+.landing-page .landing-management :is(h2, .landing-management-link) { color: white; }
+.landing-page .landing-management :is(p, .landing-management-details span) { color: #e1edff; }
+.landing-page .landing-management .landing-management-details p { border-color: rgb(255 255 255 / .22); }
+.landing-page .landing-management :is(.landing-management-details svg, .landing-management-details strong) { color: var(--aero-focus-gold); }
+.landing-page .landing-workflow-steps li > span { color: var(--aero-link); }
+.landing-page .landing-management a:focus-visible { outline-color: white; }
+
+:is(.landing-page :is(.landing-hero, .landing-management) .landing-button, .login-page .login-submit,
+  .app-shell .sensor-overview .sensor-hero .panel-link,
+  .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
+  .app-shell .chat-workspace .live-chat .chat-send:not(:disabled)) {
+  background-color: var(--aero-focus-gold);
+  color: var(--aero-focus-ink);
+}
+:is(.landing-page :is(.landing-hero, .landing-management) .landing-button, .login-page .login-submit,
+  .app-shell .sensor-overview .sensor-hero .panel-link,
+  .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
+  .app-shell .chat-workspace .live-chat .chat-send):hover:not(:disabled) {
+  background-color: var(--aero-focus-gold-hover);
+}
+.app-shell .sensor-overview .sensor-node-controls .panel-link,
+.app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link {
+  min-height: 44px;
+  width: fit-content;
+  padding-inline: 14px;
+  border-radius: var(--aero-frame-control);
+  text-decoration: none;
 }
 :is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
   max-block-size: calc(100dvh - max(24px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
@@ -444,7 +507,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 .app-shell .environment-nav .insight-topics button[aria-pressed="true"] { --aero-icon-stroke: 2; }
 
 .app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
-.landing-page :is(.landing-section-heading h2, .landing-workflow h2, .landing-management h2),
+.landing-page :is(.landing-section-heading h2, .landing-workflow h2),
 .login-page .login-form-inner h1 { color: var(--aero-heading); }
 .app-shell :is(.live-state strong, .disaster-card h3) { color: var(--foreground); }
 .app-shell :is(.page-heading p, .disaster-heading p, .live-state p) { color: var(--muted-foreground); }
