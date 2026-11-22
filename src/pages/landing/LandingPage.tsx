@@ -98,7 +98,7 @@ export function LandingPage() {
         </header>
         <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
-            <h1>Kenali <span>udara dan cuaca</span> di sekitar Anda.</h1>
+            <h1>Kenali <span>udara dan lingkungan</span> di sekitar Anda.</h1>
             <p>
               Lihat pembacaan dari titik sensor, prakiraan hujan, dan peringatan lingkungan.
             </p>

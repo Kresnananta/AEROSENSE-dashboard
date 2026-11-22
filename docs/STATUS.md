@@ -6,7 +6,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 
 - Halaman utama dan alur akun memakai ilustrasi lanskap pesisir Jawa Timur. Lanskap beranda memudar ke bagian fitur. Cahaya lembut di belakang maskot memperjelas siluetnya. Status cuaca tetap disampaikan lewat data dan ilustrasi kondisi pada Hub Lingkungan.
 
-- Beranda menautkan pembacaan sensor, prakiraan, peringatan, dan AERO-BOT langsung dari daftar fitur. Tautan navigasi desktop tampil langsung di atas langit. Tombol masuk berbentuk pil, dan menu ponsel terbuka di atas panel solid.
+- Judul beranda mengenalkan udara dan lingkungan sekitar. Beranda menautkan pembacaan sensor, prakiraan, peringatan, dan AERO-BOT langsung dari daftar fitur. Tautan navigasi desktop tampil langsung di atas langit. Tombol masuk berbentuk pil, dan menu ponsel terbuka di atas panel solid.
 - Ikon cuaca, kejadian, navigasi, dan formulir memakai set AEROSENSE dengan bidang dan ketebalan garis yang konsisten. Legenda peta memakai bentuk yang sama dengan ikon Hub. Beranda, navigasi, dan halaman akun memakai tanda merek yang sama.
 - Prakiraan berbagi permintaan untuk titik yang sama. Saat penyedia membatasi permintaan, API menunggu sebelum mencoba lagi dan dapat menampilkan prakiraan tersimpan hingga enam jam dengan waktu sumber yang jelas. Rilis memerlukan pembaruan API dan web.
 - Lapisan peta memakai satu kumpulan titik untuk cuaca dan satu untuk kualitas udara. Peta memakai ulang titik yang sama saat pengguna bergeser atau mengganti lapisan. Batas muatan peta menyisakan kuota Open-Meteo untuk prakiraan dan Hub.
