@@ -58,9 +58,10 @@ AEROSENSE uses a two-family pairing that combines geometric display warmth with 
 
 ## 4. Layout Primitive
 
-Every page repeats one architectural primitive: **the clean sky-bordered white panel with borderless tonal inner rows**.
+Pages share a blue canvas, translucent panel edges, and solid reading areas when information is dense.
 
-- **Outer panels**: `#FFFFFF` background, `1px solid var(--aero-rim)` (`#CDDFF0`) border, `22px` radius (`--aero-panel-radius`), no raised shadows or blur. Sticky navigation, menus, and dialogs use translucent surfaces with an opaque accessibility fallback.
+- **Outer panels**: Light blue gradient sheets with an alpha border and the shared panel radius. Tables, charts, and semantic data colors retain a stable reading surface.
+- **Frosted surfaces**: Sticky navigation, account forms, menus, and map overlays use layered blue tints and bounded blur. Reduced transparency and high contrast preferences use opaque surfaces.
 - **Illustrated hero frames**: `32px` radius (`--aero-hero-radius`) with time-matched 2D sky backdrops.
 - **Inner cards & controls**: `16px` card radius (`--aero-card-radius`), `14px` control radius (`--aero-control-radius`).
 - **Borderless tonal rows**: Items inside a panel (hazard lists, earthquake logs, weather alerts, status chips) use soft borderless tonal fills (`#F1F8FF`, `#EAF7F0`, `#FFF4DF`) without outer colored border outlines.
@@ -68,6 +69,8 @@ Every page repeats one architectural primitive: **the clean sky-bordered white p
 ## 5. Artwork and Time of Day (WIB / `Asia/Jakarta`)
 
 Use the original Pearl artwork for weather and environmental conditions, the original device illustration for sensor panels, and the Falcon poses for AERO-BOT. Weather artwork follows the forecast and the local time in WIB. Keep sky backgrounds quiet where text or data appears.
+
+Reuse the sunless sky along the landing and forecast panel edges. Use the terrain contours around map filters and regional summaries.
 
 | Period | WIB | Sky | Text |
 | --- | --- | --- | --- |
@@ -100,5 +103,5 @@ AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The
 2. No lavender, violet, or purple backgrounds, pills, gradients, or chart colors.
 3. No colored boxes with darker colored `1px` outer border outlines on badges, tags, or alerts.
 4. No duplicate moons or cropped moons in night sky headers.
-5. Keep reading cards opaque. Use frost on navigation and overlays, with higher opacity behind dialog text.
+5. Keep dense readings and semantic colors legible. Use higher opacity behind dialog text and map readouts.
 6. No glowing status dots, pulsing badges, or floating eyebrow pills above headings.

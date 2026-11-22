@@ -948,10 +948,6 @@ body:has(.login-page) {
   }
 }
 
-.landing-page {
-  background: var(--aero-canvas-soft);
-}
-
 .landing-page .landing-hero-stage {
   border-bottom: 1px solid var(--aero-rim);
   background: var(--aero-sensor-illustration);

@@ -6,7 +6,8 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 
 - Halaman utama memakai foto lanskap [Clouds in the sky landscape](https://commons.wikimedia.org/wiki/File:Clouds_in_the_sky_landscape.jpg) oleh Aammell (CC0), dengan rona biru dan garis kontur dekoratif. Foto tidak mewakili kondisi live. Ilustrasi memudar ke latar bagian fitur; awan yang melintasi matahari dihapus hanya dari skyline landing.
 
-- Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor selalu menggunakan tema terang. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor memakai jarak yang konsisten; jumlah node dan legenda dikelompokkan di bawah filter. Toolbar Hub Lingkungan memakai kaca saat menggulir dan kembali solid pada preferensi aksesibilitas.
+- Gradasi biru dan batas alfa dipakai di beranda, dasbor, Hub Lingkungan, AERO-BOT, dan alur akun. Langit dan garis kontur dipakai di sekitar panel fitur, prakiraan, dan peta. Legenda, kontrol lokasi, dan pop-up peta memakai permukaan kaca dengan cadangan solid. Warna skala model tetap melekat pada data peta.
+- Tampilan diperiksa di Chrome pada lebar 390 dan 1440 px. Pemeriksaan mencakup menu beranda, formulir akun, chat, kelola kawasan, dialog prakiraan, dan pembacaan titik peta. Kontrol kembali solid dalam mode kontras tinggi.
 
 - Kartu prakiraan per jam dan tujuh hari memakai proporsi potret dan ilustrasi yang lebih besar. Vinyet biru di tepi prakiraan, kategori Hub Lingkungan, dan daftar node muncul saat masih ada konten yang bisa digulir.
 - Bilah gulir halaman, prakiraan cuaca, navigasi, chat, dan tabel memakai warna biru yang sama. Seret, navigasi Tab, sapuan ponsel, dan mode kontras tinggi diuji di Chrome.

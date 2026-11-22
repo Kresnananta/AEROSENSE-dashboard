@@ -8,7 +8,7 @@
   --landing-muted: #3f5f79;
   --landing-blue: #0868dc;
   color: var(--landing-ink);
-  background: #eaf5ff;
+  background: var(--aero-atmosphere, #eaf5ff);
   min-height: 100dvh;
 }
 .landing-container {
