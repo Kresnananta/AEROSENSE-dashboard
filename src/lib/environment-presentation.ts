@@ -70,6 +70,7 @@ const REGION_EXPAND: Record<string, string> = {
   SULTRA: "Sulawesi Tenggara",
   SULBAR: "Sulawesi Barat",
   MALUT: "Maluku Utara",
+  MALUKUBRTDAYA: "Maluku Barat Daya",
   PAPUABRT: "Papua Barat",
   BABEL: "Bangka Belitung",
   KEPRI: "Kepulauan Riau",

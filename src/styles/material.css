@@ -1,13 +1,13 @@
 :root {
   color-scheme: only light;
   --background: oklch(96% .022 242);
-  --foreground: oklch(28% .062 251);
+  --foreground: oklch(30% .089 251);
   --card: oklch(99.5% .004 243);
   --card-foreground: var(--foreground);
   --popover: oklch(99.5% .004 243);
   --popover-foreground: var(--foreground);
   --muted: oklch(95.5% .024 246);
-  --muted-foreground: oklch(44% .059 244);
+  --muted-foreground: oklch(43% .077 246);
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
   --primary: oklch(52% .194 255);
@@ -22,8 +22,9 @@
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --aero-link: oklch(44% .161 254);
-  --aero-material: oklch(99.5% .007 240 / .83);
-  --aero-material-raised: oklch(99.5% .007 240 / .91);
+  --aero-heading: oklch(39% .133 253);
+  --aero-material: oklch(98% .016 237 / .62);
+  --aero-material-raised: oklch(99.3% .007 240 / .81);
   --aero-depth: 0 8px 24px oklch(33% .05 248 / .07);
   --aero-frame: 24px;
   --aero-frame-hero: 32px;
@@ -80,17 +81,17 @@ dialog.role-dialog {
 
 @supports (backdrop-filter: blur(12px)) {
   @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) {
-    .app-shell .app-topbar { background: var(--aero-material); backdrop-filter: blur(14px) saturate(140%); }
+    .app-shell .app-topbar { background: var(--aero-material); backdrop-filter: blur(12px) saturate(140%); }
     .app-shell .environment-hub > .environment-nav {
-      background: oklch(98% .018 237 / .65);
+      background: var(--aero-material);
       border-color: oklch(65% .055 246 / .36);
-      backdrop-filter: blur(22px) saturate(155%);
+      backdrop-filter: blur(12px) saturate(150%);
       box-shadow: inset 0 1px oklch(100% 0 0 / .8), var(--aero-depth);
     }
     .monitoring-options[data-slot="select-content"],
-    :is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
+    :is(.wx-detail, .wa-start-dialog, .role-dialog)[data-slot="dialog-content"], dialog.role-dialog {
       background: var(--aero-material-raised);
-      backdrop-filter: blur(20px) saturate(125%);
+      backdrop-filter: blur(14px) saturate(125%);
       box-shadow: var(--aero-depth);
     }
   }
@@ -120,9 +121,10 @@ dialog.role-dialog {
   border-color: var(--border);
 }
 .app-shell .wx-panel { --frame-inset: 16px; padding: var(--frame-inset); }
+.app-shell .wx-panel.wx-hazard-panel { --frame-inset: clamp(16px, 2vw, 24px); }
 .app-shell .wx-panel :is(.wx-card, .disaster-card) { border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset))); }
 .app-shell .chat-workspace .live-chat > header { background: var(--muted); border-color: var(--border); }
-.app-shell .chat-workspace .live-chat > header :is(strong, small), .app-shell .wx-panel h3 { color: var(--foreground); }
+.app-shell .chat-workspace .live-chat > header :is(strong, small) { color: var(--foreground); }
 .app-shell .chat-workspace .chat-welcome .chat-suggestions button,
 .app-shell .chat-workspace .chat-guest, .app-shell .chat-workspace .chat-scope,
 .app-shell .robot-mood-greet,
@@ -136,16 +138,15 @@ dialog.role-dialog {
 .app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
 .app-shell :is(.nav-group > p, .sidebar-account small, .chat-scope summary, .robot-mood-reading),
 .login-page :is(label, legend, .register-hint, .login-register) { color: var(--muted-foreground); }
-.app-shell .wx-panel .wx-day-temp strong,
-.app-shell :is(.sidebar-account strong, .chat-welcome h2, .live-heading h1, .insights-heading h1),
-.login-page :is(.login-form-inner h1, .login-input input, .register-select, .register-note) { color: var(--foreground); }
+.app-shell .sidebar-account strong,
+.login-page :is(.login-input input, .register-select, .register-note) { color: var(--foreground); }
 .app-shell :is(.chat-guest, .robot-mood-actions) a,
 .login-page :is(.login-back, .login-register a) { color: var(--aero-link); }
 .app-shell .nav-entry { color: var(--muted-foreground); }
 .app-shell .nav-entry.active { color: var(--accent-foreground); background: var(--accent); }
 .app-shell .nav-entry.active svg { color: currentColor; }
 .app-shell .app-topbar :is(.topbar-breadcrumb, .topbar-icon) { color: var(--muted-foreground); }
-.app-shell .app-topbar .topbar-breadcrumb strong { color: var(--foreground); }
+.app-shell .app-topbar .topbar-breadcrumb strong { color: var(--aero-heading); }
 .app-shell .app-topbar :is(.account-link, .topbar-icon:hover) { color: var(--aero-link); background: var(--muted); border-color: var(--border); }
 .app-shell :is(.sensor-hero, .insight-lead, .wx-today, .aero-assist, .robot-mood-scene),
 .landing-hero-stage, .login-story { color-scheme: light; }
@@ -246,7 +247,10 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 .app-shell .environment-nav .insight-topics button[aria-pressed="true"] svg.lucide { stroke-width: 2; }
 
-.app-shell :is(.page-heading h1, .disaster-heading h2, .live-state strong, .disaster-card h3) { color: var(--foreground); }
+.app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
+.landing-page :is(.landing-section-heading h2, .landing-feature-detail h3, .landing-workflow h2, .landing-management h2),
+.login-page .login-form-inner h1 { color: var(--aero-heading); }
+.app-shell :is(.live-state strong, .disaster-card h3) { color: var(--foreground); }
 .app-shell :is(.page-heading p, .disaster-heading p, .live-state p) { color: var(--muted-foreground); }
 .app-shell :is(.disaster-filters button[aria-pressed="false"], .disaster-card a, .disaster-heading a) { color: var(--aero-link); }
 .app-shell .disaster-section, .app-shell .sidebar-account { border-color: var(--border); }

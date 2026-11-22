@@ -256,7 +256,7 @@ export function WeatherOutlook({
                     <button type="button" className={`wx-card tone-${d.icon}`}
                       data-day-period={i === 0 ? weatherPeriod(o.current ?? d, dayPeriod) : "day"} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
                       <span className="wx-day-name">{dayName(d.date, i)}</span>
-                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={128} />
+                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={208} />
                       <span className="wx-day-label">{d.label}</span>
                       <span className="wx-day-temp">
                         <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
@@ -342,7 +342,7 @@ function HourCards({ hours, onSelect }: {
                   <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
                 )}
               </span>
-              <WeatherArt weather={h} size={128} />
+              <WeatherArt weather={h} size={208} />
               <span className="wx-day-label">{h.label}</span>
               <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
               <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>

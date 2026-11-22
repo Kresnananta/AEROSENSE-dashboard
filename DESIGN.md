@@ -21,8 +21,9 @@ The palette uses AEROSENSE's signature airy sky-blue canvas, crisp white data sh
 | Primary sheet | `--aero-surface` | `#FFFFFF` | Main content panels and data sheets |
 | Sidebar surface | `--sidebar` | `#F8FCFF` | Navigation sidebar |
 | Structural hairline | `--aero-rim` | `#CDDFF0` | `1px` panel borders |
-| Primary ink | `--aero-ink` | `#102A47` | Headings, primary data values, active copy |
-| Secondary ink | `--aero-muted` | `#3F5F79` | Descriptions, metadata, timestamps (WCAG AA+) |
+| Primary ink | `--aero-ink` | `oklch(30% .089 251)` | Body text and primary data |
+| Heading blue | `--aero-heading` | `oklch(39% .133 253)` | Page titles, section headings, and forecast values |
+| Secondary ink | `--aero-muted` | `oklch(43% .077 246)` | Descriptions, metadata, and timestamps |
 | Primary accent | `--aero-blue` | `#0868DC` | Primary actions, links, active navigation state |
 | Primary accent hover | `--aero-blue-hover` | `#0758BE` | Hover and active feedback for primary actions |
 | Accent tint | `--accent` | `#E7F2FF` | Active sidebar item and selected option surface |
@@ -59,7 +60,7 @@ AEROSENSE uses a two-family pairing that combines geometric display warmth with 
 
 Every page repeats one architectural primitive: **the clean sky-bordered white panel with borderless tonal inner rows**.
 
-- **Outer panels**: `#FFFFFF` background, `1px solid var(--aero-rim)` (`#CDDFF0`) border, `22px` radius (`--aero-panel-radius`), no raised shadows or blur. The sticky top bar can use a lightly frosted surface with an opaque fallback.
+- **Outer panels**: `#FFFFFF` background, `1px solid var(--aero-rim)` (`#CDDFF0`) border, `22px` radius (`--aero-panel-radius`), no raised shadows or blur. Sticky navigation, menus, and dialogs use translucent surfaces with an opaque accessibility fallback.
 - **Illustrated hero frames**: `32px` radius (`--aero-hero-radius`) with time-matched 2D sky backdrops.
 - **Inner cards & controls**: `16px` card radius (`--aero-card-radius`), `14px` control radius (`--aero-control-radius`).
 - **Borderless tonal rows**: Items inside a panel (hazard lists, earthquake logs, weather alerts, status chips) use soft borderless tonal fills (`#F1F8FF`, `#EAF7F0`, `#FFF4DF`) without outer colored border outlines.
@@ -99,5 +100,5 @@ AERO-BOT uses its existing poses for each expression. Idle motion is subtle. The
 2. No lavender, violet, or purple backgrounds, pills, gradients, or chart colors.
 3. No colored boxes with darker colored `1px` outer border outlines on badges, tags, or alerts.
 4. No duplicate moons or cropped moons in night sky headers.
-5. Keep dialogs, cards, and reading surfaces opaque. Reserve blur for the sticky top bar.
+5. Keep reading cards opaque. Use frost on navigation and overlays, with higher opacity behind dialog text.
 6. No glowing status dots, pulsing badges, or floating eyebrow pills above headings.

@@ -268,6 +268,10 @@ test("temporary PM2.5-only status: judged on PM2.5 estimasi, a missing dust_ug_m
 
 test("formatQuakeRegion formats raw BMKG earthquake region strings cleanly", () => {
   assert.equal(
+    formatQuakeRegion("43 km BaratLaut MALUKUBRTDAYA"),
+    "43 km Barat Laut Maluku Barat Daya",
+  );
+  assert.equal(
     formatQuakeRegion("130 km BaratDaya MALUKUTENGGARA"),
     "130 km Barat Daya Maluku Tenggara",
   );
