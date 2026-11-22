@@ -341,7 +341,7 @@ export function LiveMap({
                 className: "map-location-dot",
                 color: "#fff",
                 weight: 3,
-                fillColor: "#076cfb",
+                fillColor: "#197dae",
                 fillOpacity: 1,
               }}
             >
@@ -406,7 +406,14 @@ export function LiveMap({
             icon={mapIcon("watersense", "watersense", point.id === focusedWatersense)}
             zIndexOffset={point.id === focusedWatersense ? 1500 : 500}
           >
-            <Tooltip direction="top">
+            <Tooltip
+              key={point.id === focusedWatersense ? "selected" : "preview"}
+              permanent={point.id === focusedWatersense}
+              direction="top"
+              offset={[0, -3]}
+              opacity={1}
+              className="node-focus-tooltip"
+            >
               {point.name}
             </Tooltip>
             <Popup className="node-reading-popup">

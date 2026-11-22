@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ImageOverlay, Marker, Pane, useMap } from "react-leaflet";
-import { divIcon, type LayerEvent, type Map as LeafletMap } from "leaflet";
+import { divIcon, Point, type LayerEvent, type Map as LeafletMap } from "leaflet";
 import { apiRequest } from "@/services/api";
 import { HEAT_LAYERS, type HeatLayerKey, type Stop } from "./heat-layers";
 
@@ -410,85 +410,139 @@ const clip = (b: {
   return s < n && w < e ? { s, w, n, e } : null;
 };
 
+type WeatherPoint = {
+  point: Point;
+  position: [number, number];
+  value: number;
+  band: number;
+  text: string;
+  cloud?: boolean;
+};
+
+function weatherRegions(map: LeafletMap, { g, v, uv }: Field, layer: HeatLayerKey) {
+  const { x: width, y: height } = map.getSize();
+  const stride = 16;
+  const origin = map.getPixelBounds().getTopLeft();
+  const startX = ((-origin.x % stride) + stride) % stride;
+  const startY = ((-origin.y % stride) + stride) % stride;
+  const cols = Math.ceil((width - startX) / stride);
+  const rows = Math.ceil((height - startY) / stride);
+  const cfg = HEAT_LAYERS[layer];
+  const cells = Array.from({ length: Math.max(0, cols * rows) }, (_, i): WeatherPoint | null => {
+    const point = new Point(startX + (i % cols) * stride, startY + Math.floor(i / cols) * stride);
+    const { lat, lng } = map.containerPointToLatLng(point);
+    const raw = sample(g, v, lat, lng, layer === "rain");
+    if (raw == null || !Number.isFinite(raw)) return null;
+    const value = layer === "temperature" ? raw : Math.max(0, raw);
+    const row = (lat - g.south) / g.step;
+    const col = (lng - g.west) / g.step;
+    const opacity = coverage(g, layer, value, row, col);
+    const position: [number, number] = [lat, lng];
+
+    if (layer === "cloud") {
+      if (coverage(g, layer, 100, row, col) < 0.12) return null;
+      const u = uv ? sample(g, uv.u, lat, lng) ?? 0 : 0;
+      const vv = uv ? sample(g, uv.v, lat, lng) ?? 0 : 0;
+      const speed = Math.round(Math.hypot(u, vv));
+      const cloud = opacity >= 0.12;
+      if (!cloud && speed < 3) return null;
+      const direction = speed ? " " + arrow(u, vv) : "";
+      const text = `${speed}${direction}${cloud ? " · " + cfg.format(Math.min(100, value)) : ""}`;
+      const band = cloud ? 100 + Math.round(value / 15) : Math.floor(speed / 8);
+      return { point, position, value, band, text, cloud };
+    }
+
+    if (opacity < 0.12) return null;
+    const band = layer === "rain"
+      ? HEAT_LAYERS.rain.stops.filter(([stop]) => value >= stop).length
+      : Math.round(value / (layer === "pm25" ? 5 : 1));
+    return { point, position, value, band, text: cfg.format(value) };
+  });
+
+  const regions: WeatherPoint[][] = [];
+  cells.forEach((start, i) => {
+    if (!start) return;
+    const region = [start];
+    const queue = [i];
+    cells[i] = null;
+    for (let read = 0; read < queue.length; read++) {
+      const j = queue[read];
+      const neighbors = [j - cols, j + cols];
+      if (j % cols > 0) neighbors.push(j - 1);
+      if (j % cols < cols - 1) neighbors.push(j + 1);
+      for (const next of neighbors) {
+        const candidate = cells[next];
+        if (candidate?.band !== start.band) continue;
+        region.push(candidate);
+        queue.push(next);
+        cells[next] = null;
+      }
+    }
+    regions.push(region);
+  });
+
+  regions.sort((a, b) => layer === "rain" || layer === "pm25"
+    ? b[0].band - a[0].band || b.length - a.length
+    : b.length - a.length);
+  return regions;
+}
+
 function fieldLabels(map: LeafletMap, field: Field, layer: HeatLayerKey): Label[] {
-  const { g, v, uv } = field;
   const size = map.getSize();
   const container = map.getContainer();
   const viewport = container.getBoundingClientRect();
   const obstacles = Array.from(container.querySelectorAll(
     ".aerosense-map-marker, .leaflet-tooltip, .leaflet-popup, .leaflet-control, .map-location-dot",
   ), (el) => el.getBoundingClientRect());
-  const points: { lat: number; lng: number; value: number }[] = [];
-
-  const addPoint = (lat: number, lng: number, value: number | null) => {
-    if (value == null || !Number.isFinite(value)) return;
-    const numeric = layer === "temperature" ? value : Math.max(0, value);
-    const row = (lat - g.south) / g.step;
-    const col = (lng - g.west) / g.step;
-    if (coverage(g, layer, layer === "cloud" ? 100 : numeric, row, col) >= 0.12)
-      points.push({ lat, lng, value: numeric });
-  };
-
-  if (layer === "rain") {
-    g.values.forEach((row, i) =>
-      row.forEach((value, j) => addPoint(g.south + i * g.step, g.west + j * g.step, value)),
-    );
-  }
-  const maxLabels = Math.max(3, Math.min(14, Math.ceil((size.x * size.y) / 28500)));
-  const spacing = layer === "rain"
-    ? 120
-    : Math.max(120, Math.ceil(Math.sqrt((size.x * size.y) / maxLabels)));
-  const origin = map.getPixelBounds().getTopLeft();
-  const stepPixels = Math.abs(map.project([0, g.west + g.step]).x - map.project([0, g.west]).x);
-  if (layer !== "rain" || stepPixels >= spacing / 2) {
-    for (let y = (-origin.y % spacing + spacing) % spacing; y < size.y; y += spacing) {
-      for (let x = (-origin.x % spacing + spacing) % spacing; x < size.x; x += spacing) {
-        const { lat, lng } = map.containerPointToLatLng([x, y]);
-        addPoint(lat, lng, sample(g, v, lat, lng, layer === "rain"));
-      }
-    }
-  }
-  if (layer === "rain") points.sort((a, b) => b.value - a.value);
-
-  const placed: { x: number; y: number }[] = [];
-  const labels: Label[] = [];
-  const cfg = HEAT_LAYERS[layer];
-  for (const { lat, lng, value } of points) {
-    const p = map.latLngToContainerPoint([lat, lng]);
-    if (placed.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < spacing - 8)) continue;
-
-    let text = cfg.format(value);
-    let tone = colorAt(cfg.stops, value);
-    if (layer === "cloud") {
-      const u = uv ? sample(g, uv.u, lat, lng) ?? 0 : 0;
-      const vv = uv ? sample(g, uv.v, lat, lng) ?? 0 : 0;
-      const spd = Math.round(Math.hypot(u, vv));
-      const cloud = Math.max(0, Math.min(100, value));
-      const showCloud = cloud >= HEAT_LAYERS.cloud.quiet;
-      if (!showCloud && spd < 3) continue;
-      text = `${spd}${spd ? " " + arrow(u, vv) : ""}${showCloud ? " · " + cfg.format(cloud) : ""}`;
-      if (!showCloud) tone = [64, 122, 168];
-    }
-
+  const fitsMap = ({ point, text }: WeatherPoint) => {
     const halfWidth = (text.length * 8 + 26) / 2;
     const halfHeight = 16;
-    if (p.x < halfWidth || p.x > size.x - halfWidth || p.y < halfHeight || p.y > size.y - halfHeight)
-      continue;
-    const x = viewport.left + p.x;
-    const y = viewport.top + p.y;
-    const blocked = obstacles.some((box) =>
+    if (point.x < halfWidth || point.x > size.x - halfWidth ||
+        point.y < halfHeight || point.y > size.y - halfHeight) return false;
+    const x = viewport.left + point.x;
+    const y = viewport.top + point.y;
+    return !obstacles.some((box) =>
       x + halfWidth > box.left && x - halfWidth < box.right &&
       y + halfHeight > box.top && y - halfHeight < box.bottom,
     );
-    if (blocked) continue;
+  };
 
-    placed.push(p);
-    labels.push({
-      key: `${lat.toFixed(5)},${lng.toFixed(5)}`,
-      position: [lat, lng],
-      text,
-      color: `rgb(${tone.join(" ")})`,
-    });
+  const regions = weatherRegions(map, field, layer).map((area) => ({
+    center: area.reduce((sum, { point }) => sum.add(point), new Point(0, 0)).divideBy(area.length),
+    candidates: area.filter(fitsMap),
+  })).filter((region) => region.candidates.length > 0);
+  const ordered = new Set(regions);
+  if (layer === "temperature" && regions.length) {
+    const coolest = regions.reduce((a, b) => a.candidates[0].band <= b.candidates[0].band ? a : b);
+    const warmest = regions.reduce((a, b) => a.candidates[0].band >= b.candidates[0].band ? a : b);
+    ordered.clear();
+    for (const region of [coolest, warmest, ...regions]) ordered.add(region);
+  }
+
+  const maxLabels = Math.max(2, Math.min(10, Math.ceil((size.x * size.y) / 45000)));
+  const placed: WeatherPoint[] = [];
+  const labels: Label[] = [];
+
+  for (const { center, candidates } of ordered) {
+    candidates.sort((a, b) =>
+      (layer === "rain" ? b.value - a.value : 0) ||
+      a.point.distanceTo(center) - b.point.distanceTo(center),
+    );
+    for (const candidate of candidates) {
+      const { point, position, text, value, cloud } = candidate;
+      if (placed.some((other) => point.distanceTo(other.point) < (other.text === text ? 180 : 88)))
+        continue;
+
+      const tone = cloud === false ? [64, 122, 168] : colorAt(HEAT_LAYERS[layer].stops, value);
+      placed.push(candidate);
+      labels.push({
+        key: position.map((coordinate) => coordinate.toFixed(6)).join(","),
+        position,
+        text,
+        color: `rgb(${tone.join(" ")})`,
+      });
+      break;
+    }
     if (labels.length >= maxLabels) break;
   }
   return labels;

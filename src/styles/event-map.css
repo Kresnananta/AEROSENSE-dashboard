@@ -19,8 +19,8 @@
 }
 .map-pin {
   --pin-color: oklch(44% 0.12 252);
-  --pin-fill: color-mix(in oklch, var(--pin-color) 11%, white);
-  --pin-border: color-mix(in oklch, var(--pin-color) 32%, white);
+  --pin-fill: color-mix(in oklch, var(--pin-color) 9%, #f7fcff);
+  --pin-border: color-mix(in oklch, var(--pin-color) 24%, #f7fcff);
   position: relative;
   display: grid;
   place-items: center;
@@ -40,8 +40,8 @@
   z-index: -1;
   inset: 0;
   border-radius: 12px;
-  background: linear-gradient(155deg, #fff 12%, var(--pin-fill) 88%);
-  box-shadow: 0 3px 8px oklch(28% 0.05 248 / 0.20);
+  background: linear-gradient(155deg, #fdfefe, var(--pin-fill));
+  box-shadow: 0 2px 5px oklch(28% 0.05 248 / 0.19);
   transition: box-shadow 160ms ease;
 }
 .map-pin::after {
@@ -74,10 +74,6 @@
   width: 19px;
   height: 19px;
 }
-.map-pin.is-active::before {
-  border-color: #0967e9;
-  box-shadow: 0 0 0 4px oklch(64% 0.18 251 / 0.26), 0 3px 8px oklch(28% 0.05 248 / 0.20);
-}
 .aerosense-map-marker:hover .map-pin::before {
   border-color: var(--pin-color);
 }
@@ -93,14 +89,8 @@
     transition: none;
   }
 }
-.map-pin.pin-sensor.is-active {
-  --pin-fill: var(--pin-color);
-  --pin-border: var(--pin-color);
-  color: #fff;
-}
-.map-pin.pin-sensor.is-active::before {
-  background: var(--pin-fill);
-  border-color: var(--pin-border);
+.map-pin.is-active::before {
+  border-color: var(--pin-color);
   box-shadow: 0 2px 5px rgb(15 40 80 / 0.22);
 }
 .live-map .leaflet-tooltip.node-focus-tooltip {
@@ -366,8 +356,8 @@
   gap: 5px;
   transform: translate(-50%, -50%);
   padding: 2px 6px;
-  border-radius: 6px;
-  background: #f8fcff;
+  border-radius: 7px;
+  background: rgb(249 253 255 / 0.95);
   color: #173452;
   font-size: 11px;
   font-weight: 700;
