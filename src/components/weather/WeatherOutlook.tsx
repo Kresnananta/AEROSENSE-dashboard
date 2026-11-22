@@ -22,7 +22,7 @@ import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { BMKG_EARTHQUAKES_URL } from "@/lib/constants";
 import { conditionArtUrl } from "@/lib/condition-art";
-import { formatQuakeRegion } from "@/lib/environment-presentation";
+import { formatQuakeMagnitude, formatQuakeRegion, formatQuakeTime } from "@/lib/environment-presentation";
 import {
   dayPeriodFromHour,
   dayPeriodLabel,
@@ -414,36 +414,35 @@ function HazardList({ hazards }: { hazards: Hazards | null }) {
   const allQuakesWithoutTsunami = quakes.length > 0 && quakes.every(
     (q) => /^tidak berpotensi tsunami[.!]?$/i.test(q.potential?.trim() ?? ""),
   );
-  const quakeDate = new Intl.DateTimeFormat("id-ID", {
-    day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
-  });
   return (
     <div className="wx-panel wx-hazard-panel">
-      <h3>Gempa M5+ dari BMKG</h3>
+      <h3>Gempa M5+ · BMKG</h3>
       <ul className="wx-hazards">
         {quakeData === null && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Data gempa belum tersedia.</span></li>}
         {quakeData?.length === 0 && <li className="is-muted"><Waves size={18} aria-hidden="true" /> <span>Belum ada gempa M5+ di data terbaru.</span></li>}
         {quakes.map((q) => {
           const location = formatQuakeRegion(q.region || "");
+          const when = formatQuakeTime(q.time);
+          const magnitude = formatQuakeMagnitude(q.magnitude);
           return (
             <li key={q.id} className="wx-quake">
               <div className="wx-quake-content">
                 <strong>{location || "Lokasi belum tersedia"}</strong>
                 <div className="wx-quake-meta">
-                  <time dateTime={q.time}>{quakeDate.format(new Date(q.time))} WIB</time>
+                  {when && <time dateTime={q.time}>{when}</time>}
                   {q.depth && <span>Kedalaman {q.depth}</span>}
                 </div>
                 {!allQuakesWithoutTsunami && q.potential && <p>{q.potential}</p>}
               </div>
-              <span className="wx-magnitude">M {num(q.magnitude)}</span>
+              {magnitude && <span className="wx-magnitude">M {magnitude}</span>}
             </li>
           );
         })}
       </ul>
-      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Menurut BMKG, gempa di atas tidak berpotensi tsunami.</p>}
+      {allQuakesWithoutTsunami && <p className="wx-quake-summary">Seluruh gempa di atas tidak berpotensi tsunami.</p>}
       <div className="wx-foot">
         <a className="insight-text-link" href={BMKG_EARTHQUAKES_URL} target="_blank" rel="noreferrer">
-          Lihat data resmi BMKG <ArrowUpRight size={15} aria-hidden="true" />
+          Data BMKG <ArrowUpRight size={15} aria-hidden="true" />
         </a>
       </div>
       <div className="wx-cyclone-section">

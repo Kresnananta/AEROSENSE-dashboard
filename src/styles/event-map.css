@@ -44,6 +44,33 @@
 .map-pin.pin-watersense { --pin-color: #087367; }
 .map-pin.pin-fire { --pin-color: #aa4318; }
 .map-pin.pin-earthquake { --pin-color: #ac2d55; }
+.map-quake-number {
+  fill: currentColor;
+  font-size: 11px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.map-quake-unit { font-size: 7px; }
+.map-quake-ripple {
+  position: absolute;
+  left: 50%;
+  top: 42px;
+  width: var(--quake-size);
+  height: var(--quake-size);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.map-quake-ripple::before,
+.map-quake-ripple::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--pin-color);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.7);
+  opacity: 0;
+}
+.quake-selected .map-pin-shape { stroke-width: 2.3; }
 
 .map-pin-status {
   stroke: #fff;
@@ -59,9 +86,20 @@
   border-radius: 9px;
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .aerosense-map-marker:hover .map-pin-art {
+  .aerosense-map-marker:not(.quake-marker):hover .map-pin-art {
     animation: map-pin-hover 1.5s ease-in-out infinite;
   }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .quake-selected .map-quake-ripple::before,
+  .quake-selected .map-quake-ripple::after {
+    animation: quake-ripple 1s ease-out both;
+  }
+  .quake-selected .map-quake-ripple::after { animation-delay: 140ms; }
+}
+@keyframes quake-ripple {
+  from { transform: scale(0.22); opacity: 0.9; }
+  to { transform: scale(1); opacity: 0; }
 }
 @keyframes map-pin-hover {
   0%, 100% { transform: translateY(0); }
@@ -158,6 +196,52 @@
 }
 .event-popup .event-stale {
   color: #8b510d;
+}
+.quake-popup .leaflet-popup-content {
+  margin: 14px 34px 4px 14px;
+}
+.leaflet-container .quake-popup a.leaflet-popup-close-button {
+  top: 3px;
+  right: 3px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+}
+.quake-popup-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.quake-popup-top strong {
+  min-width: 0;
+  line-height: 1.35;
+}
+.quake-magnitude {
+  flex: none;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #faeaf0;
+  color: #84213e;
+  font-size: 13px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.quake-popup .leaflet-popup-content p {
+  margin: 6px 0;
+}
+.quake-popup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 9px;
+  color: #426179;
+}
+.quake-popup .quake-scale-note { color: #536a7e; }
+.quake-popup summary {
+  color: #315a7e;
+  font-size: 11px;
+  cursor: pointer;
 }
 .map-controls {
   margin: 0 0 12px;

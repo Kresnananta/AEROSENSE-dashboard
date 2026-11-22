@@ -72,12 +72,18 @@ const REGION_EXPAND: Record<string, string> = {
   MALUT: "Maluku Utara",
   MALUKUBRTDAYA: "Maluku Barat Daya",
   PAPUABRT: "Papua Barat",
+  PAPUAPGNGN: "Papua Pegunungan",
+  KEPSERIBU: "Kepulauan Seribu",
+  LABUANBAJO: "Labuan Bajo",
+  LOMBOKBARAT: "Lombok Barat",
   BABEL: "Bangka Belitung",
   KEPRI: "Kepulauan Riau",
 };
 
 export function formatQuakeRegion(raw: string): string {
   return raw
+    .replace(/\bKAB[.\s-]+(?=[A-Za-z])/gi, "Kab. ")
+    .replace(/\bKEP\.\s*(?=[A-Za-z])/gi, "Kep. ")
     .replace(/\bSERAMBAGIANTIMUR\b/gi, "Seram Bagian Timur")
     .replace(/\bSERAMBAGIANBARAT\b/gi, "Seram Bagian Barat")
     .replace(/\bKEBARMANOKWARI\b/gi, "Kebar, Manokwari")
@@ -96,6 +102,22 @@ export function formatQuakeRegion(raw: string): string {
     })
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+const quakeNumber = new Intl.NumberFormat("id-ID", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+const quakeDate = new Intl.DateTimeFormat("id-ID", {
+  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
+});
+
+export function formatQuakeMagnitude(value: number | null | undefined) {
+  return value != null && Number.isFinite(value) ? quakeNumber.format(value) : "";
+}
+
+export function formatQuakeTime(at: string | null | undefined) {
+  return at && Number.isFinite(Date.parse(at)) ? quakeDate.format(new Date(at)) + " WIB" : "";
 }
 
 export function currentFacts(facts: EnvironmentFact[], now = Date.now()) {
