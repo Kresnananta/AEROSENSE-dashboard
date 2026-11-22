@@ -6,7 +6,7 @@ import {
   Radio,
   CloudSun,
   MessageCircle,
-  ChartNoAxesCombined,
+  Bell,
   Menu,
   X,
   Settings2,
@@ -14,66 +14,42 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { AeroMascot } from "@/components/environment/AeroMascot";
-import { ConditionScene } from "@/components/environment/ConditionScene";
 import { useAuth } from "@/hooks/useAuth";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
-import { weatherSceneForPeriod } from "@/lib/time-of-day";
-import type { Scene } from "@/lib/environment-presentation";
-import { LandingTrend } from "./LandingTrend";
 import "@/styles/landing.css";
 
 const features = [
   {
-    title: "Sensor udara",
+    title: "Cek udara di titik sensor",
     icon: Radio,
-    heading: "Pembacaan sensor per lokasi",
-    description:
-      "Pilih titik sensor di peta untuk melihat kondisi udara dan waktu pembacaan terakhir.",
+    description: "Lihat pembacaan kualitas udara, suhu, dan kelembapan menurut lokasi sensor.",
     path: "/dashboard",
-    action: "Lihat pemantauan",
-    scene: "sensor" as const,
   },
   {
-    title: "Cuaca dan lingkungan",
+    title: "Lihat prakiraan cuaca",
     icon: CloudSun,
-    heading: "Cuaca, prakiraan, dan peringatan",
-    description:
-      "Lihat perkiraan hujan per jam, kualitas udara wilayah, dan kejadian di sekitar titik sensor.",
+    description: "Cek perkiraan hujan per jam dan kondisi lingkungan di sekitar Anda.",
     path: "/environment",
-    action: "Buka Hub Lingkungan",
-    scene: "air" as const,
+  },
+  {
+    title: "Baca peringatan sensor",
+    icon: Bell,
+    description: "Lihat titik pemantauan yang perlu diperhatikan dan cara menerima kabar lewat WhatsApp.",
+    path: "/alerts",
   },
   {
     title: "Tanya AERO-BOT",
     icon: MessageCircle,
-    heading: "Tanya AERO-BOT",
-    description:
-      "Tanya kapan hujan diperkirakan turun atau apa arti angka kualitas udara di sekitar Anda.",
+    description: "Tanyakan arti pembacaan udara atau kapan hujan diperkirakan turun.",
     path: "/aerobot",
-    action: "Tanya AERO-BOT",
-    scene: null,
-  },
-  {
-    title: "Riwayat dan laporan",
-    icon: ChartNoAxesCombined,
-    heading: "Grafik, laporan, dan ekspor data",
-    description:
-      "Bandingkan pembacaan dari waktu ke waktu. Pengelola dapat mengunduh laporan dan data CSV.",
-    path: "/analytics",
-    action: "Lihat riwayat udara",
-    scene: "sensor" as const,
   },
 ];
 
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [active, setActive] = useState(0);
   const { user } = useAuth();
   const dayPeriod = useDayPeriod();
 
-  const feature = features[active];
-  const weatherScene = weatherSceneForPeriod({ icon: "partly", period: dayPeriod }) as Scene;
-  const activeScene = feature.path === "/environment" ? weatherScene : feature.scene;
   return (
     <div className="landing-page">
       <a className="landing-skip" href="#konten">
@@ -116,16 +92,12 @@ export function LandingPage() {
           <div className="landing-hero-copy">
             <h1>Kenali udara dan cuaca di sekitar Anda.</h1>
             <p>
-              Cek kualitas udara, prakiraan hujan, dan peringatan di sekitar Anda.
+              Lihat pembacaan dari titik sensor, prakiraan hujan, dan peringatan lingkungan.
             </p>
             <div className="landing-actions">
               <Link className="landing-button" to="/dashboard">
-                Lihat pemantauan
+                Cek kondisi sekitar
                 <ArrowRight size={18} />
-              </Link>
-              <Link className="landing-text-link" to="/aerobot">
-                Tanya AERO-BOT
-                <ArrowUpRight size={16} />
               </Link>
             </div>
           </div>
@@ -136,44 +108,25 @@ export function LandingPage() {
       </div>
 
       <main id="konten">
-        <section id="fitur" className="landing-features landing-container">
+        <section id="fitur" className="landing-features landing-container" aria-labelledby="landing-features-heading">
           <div className="landing-section-heading">
-            <h2>Jelajahi pemantauan</h2>
+            <h2 id="landing-features-heading">Yang bisa Anda cek</h2>
           </div>
-          <div className="landing-feature-layout">
-            <div className="landing-feature-options" aria-label="Pilih fitur AEROSENSE">
-              {features.map((item, index) => (
-                <button
-                  key={item.title}
-                  aria-pressed={active === index}
-                  onClick={() => setActive(index)}
-                >
-                  <item.icon size={20} />
-                  <span>{item.title}</span>
-                  <ArrowUpRight size={16} />
-                </button>
-              ))}
-            </div>
-            <article className="landing-feature-detail" data-feature={feature.path} aria-live="polite">
-              <div>
-                <h3>{feature.heading}</h3>
-                <p>{feature.description}</p>
-                <Link className="landing-text-link" to={feature.path}>
-                  {feature.action}
-                  <ArrowRight size={16} />
+          <ul className="landing-feature-list">
+            {features.map(({ title, icon: Icon, description, path }) => (
+              <li key={path}>
+                <Link to={path} className="landing-feature-link" data-destination={path}
+                  aria-labelledby={`fitur-${path.slice(1)}`} aria-describedby={`info-${path.slice(1)}`}>
+                  <span className="landing-feature-icon"><Icon size={24} aria-hidden="true" /></span>
+                  <span className="landing-feature-copy">
+                    <strong id={`fitur-${path.slice(1)}`}>{title}</strong>
+                    <span id={`info-${path.slice(1)}`}>{description}</span>
+                  </span>
+                  <ArrowRight size={18} aria-hidden="true" />
                 </Link>
-              </div>
-              <div className="landing-feature-illustration">
-                {feature.path === "/analytics" ? (
-                  <LandingTrend />
-                ) : activeScene ? (
-                  <ConditionScene scene={activeScene} />
-                ) : (
-                  <AeroMascot pose="watch" />
-                )}
-              </div>
-            </article>
-          </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section id="cara-kerja" className="landing-workflow landing-container">

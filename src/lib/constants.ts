@@ -33,11 +33,11 @@ export interface NavItemConfig {
 
 export const NAV_ITEMS: readonly NavItemConfig[] = [
   {
-    label: "Beranda",
+    label: "Ringkasan",
     path: ROUTES.DASHBOARD,
     icon: "LayoutGrid",
   },
-  { label: "Hub Lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
+  { label: "Cuaca & lingkungan", path: ROUTES.ENVIRONMENT, icon: "Leaf" },
   { label: "Kelola kawasan", path: ROUTES.MANAGEMENT, icon: "Settings2" },
   {
     label: "Peta sensor",
@@ -55,7 +55,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     icon: "FileText",
   },
   {
-    label: "Peringatan",
+    label: "Peringatan sensor",
     path: ROUTES.ALERTS,
     icon: "Bell",
   },

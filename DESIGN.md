@@ -39,6 +39,8 @@ Status tags, alert strips, and row cards use **borderless soft tonal fills** (`b
 | Danger / Critical | `#9E2A35` | `#FDEBEF` | `0` (none) |
 | Pending / Neutral | `#466078` | `#E8F1FA` | `0` (none) |
 
+Amber menandai prakiraan cuaca dan status Waspada. Merah lembut menandai akses ke peringatan sensor dan status Bahaya. Status selalu memuat label teks. Gunakan `--aero-amber-ink`, `--aero-amber-soft`, `--aero-red-ink`, dan `--aero-red-soft` sebagai pasangan warna.
+
 ### Data Visualization Palette
 
 1. `--chart-1`: `#0868DC` (AEROSENSE Cobalt)

@@ -109,7 +109,7 @@ export function SensorOverview() {
                 <p className="sensor-recommendation">
                   <ArrowRight size={17} aria-hidden="true" />
                   <span>
-                    {!node ? "Lihat estimasi wilayah di Hub Lingkungan." : recommendation}
+                    {!node ? "Cek prakiraan dan estimasi wilayah." : recommendation}
                   </span>
                 </p>
                 {hasReading && !fresh && (
@@ -141,7 +141,7 @@ export function SensorOverview() {
                     className="panel-link"
                     to={node ? `/nodes/${encodeURIComponent(node.id)}` : "/environment"}
                   >
-                    {node ? "Lihat detail sensor" : "Buka Hub Lingkungan"}
+                    {node ? "Lihat detail sensor" : "Lihat cuaca dan lingkungan"}
                     <ArrowUpRight size={16} />
                   </Link>
                 </div>
@@ -167,35 +167,20 @@ export function SensorOverview() {
                   })}
                 </dl>
               )}
-              {(fresh || (node && nodes.length === 0)) && (
+              {fresh && (
                 <footer className="sensor-panel-footer">
-                  {fresh && (
-                    <span>
-                      <Radio size={13} />
-                      {dateLabel(lastReadingTime)}
-                    </span>
-                  )}
-                  {node && (
-                    <span>
-                      <MapPin size={13} aria-hidden="true" />
-                      {node.name}
-                    </span>
-                  )}
+                  <span>
+                    <Radio size={13} aria-hidden="true" />
+                    <time dateTime={lastReadingTime || undefined}>{dateLabel(lastReadingTime)}</time>
+                  </span>
                 </footer>
               )}
               <ConditionScene scene="sensor" />
             </article>
             <aside className={`aero-assist assist-${summary.tone}`}>
               <div className="assist-copy">
-                <h2>
-                  {summary.tone === "danger"
-                    ? "Periksa titik ini sekarang."
-                    : summary.tone === "warning"
-                      ? "Ada yang perlu dicek."
-                      : "Tanya soal udara sekitar"}
-                </h2>
-                {summary.tone === "danger" && <p>Cek lokasi dan perangkat.</p>}
-                {summary.tone === "warning" && <p>Cari tahu apa arti status ini.</p>}
+                <h2>Butuh penjelasan?</h2>
+                <p>Tanyakan arti pembacaan udara dan cuaca.</p>
               </div>
               <div className="assist-visual">
                 <AeroMascot pose={pose === "calm" ? "welcome" : pose} />

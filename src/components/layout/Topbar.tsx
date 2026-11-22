@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccess } from "@/hooks/useAccess";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { Menu, ChevronRight, Bell } from "lucide-react";
 import type { Ref } from "react";
@@ -16,7 +16,6 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
   const { user } = useAuth();
   const { canViewModel } = useAccess();
   const location = useLocation();
-  const navigate = useNavigate();
   const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname);
   const currentLabel =
     location.pathname === ROUTES.ANALYTICS && !canViewModel
@@ -54,14 +53,13 @@ export function Topbar({ onMenuClick, menuButton, menuOpen }: TopbarProps) {
       </div>
 
       <div className="topbar-actions flex items-center gap-3 sm:gap-4">
-        <button
-          type="button"
-          onClick={() => navigate(ROUTES.ALERTS)}
-          aria-label="Lihat peringatan"
-          className="topbar-icon relative w-8 h-8 rounded-lg text-[#3f566a] hover:bg-[#edf2ee] hover:text-[#0a58ca] grid place-items-center transition-colors cursor-pointer"
+        <Link
+          to={ROUTES.ALERTS}
+          aria-label="Lihat peringatan sensor"
+          className="topbar-icon topbar-alert-link grid size-11 place-items-center rounded-lg md:hidden"
         >
-          <Bell size={18} />
-        </button>
+          <Bell size={18} aria-hidden="true" />
+        </Link>
 
         <Link className="account-link" to={user ? ROUTES.SYSTEM : ROUTES.LOGIN}>
           {user ? "Akun saya" : "Masuk"}

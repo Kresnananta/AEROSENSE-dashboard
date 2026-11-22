@@ -1,8 +1,9 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { NAV_ITEMS, ROUTES } from "@/lib/constants";
 import { ROLE_LABELS, useAccess } from "@/hooks/useAccess";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  ChevronDown,
   LayoutGrid,
   Map,
   LineChart,
@@ -28,29 +29,38 @@ const ICONS: Record<string, React.ElementType> = {
   Settings2,
 };
 
-const groups = [
-  {
-    label: "Pantau",
-    paths: [ROUTES.DASHBOARD, ROUTES.ENVIRONMENT, ROUTES.SENSOR_MAP, ROUTES.ALERTS],
-  },
-  {
-    label: "Jelajahi",
-    paths: [ROUTES.ANALYTICS, ROUTES.AEROBOT],
-  },
-  {
-    label: "Perangkat & laporan",
-    paths: [ROUTES.NODE_MONITORING, ROUTES.MANAGEMENT, ROUTES.ESG_REPORTS],
-  },
-];
+const monitoringPaths = [ROUTES.DASHBOARD, ROUTES.ENVIRONMENT, ROUTES.SENSOR_MAP, ROUTES.ALERTS, ROUTES.AEROBOT];
+const toolPaths = [ROUTES.ANALYTICS, ROUTES.NODE_MONITORING, ROUTES.MANAGEMENT, ROUTES.ESG_REPORTS];
 
 export function Sidebar({ onClose }: { onClose?: () => void }) {
   const { canAudit, canViewModel, canManage, role } = useAccess();
   const { user } = useAuth();
+  const { pathname } = useLocation();
   const visibleItems = NAV_ITEMS.filter(
     (item) =>
       (item.path !== ROUTES.ESG_REPORTS || canAudit) &&
       (item.path !== ROUTES.MANAGEMENT || canManage),
   );
+  const toolsActive = toolPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+
+  function links(paths: readonly string[]) {
+    return paths.flatMap((path) => visibleItems.filter((item) => item.path === path)).map((item) => {
+      const Icon = ICONS[item.icon] || LayoutGrid;
+      return (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          onClick={onClose}
+          data-destination={item.path}
+          className={({ isActive }) => (isActive ? "nav-entry active" : "nav-entry")}
+        >
+          <Icon size={18} aria-hidden="true" />
+          <span>{item.path === ROUTES.ANALYTICS && !canViewModel ? "Riwayat udara" : item.label}</span>
+        </NavLink>
+      );
+    });
+  }
+
   return (
     <aside className="app-sidebar">
       <NavLink
@@ -68,35 +78,17 @@ export function Sidebar({ onClose }: { onClose?: () => void }) {
         />
         <span>
           AERO<strong>SENSE</strong>
-          <small>Pantau lingkungan sekitar.</small>
         </span>
       </NavLink>
       <nav className="app-navigation" aria-label="Navigasi utama">
-        {groups.map(({ label, paths }) => {
-          const items = paths.flatMap((path) => visibleItems.filter((item) => item.path === path));
-          if (!items.length) return null;
-          const groupLabel =
-            label === "Perangkat & laporan" && !canAudit && !canManage ? "Perangkat" : label;
-          return (
-            <div className="nav-group" role="group" aria-label={groupLabel} key={label}>
-              <p>{groupLabel}</p>
-              {items.map((item) => {
-                const Icon = ICONS[item.icon] || LayoutGrid;
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    onClick={onClose}
-                    className={({ isActive }) => (isActive ? "nav-entry active" : "nav-entry")}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                    <span>{item.path === ROUTES.ANALYTICS && !canViewModel ? "Riwayat udara" : item.label}</span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          );
-        })}
+        <div className="nav-group">{links(monitoringPaths)}</div>
+        <details className="nav-tools" open={toolsActive || undefined}>
+          <summary>
+            Data &amp; perangkat
+            <ChevronDown size={16} aria-hidden="true" />
+          </summary>
+          <div className="nav-group">{links(toolPaths)}</div>
+        </details>
       </nav>
       <div className="sidebar-account">
         <span className="account-avatar">

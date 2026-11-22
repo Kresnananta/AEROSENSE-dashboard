@@ -23,6 +23,10 @@
   --sidebar-border: var(--border);
   --aero-link: oklch(44% .161 254);
   --aero-heading: oklch(39% .133 253);
+  --aero-amber-ink: oklch(46% .112 64);
+  --aero-amber-soft: oklch(95% .065 86);
+  --aero-red-ink: oklch(44% .152 22);
+  --aero-red-soft: oklch(94% .042 19);
   --aero-atmosphere: linear-gradient(127deg, oklch(98% .017 230), oklch(94% .048 234) 49%, oklch(87% .078 241));
   --aero-sheet: linear-gradient(143deg, oklch(100% 0 0 / .9), oklch(96% .035 231 / .62));
   --aero-material: linear-gradient(119deg, oklch(99% .013 229 / .85), oklch(91% .066 233 / .67));
@@ -120,11 +124,34 @@ dialog.role-dialog {
 
 @supports (backdrop-filter: blur(12px)) {
   @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
-    .app-shell .app-topbar,
-    .landing-page .landing-header nav {
+    .app-shell .app-topbar {
       background: var(--aero-material);
       border-color: var(--aero-glass-rim);
       backdrop-filter: blur(14px) saturate(128%);
+    }
+    .landing-page .landing-header nav {
+      background: oklch(98% .018 233 / .27);
+      border-color: oklch(100% 0 0 / .43);
+      backdrop-filter: blur(10px);
+    }
+    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav {
+      background: oklch(25% .055 245 / .38);
+      border-color: oklch(100% 0 0 / .25);
+    }
+    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login) {
+      color: oklch(98% .014 234);
+    }
+    .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav a:focus-visible {
+      outline: 2px solid oklch(98% .014 234);
+      outline-offset: 3px;
+    }
+    @media (max-width: 760px) {
+      .landing-page .landing-header nav {
+        background: oklch(98% .018 233 / .9);
+      }
+      .landing-page .landing-hero-stage[data-day-period="night"] .landing-header nav {
+        background: oklch(29% .062 245 / .88);
+      }
     }
     .app-shell .environment-hub > .environment-nav {
       background: var(--aero-material);
@@ -199,7 +226,7 @@ dialog.role-dialog {
 }
 .app-shell .robot-mood-greet:hover { background: var(--accent); }
 .app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
-.app-shell :is(.nav-group > p, .sidebar-account small, .chat-scope summary, .robot-mood-reading),
+.app-shell :is(.sidebar-account small, .chat-scope summary, .robot-mood-reading),
 .login-page :is(label, legend, .register-hint, .login-register) { color: var(--muted-foreground); }
 .app-shell .sidebar-account strong,
 .login-page :is(.login-input input, .register-select, .register-note) { color: var(--foreground); }
@@ -288,7 +315,90 @@ dialog.role-dialog {
 .app-shell :is(.robot-mood, .wx-panel), .app-shell .chat-workspace .live-chat {
   box-shadow: var(--aero-panel-depth);
 }
-.app-shell .app-navigation .nav-group + .nav-group { border-color: var(--border); }
+.app-navigation .nav-tools {
+  border-block-start: 1px solid var(--border);
+  padding-block-start: 8px;
+}
+.app-navigation .nav-tools summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding-inline: 14px;
+  border-radius: var(--aero-frame-inset);
+  color: var(--muted-foreground);
+  font-size: .8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.app-navigation .nav-tools summary::-webkit-details-marker { display: none; }
+.app-navigation .nav-tools summary:hover { background: var(--muted); }
+.app-navigation .nav-tools[open] summary svg { rotate: 180deg; }
+.app-shell .nav-entry[data-destination="/environment"] svg { color: var(--aero-amber-ink); }
+.app-shell .nav-entry[data-destination="/alerts"] svg,
+.app-shell .app-topbar .topbar-alert-link {
+  color: var(--aero-red-ink);
+}
+.app-shell .app-topbar .topbar-alert-link:hover { background: var(--aero-red-soft); }
+.app-shell .insights-compact > .insights-heading { flex-wrap: wrap; gap: 4px 20px; }
+.app-shell .insights-compact > .insights-heading .insight-text-link {
+  min-height: 44px;
+  font-size: .875rem;
+}
+.app-shell :is(.sensor-hero, .insight-lead).tone-warning .insight-status:not(.status-pending) {
+  color: var(--aero-amber-ink);
+  background: var(--aero-amber-soft);
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+.app-shell :is(.sensor-hero, .insight-lead).tone-danger .insight-status:not(.status-pending) {
+  color: var(--aero-red-ink);
+  background: var(--aero-red-soft);
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+@media (max-width: 767px) {
+  #mobile-navigation .app-sidebar { max-width: calc(100vw - 60px); }
+  .app-shell .app-topbar { gap: 8px; }
+  .app-shell .topbar-actions { gap: 4px; flex-shrink: 0; }
+  .app-shell .app-topbar button.topbar-icon { flex: 0 0 44px; }
+}
+@media (max-width: 600px) {
+  .app-shell .sensor-overview .sensor-hero[data-day-period]:not([data-day-period="night"]) {
+    background: var(--aero-sheet);
+  }
+  .app-shell .sensor-overview .sensor-hero[data-day-period="night"] {
+    background: linear-gradient(136deg, #102843, #193d61);
+  }
+  .app-shell .sensor-overview .sensor-hero,
+  .app-shell .environment-hub.insights-compact .insight-lead {
+    padding: 20px;
+  }
+  .app-shell :is(.sensor-overview .sensor-hero, .insights-compact .insight-lead) > .condition-scene {
+    display: none;
+  }
+  .app-shell .sensor-overview .sensor-hero .sensor-panel-footer {
+    padding-block: 12px 0;
+  }
+}
+@media (min-width: 360px) and (max-width: 600px) {
+  .app-shell .sensor-overview .sensor-hero .sensor-key-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .app-shell .sensor-overview .sensor-hero .sensor-key-metrics > div:first-child {
+    grid-column: auto;
+  }
+  .app-shell .sensor-overview .sensor-key-metrics dt {
+    min-block-size: 2lh;
+  }
+  .app-shell .sensor-overview .sensor-key-metrics dd {
+    font-size: 24px;
+  }
+}
+
 .app-shell .environment-nav .insight-topics button[aria-pressed="false"] { color: var(--muted-foreground); }
 .app-shell .environment-nav .insight-topics button[aria-pressed="false"]:hover { background: var(--muted); color: var(--foreground); }
 .app-shell .environment-nav :is(.monitoring-select, .live-icon-button) {
@@ -319,19 +429,11 @@ dialog.role-dialog {
   --landing-muted: var(--muted-foreground);
   --landing-blue: var(--primary);
 }
-.landing-page :is(.landing-feature-detail, .landing-management) {
+.landing-page .landing-management {
   background: var(--aero-sheet);
   border-color: var(--aero-glass-rim);
 }
-.landing-page .landing-feature-options button { border: 1px solid transparent; }
-.landing-page .landing-feature-options button[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--input);
-  color: var(--accent-foreground);
-}
-.landing-page .landing-feature-options button[aria-pressed="false"] { color: var(--muted-foreground); }
-.landing-page .landing-feature-options button[aria-pressed="false"]:hover { background: var(--muted); }
-.landing-page :is(.landing-feature-link, .landing-management-link, .landing-management-details svg, .landing-workflow-steps li > span) {
+.landing-page :is(.landing-management-link, .landing-management-details svg, .landing-workflow-steps li > span) {
   color: var(--aero-link);
 }
 :is(.wx-detail, .wa-start-dialog)[data-slot="dialog-content"], dialog.role-dialog {
@@ -359,7 +461,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 .app-shell .environment-nav .insight-topics button[aria-pressed="true"] svg.lucide { stroke-width: 2; }
 
 .app-shell :is(.page-heading h1, .live-heading h1, .insights-heading h1, .disaster-heading h2, .wx-panel h3, .chat-welcome h2),
-.landing-page :is(.landing-section-heading h2, .landing-feature-detail h3, .landing-workflow h2, .landing-management h2),
+.landing-page :is(.landing-section-heading h2, .landing-workflow h2, .landing-management h2),
 .login-page .login-form-inner h1 { color: var(--aero-heading); }
 .app-shell :is(.live-state strong, .disaster-card h3) { color: var(--foreground); }
 .app-shell :is(.page-heading p, .disaster-heading p, .live-state p) { color: var(--muted-foreground); }
@@ -473,8 +575,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
-  .app-shell .wx-panel:not(.wx-hazard-panel),
-  .landing-page .landing-feature-detail {
+  .app-shell .wx-panel:not(.wx-hazard-panel) {
     background: var(--aero-landscape) right bottom / min(42rem, 84%) auto no-repeat,
       var(--aero-sheet);
   }
