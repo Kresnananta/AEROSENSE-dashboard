@@ -1180,14 +1180,16 @@ select,
   margin: 0 auto 12px;
   object-fit: contain;
 }
+.chat-workspace .live-chat { --chat-header-inset: clamp(12px, 2vw, 20px); }
+
 .chat-guest {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  margin: 14px 16px 0;
-  padding: 10px 10px 10px 16px;
+  gap: 12px 16px;
+  margin: 12px var(--chat-header-inset) 0;
+  padding: 10px 12px;
   border-radius: 16px;
   background: #fff8e6;
   color: #6b4a07;
@@ -1195,7 +1197,7 @@ select,
   line-height: 1.55;
 }
 .chat-guest p {
-  flex: 1 1 260px;
+  flex: 1 1 200px;
   margin: 0;
 }
 .chat-guest a {
@@ -1204,13 +1206,9 @@ select,
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.chat-guest .live-button {
-  min-height: 38px;
-  padding: 6px 14px;
-  font-size: 0.78rem;
-}
-.app-shell .chat-scope {
-  padding: 10px 20px;
+.app-shell .chat-workspace .live-chat .chat-scope {
+  padding: 8px var(--chat-header-inset) 12px;
+  background: var(--card);
   border-bottom: 0;
 }
 .app-shell .chat-scope > span {
