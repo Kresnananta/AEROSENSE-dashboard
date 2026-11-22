@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, ChevronDown, MapPin, RefreshCw, Radio } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { DataState } from "@/components/shared/DataState";
 import { ConditionScene } from "@/components/environment/ConditionScene";
@@ -22,6 +23,7 @@ export function SensorOverview() {
   const [params, setParams] = useSearchParams();
   const [selected, setSelected] = useState("");
   const nodes = dashboard.data?.nodes || [];
+  const { ref: nodeRail, edges: nodeEdges } = useScrollEdges(nodes.length);
   const node =
     nodes.find((n) => n.id === params.get("node_id")) ||
     nodes.find((n) => n.id === selected) ||
@@ -204,22 +206,24 @@ export function SensorOverview() {
             </aside>
           </div>
           {nodes.length > 1 && (
-            <div className="node-strip" aria-label="Status perangkat">
-              {nodes.map((n) => (
-                <button
-                  key={n.id}
-                  aria-pressed={n.id === node?.id}
-                  onClick={() => {
-                    setSelected(n.id);
-                    const next = new URLSearchParams(params);
-                    next.set("node_id", n.id);
-                    setParams(next);
-                  }}
-                >
-                  <strong>{n.name}</strong>
-                  <NodeStatus node={n} />
-                </button>
-              ))}
+            <div className="scroll-vignette" {...nodeEdges}>
+              <div ref={nodeRail} className="node-strip" aria-label="Status perangkat">
+                {nodes.map((n) => (
+                  <button
+                    key={n.id}
+                    aria-pressed={n.id === node?.id}
+                    onClick={() => {
+                      setSelected(n.id);
+                      const next = new URLSearchParams(params);
+                      next.set("node_id", n.id);
+                      setParams(next);
+                    }}
+                  >
+                    <strong>{n.name}</strong>
+                    <NodeStatus node={n} />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {node?.rules && node.rules.length > 0 && (

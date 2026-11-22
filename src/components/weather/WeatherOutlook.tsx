@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
   CloudLightning,
   CloudRainWind,
+  CloudSnow,
   ChevronRight,
   Droplets,
   Map as MapIcon,
@@ -17,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { conditionArtUrl } from "@/lib/condition-art";
 import { formatQuakeRegion } from "@/lib/environment-presentation";
@@ -32,28 +34,51 @@ import type { WeatherOutlook as Outlook, Hazards, WeatherDay, WeatherHour } from
 import "@/styles/weather.css";
 
 function weatherPeriod(weather: WeatherDay | WeatherHour | Outlook["current"], fallback: DayPeriod): DayPeriod {
-  if (!("time" in weather)) return fallback;
-  const period = dayPeriodFromHour(wibHour(weather.time));
-  if (weather.is_day === false) return "night";
-  return weather.is_day === true && period === "night" ? "day" : period;
+  const period = "time" in weather ? dayPeriodFromHour(wibHour(weather.time)) : fallback;
+  const isDay = "is_day" in weather ? weather.is_day : null;
+  if (isDay === false) return "night";
+  return isDay === true && period === "night" ? "day" : period;
 }
+
+const cardArtScale: Record<string, number> = {
+  sunny: 1.21,
+  "sunny-night": 0.81,
+  "warm-night": 0.88,
+  cloudy: 0.91,
+  "cloudy-night": 0.87,
+  "drizzle-night": 0.83,
+  "light-rain": 1.04,
+  "light-rain-night": 0.83,
+  "steady-rain": 0.93,
+  "rain-night": 0.83,
+  storm: 0.84,
+  "storm-night": 0.83,
+  fog: 0.8,
+  "fog-night": 0.83,
+};
 
 function WeatherArt({
   weather,
   size,
   period = "day",
+  card = false,
 }: {
   weather: WeatherDay | WeatherHour | Outlook["current"];
   size: number;
   period?: DayPeriod;
+  card?: boolean;
 }) {
   const { icon, code } = weather;
+  if (code != null && [71, 73, 75, 77, 85, 86].includes(code)) {
+    return <CloudSnow className="wx-art wx-snow" width={size} height={size} aria-hidden="true" />;
+  }
   const resolvedPeriod = weatherPeriod(weather, period);
   const isDay = "is_day" in weather ? weather.is_day : null;
   const scene = weatherSceneForPeriod({ icon, code, period: resolvedPeriod, isDay });
   return (
     <img
       className="wx-art"
+      style={card ? { scale: cardArtScale[scene] ?? 1 } : undefined}
       src={conditionArtUrl(scene)}
       alt=""
       width={size}
@@ -115,8 +140,9 @@ export function WeatherOutlook({
   const dayPeriod = useDayPeriod();
   const [selection, setSelection] = useState<{ path: string | null; time: string } | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  if (!point) return null;
   const o = wx.data;
+  const { ref: dailyRail, edges: dailyEdges } = useScrollEdges(o?.daily.length ?? 0);
+  if (!point) return null;
   const today = o?.daily[0];
 
   const allHours = (o?.day_hours ?? o?.hourly ?? []).slice(1);
@@ -164,7 +190,7 @@ export function WeatherOutlook({
       {o && !today && <p className="live-notice">Prakiraan harian belum tersedia.</p>}
       {o && today && (
         <div className="wx-body">
-          <article className={`wx-today tone-${o.current?.icon || today.icon}`} data-day-period={dayPeriod}>
+          <article className={`wx-today tone-${o.current?.icon || today.icon}`} data-day-period={weatherPeriod(o.current ?? today, dayPeriod)}>
             <WeatherArt weather={o.current ?? today} period={dayPeriod} size={compact ? 116 : 148} />
             <div className="wx-today-copy">
               <p className="wx-dateline">
@@ -250,25 +276,27 @@ export function WeatherOutlook({
           {!compact && (
             <div className="wx-panel">
               <h3>7 hari ke depan</h3>
-              <ol className="wx-days">
-                {o.daily.map((d, i) => (
-                  <li key={d.date}>
-                    <button type="button" className={`wx-card tone-${d.icon}`}
-                      data-day-period={i === 0 ? weatherPeriod(o.current ?? d, dayPeriod) : "day"} aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
-                      <span className="wx-day-name">{dayName(d.date, i)}</span>
-                      <WeatherArt weather={i === 0 && o.current ? o.current : d} period={i === 0 ? dayPeriod : "day"} size={208} />
-                      <span className="wx-day-label">{d.label}</span>
-                      <span className="wx-day-temp">
-                        <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
-                      </span>
-                      <span className={`wx-chip ${(d.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
-                        <Droplets size={12} aria-hidden="true" /> {unit(d.rain_chance, "%")}
-                      </span>
-                      <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
-                    </button>
-                  </li>
-                ))}
-              </ol>
+              <div className="scroll-vignette" {...dailyEdges}>
+                <ol ref={dailyRail} className="wx-days" aria-label="Prakiraan tujuh hari">
+                  {o.daily.map((d, i) => (
+                    <li key={d.date}>
+                      <button type="button" className={`wx-card tone-${d.icon}`}
+                        data-day-period="day" aria-haspopup="dialog" aria-label={`Rincian ${dayName(d.date, i)}, ${d.label}`} onClick={(e) => openDetail(d.date, e.currentTarget)}>
+                        <span className="wx-day-name">{dayName(d.date, i)}</span>
+                        <WeatherArt weather={d} size={208} card />
+                        <span className="wx-day-label">{d.label}</span>
+                        <span className="wx-day-temp">
+                          <strong>{unit(d.max, "°")}</strong> {unit(d.min, "°")}
+                        </span>
+                        <span className={`wx-chip ${(d.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>
+                          <Droplets size={12} aria-hidden="true" /> {unit(d.rain_chance, "%")}
+                        </span>
+                        <ChevronRight size={13} className="wx-card-arrow" aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           )}
           {!compact && <HazardList hazards={hz.data} />}
@@ -310,25 +338,10 @@ function HourCards({ hours, onSelect }: {
   hours: WeatherHour[];
   onSelect: (time: string, button: HTMLButtonElement) => void;
 }) {
-  const rail = useRef<HTMLOListElement>(null);
-  const [edges, setEdges] = useState({ start: false, end: false });
-  useEffect(() => {
-    const list = rail.current;
-    if (!list) return;
-    const measure = () => {
-      const start = list.scrollLeft > 1;
-      const end = list.scrollWidth - list.clientWidth - list.scrollLeft > 1;
-      setEdges((current) => current.start === start && current.end === end ? current : { start, end });
-    };
-    const observer = new ResizeObserver(measure);
-    observer.observe(list);
-    list.addEventListener("scroll", measure, { passive: true });
-    measure();
-    return () => { observer.disconnect(); list.removeEventListener("scroll", measure); };
-  }, [hours.length]);
+  const { ref: rail, edges } = useScrollEdges(hours.length);
   if (!hours.length) return <p className="wx-muted">Prakiraan per jam belum tersedia.</p>;
   return (
-    <div className="wx-hour-rail" data-edge-start={edges.start} data-edge-end={edges.end}>
+    <div className="scroll-vignette" {...edges}>
       <ol ref={rail} className="wx-hours" aria-label="Prakiraan per jam dalam WIB">
         {hours.map((h, i) => (
           <li key={h.time}>
@@ -342,7 +355,7 @@ function HourCards({ hours, onSelect }: {
                   <span className="wx-hour-date">{h.time.slice(8, 10)}/{h.time.slice(5, 7)}</span>
                 )}
               </span>
-              <WeatherArt weather={h} size={208} />
+              <WeatherArt weather={h} size={208} card />
               <span className="wx-day-label">{h.label}</span>
               <span className="wx-day-temp"><strong>{unit(h.temperature, "°")}</strong></span>
               <span className={`wx-chip ${(h.rain_chance ?? 0) >= 50 ? "is-wet" : ""}`}>

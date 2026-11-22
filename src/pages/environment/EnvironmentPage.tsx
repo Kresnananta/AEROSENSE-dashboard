@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
 import {
@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useLiveData } from "@/hooks/useLiveData";
 import { WeatherOutlook } from "@/components/weather/WeatherOutlook";
+import { useScrollEdges } from "@/hooks/useScrollEdges";
 import { useDayPeriod } from "@/hooks/useDayPeriod";
 import { useAuth } from "@/hooks/useAuth";
 import { DataState } from "@/components/shared/DataState";
@@ -54,7 +55,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
   const dayPeriod = useDayPeriod();
   const nodes = dashboard.data?.nodes || [];
   const [params, setParams] = useSearchParams();
-  const topics = useRef<HTMLDivElement>(null);
+  const { rail: topicRail, ref: topics, edges: topicEdges } = useScrollEdges(categories.length);
   const [locationMode, setLocationMode] = useState<"node" | "device">("node");
   const [userPoint, setUserPoint] = useState<GeoPoint | null>(null);
   const [locating, setLocating] = useState(false);
@@ -80,14 +81,14 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     ? params.get("topic")!
     : "weather";
   useEffect(() => {
-    const row = topics.current;
+    const row = topicRail;
     const active = row?.querySelector('[aria-pressed="true"]');
     if (!row || !active) return;
     const tab = active.getBoundingClientRect();
     const strip = row.getBoundingClientRect();
     if (tab.left < strip.left) row.scrollLeft += tab.left - strip.left;
     if (tab.right > strip.right) row.scrollLeft += tab.right - strip.right;
-  }, [category]);
+  }, [category, topicRail]);
   const insights = data?.insights || [];
   const important =
     insights.find(
@@ -233,26 +234,28 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <div className="environment-nav">
           {actions}
-          <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                data-topic={c.id}
-                aria-pressed={category === c.id}
-                onClick={(event) => {
-                  if (c.id === category) return;
-                  const bar = event.currentTarget.closest(".environment-nav");
-                  const panel = bar?.parentElement?.querySelector(".insight-lead");
-                  if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
-                    panel.scrollIntoView({ block: "start" });
-                  }
-                  updateParams({ topic: c.id });
-                }}
-              >
-                <c.icon size={17} aria-hidden="true" />
-                {c.label}
-              </button>
-            ))}
+          <div className="scroll-vignette topic-vignette" {...topicEdges}>
+            <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
+              {categories.map((c) => (
+                <button
+                  key={c.id}
+                  data-topic={c.id}
+                  aria-pressed={category === c.id}
+                  onClick={(event) => {
+                    if (c.id === category) return;
+                    const bar = event.currentTarget.closest(".environment-nav");
+                    const panel = bar?.parentElement?.querySelector(".insight-lead");
+                    if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
+                      panel.scrollIntoView({ block: "start" });
+                    }
+                    updateParams({ topic: c.id });
+                  }}
+                >
+                  <c.icon size={17} aria-hidden="true" />
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       )}

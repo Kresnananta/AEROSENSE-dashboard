@@ -31,14 +31,30 @@
 }
 .app-shell .chat-workspace .chat-header-icon { width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; border-radius: var(--aero-control-radius); background: #dceeff; }
 .app-shell .chat-workspace .live-messages { min-height: 0; }
-.chat-workspace .chat-welcome { padding-block: clamp(16px, 3vw, 40px); }
+.app-shell .chat-workspace .live-messages:has(.chat-welcome) {
+  background:
+    radial-gradient(ellipse at 70% 0%, oklch(94% .064 78 / .66), transparent 52%),
+    radial-gradient(ellipse at 9% 18%, oklch(92% .055 223), transparent 56%), var(--card);
+}
+.chat-workspace .chat-welcome { padding-block: clamp(12px, 2.6vw, 32px); }
+.chat-welcome-heading { display: flex; align-items: center; justify-content: center; gap: clamp(8px, 2vw, 20px); }
+.chat-welcome-heading img { width: clamp(68px, 9vw, 112px); height: auto; flex: none; }
 .chat-workspace .chat-welcome h2 { font-size: clamp(1.25rem, 2vw, 1.7rem); }
 .chat-workspace .chat-welcome .chat-suggestions button {
   min-height: 48px;
   border-radius: var(--aero-control-radius);
-  background: #f4f9ff;
+  background: var(--suggestion-fill, var(--muted));
+  border-color: var(--border);
+  color: var(--foreground);
 }
-.chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled) { background: #e4f1ff; }
+.chat-suggestions [data-topic="weather"] { --suggestion-fill: oklch(96% .044 83); --suggestion-ink: oklch(46% .125 61); }
+.chat-suggestions [data-topic="rain"] { --suggestion-fill: oklch(95% .038 241); --suggestion-ink: var(--aero-link); }
+.chat-suggestions [data-topic="activity"] { --suggestion-fill: oklch(96% .038 50); --suggestion-ink: oklch(46% .132 43); }
+.chat-suggestions [data-topic="air"] { --suggestion-fill: oklch(96% .042 169); --suggestion-ink: oklch(43% .104 158); }
+.chat-workspace .chat-welcome .chat-suggestions button svg { color: var(--suggestion-ink); }
+.chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--suggestion-fill), var(--suggestion-ink) 8%);
+}
 
 .robot-mood {
   --mood-sky: #c3e8ff;

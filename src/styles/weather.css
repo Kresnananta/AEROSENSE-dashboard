@@ -209,6 +209,8 @@
   list-style: none;
   overflow-x: auto;
   scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+  scroll-padding-inline: 4px;
 }
 .wx-hours {
   grid-auto-flow: column;
@@ -245,6 +247,7 @@
   --wx-ground: oklch(96% 0.025 217);
   cursor: pointer;
   text-align: center;
+  overflow: clip;
   transition: translate 160ms ease, border-color 160ms ease;
 }
 .wx-card[data-day-period="morning"], .wx-card[data-day-period="afternoon"] {
@@ -263,6 +266,7 @@
   height: auto;
   aspect-ratio: 1;
 }
+.wx-card .wx-snow { width: min(78%, 148px); color: var(--aero-heading); }
 .wx-card > .wx-day-name, .wx-card-when { align-self: start; }
 .wx-card-when { display: grid; justify-items: center; gap: 1px; }
 .wx-card-arrow {
@@ -620,46 +624,4 @@
   .wx-card:hover {
     translate: none;
   }
-}
-
-.wx-hour-rail { position: relative; min-width: 0; }
-.wx-hour-rail .wx-hours {
-  overscroll-behavior-inline: contain;
-  scroll-padding-inline: 4px;
-}
-.wx-hour-rail::before,
-.wx-hour-rail::after {
-  content: "";
-  position: absolute;
-  inset-block: 0 var(--aero-scrollbar-size, 14px);
-  z-index: 1;
-  width: clamp(24px, 4vw, 56px);
-  pointer-events: none;
-  opacity: 0;
-}
-.wx-hour-rail::before {
-  left: 0;
-  background: linear-gradient(to right, var(--card), transparent);
-}
-.wx-hour-rail::after {
-  right: 0;
-  background: linear-gradient(to left, var(--card), transparent);
-}
-.wx-hour-rail[data-edge-start="true"]:not(:has(:focus-visible))::before,
-.wx-hour-rail[data-edge-end="true"]:not(:has(:focus-visible))::after { opacity: 1; }
-@supports (backdrop-filter: blur(5px)) {
-  @media (prefers-reduced-transparency: no-preference) {
-    .wx-hour-rail::before, .wx-hour-rail::after { backdrop-filter: blur(5px); }
-    .wx-hour-rail::before {
-      background: color-mix(in oklch, var(--card) 66%, transparent);
-      mask-image: linear-gradient(to right, #000 8%, transparent);
-    }
-    .wx-hour-rail::after {
-      background: color-mix(in oklch, var(--card) 66%, transparent);
-      mask-image: linear-gradient(to left, #000 8%, transparent);
-    }
-  }
-}
-@media (prefers-contrast: more), (forced-colors: active) {
-  .wx-hour-rail::before, .wx-hour-rail::after { display: none; }
 }

@@ -17,6 +17,7 @@ import {
   Square,
   Volume2,
 } from "lucide-react";
+import { conditionArtUrl } from "@/lib/condition-art";
 import { chatService } from "@/services/chat.service";
 import { useAuth } from "@/hooks/useAuth";
 import { useLiveData } from "@/hooks/useLiveData";
@@ -59,10 +60,10 @@ const handsFreeLabels: Record<HandsFreePhase, [string, string]> = {
   speaking: ["Membacakan jawaban", "Tekan Esc atau tombol Hentikan suara untuk berhenti."],
 };
 const suggestions = [
-  { icon: CloudSun, text: "Bagaimana cuaca di sekitarku hari ini?" },
-  { icon: CloudRain, text: "Apakah nanti akan hujan?" },
-  { icon: Footprints, text: "Aman tidak olahraga di luar sekarang?" },
-  { icon: Leaf, text: "Bagaimana cara mengurangi polusi?" },
+  { icon: CloudSun, topic: "weather", text: "Bagaimana cuaca di sekitarku hari ini?" },
+  { icon: CloudRain, topic: "rain", text: "Apakah nanti akan hujan?" },
+  { icon: Footprints, topic: "activity", text: "Aman tidak olahraga di luar sekarang?" },
+  { icon: Leaf, topic: "air", text: "Bagaimana cara mengurangi polusi?" },
 ];
 export function ChatPanel() {
   const { user, isLoading, error: authError } = useAuth();
@@ -506,11 +507,15 @@ export function ChatPanel() {
         <div className="live-messages" role="log" aria-live="polite">
           {messages.length === 1 && !busy && (
             <div className="chat-welcome">
-              <h2>Mau tanya apa?</h2>
+              <div className="chat-welcome-heading">
+                <img src={conditionArtUrl("partly-cloudy")} width={112} height={112} alt="" decoding="async" />
+                <h2>Mau tanya apa?</h2>
+              </div>
               <div className="chat-suggestions">
-                {suggestions.map(({ icon: Icon, text }) => (
+                {suggestions.map(({ icon: Icon, text, topic }) => (
                   <button
                     key={text}
+                    data-topic={topic}
                     type="button"
                     disabled={busy || !!pending || isLoading}
                     onClick={() => void send(text)}

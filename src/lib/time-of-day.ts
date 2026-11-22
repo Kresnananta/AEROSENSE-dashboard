@@ -74,6 +74,9 @@ export function weatherSceneForPeriod({
     if ([61, 66, 80].includes(code)) return night ? "light-rain-night" : "light-rain";
     if ([63, 65, 67, 81, 82].includes(code)) return night ? "rain-night" : "steady-rain";
     if (code === 45 || code === 48) return night ? "fog-night" : "fog";
+    if (code === 0) return night ? "sunny-night" : "sunny";
+    if (code === 3) return "cloudy";
+    if (code === 1 || code === 2) icon = "partly";
   }
 
   if (icon === "thunder") return night ? "storm-night" : "storm";
@@ -81,26 +84,12 @@ export function weatherSceneForPeriod({
   if (icon === "rain" || icon === "heavy-rain") return night ? "rain-night" : "steady-rain";
   if (icon === "fog") return night ? "fog-night" : "fog";
 
-  if (!night && hot) {
+  if (icon === "clear") return night ? "sunny-night" : "sunny";
+  if (icon === "partly" || hot || warm) {
+    if (night) return warm ? "warm-night" : "cloudy-night";
     if (effectivePeriod === "morning") return "sunny-morning";
     if (effectivePeriod === "afternoon") return "sunny-dusk";
-    return "sunny";
+    return hot && icon !== "partly" ? "sunny" : "partly-cloudy";
   }
-
-  const clearOrPartly =
-    code === 0 || code === 1 || code === 2 || icon === "clear" || icon === "partly";
-
-  if (clearOrPartly) {
-    if (night) return warm ? "warm-night" : "sunny-night";
-    if (effectivePeriod === "morning") return "sunny-morning";
-    if (effectivePeriod === "afternoon") return "sunny-dusk";
-    return code === 0 || icon === "clear" ? "sunny" : "partly-cloudy";
-  }
-
-  if (night) return warm ? "warm-night" : "cloudy-night";
-  if (warm) {
-    if (effectivePeriod === "morning") return "sunny-morning";
-    if (effectivePeriod === "afternoon") return "sunny-dusk";
-  }
-  return "cloudy";
+  return icon === "cloudy" ? "cloudy" : night ? "cloudy-night" : "cloudy";
 }

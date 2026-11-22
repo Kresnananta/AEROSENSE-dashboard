@@ -147,7 +147,6 @@ dialog.role-dialog {
 .app-shell .wx-panel :is(.wx-card, .disaster-card) { border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset))); }
 .app-shell .chat-workspace .live-chat > header { background: var(--muted); border-color: var(--border); }
 .app-shell .chat-workspace .live-chat > header :is(strong, small) { color: var(--foreground); }
-.app-shell .chat-workspace .chat-welcome .chat-suggestions button,
 .app-shell .chat-workspace .chat-guest, .app-shell .chat-workspace .chat-scope,
 .app-shell .robot-mood-greet,
 .login-page :is(.login-input, .register-profile summary) {
@@ -155,7 +154,6 @@ dialog.role-dialog {
   border-color: var(--border);
   color: var(--foreground);
 }
-.app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled),
 .app-shell .robot-mood-greet:hover { background: var(--accent); }
 .app-shell .wx-panel :is(.wx-panel-heading span, .wx-day-label, .wx-hour-date, .wx-card-arrow),
 .app-shell :is(.nav-group > p, .sidebar-account small, .chat-scope summary, .robot-mood-reading),
@@ -176,16 +174,60 @@ dialog.role-dialog {
 :is(.app-topbar, .landing-header, .app-navigation, .live-panel, .live-chat, .robot-mood, .login-page, .wx-panel) svg.lucide { stroke-width: 1.65; }
 :is(.nav-entry.active, .account-link, .landing-button, .login-submit, .live-button:not(.secondary), .wx-close) svg.lucide { stroke-width: 2; }
 
+.scroll-vignette {
+  position: relative;
+  min-inline-size: 0;
+  --vignette-width: clamp(30px, 5vw, 72px);
+}
+.topic-vignette { flex: 1; --vignette-width: 32px; }
+.scroll-vignette::before,
+.scroll-vignette::after {
+  content: "";
+  position: absolute;
+  inset-block: 0 var(--aero-scrollbar-size);
+  z-index: 1;
+  inline-size: var(--vignette-width);
+  background: radial-gradient(ellipse 115% 80% at var(--vignette-origin) center,
+    oklch(58% .11 245 / .30), transparent 82%),
+    linear-gradient(to var(--vignette-direction), oklch(93% .042 235 / .95), transparent 92%);
+  opacity: 0;
+  pointer-events: none;
+}
+.scroll-vignette::before {
+  left: 0;
+  --vignette-origin: left;
+  --vignette-direction: right;
+}
+.scroll-vignette::after {
+  right: 0;
+  --vignette-origin: right;
+  --vignette-direction: left;
+}
+.scroll-vignette[data-edge-start="true"]:not(:has(:focus-visible))::before,
+.scroll-vignette[data-edge-end="true"]:not(:has(:focus-visible))::after { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-vignette::before, .scroll-vignette::after { transition: opacity 160ms ease-out; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-vignette::before, .scroll-vignette::after { transition-property: none; }
+}
+@supports (backdrop-filter: blur(4px)) {
+  @media (prefers-reduced-transparency: no-preference) {
+    .scroll-vignette::before, .scroll-vignette::after {
+      backdrop-filter: blur(4px);
+      mask-image: linear-gradient(to var(--vignette-direction), #000, transparent 96%);
+    }
+  }
+}
+@media (prefers-contrast: more), (forced-colors: active) {
+  .scroll-vignette::before, .scroll-vignette::after { display: none; }
+}
+
 @media (max-width: 680px) {
   .app-shell .app-topbar .topbar-actions { gap: 4px; }
   .app-shell .app-topbar .account-link { padding-inline: 9px; }
   .app-shell .app-topbar .account-link svg { display: none; }
   .app-shell .app-topbar .topbar-breadcrumb strong { overflow-wrap: anywhere; }
-  .app-shell .wx-days:not(:focus-within),
-  .app-shell .environment-hub .environment-nav .insight-topics:not(:focus-within) {
-    padding-inline-end: 16px;
-    mask-image: linear-gradient(to right, #000 calc(100% - 10px), transparent);
-  }
 }
 
 

@@ -8,9 +8,11 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 
 - Warna OKLCH, batas alfa, dan radius berlapis dipakai pada panel dan kontrol web. Dasbor selalu menggunakan tema terang. Toolbar dan dialog memakai kaca dengan cadangan solid. Kontrol Peta Sensor memakai jarak yang konsisten; jumlah node dan legenda dikelompokkan di bawah filter. Toolbar Hub Lingkungan memakai kaca saat menggulir dan kembali solid pada preferensi aksesibilitas.
 
-- Kartu prakiraan per jam dan tujuh hari memakai proporsi potret dan ilustrasi yang lebih besar. Tepi daftar per jam memudar selama masih ada kartu di arah tersebut.
+- Kartu prakiraan per jam dan tujuh hari memakai proporsi potret dan ilustrasi yang lebih besar. Vinyet biru di tepi prakiraan, kategori Hub Lingkungan, dan daftar node muncul saat masih ada konten yang bisa digulir.
 - Bilah gulir halaman, prakiraan cuaca, navigasi, chat, dan tabel memakai warna biru yang sama. Seret, navigasi Tab, sapuan ponsel, dan mode kontras tinggi diuji di Chrome.
 - Judul utama dan angka prakiraan memakai biru yang lebih kuat. Bilah navigasi, menu, dan dialog menggunakan kaca yang lebih bening dengan cadangan solid untuk pengaturan aksesibilitas.
+- Ilustrasi prakiraan diukur dari area gambar yang terlihat. Cerah malam memakai bulan, cerah berawan memakai bulan dan awan, dan kartu harian memakai kondisi harian.
+- Area sambutan Tanya AERO-BOT memakai ilustrasi cuaca dan warna lembut sesuai topik saran.
 - Latar kartu prakiraan mengikuti waktu WIB. Kartu siang memakai rona langit cerah, dan kartu malam memakai biru laut yang lebih dalam.
 - Kabar Bencana menampilkan peta pantauan GDACS untuk lampiran gempa dan banjir yang tersedia. Kartu ANTARA membuka artikel sumber untuk melihat dokumentasi. Rilis membutuhkan pembaruan API dan web.
 - Ringkasan siklon dan gempa memberi ruang terpisah untuk lokasi, waktu, kedalaman, dan catatan BMKG. Nama Maluku Barat Daya ditulis lengkap dan magnitudo tampil polos. Status tsunami diringkas hanya jika BMKG menyatakan semua gempa yang ditampilkan tidak berpotensi tsunami.
