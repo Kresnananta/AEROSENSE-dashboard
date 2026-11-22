@@ -4,14 +4,14 @@
 
 Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditinjau dan diuji bersama.
 
-- Halaman utama memakai foto lanskap [Clouds in the sky landscape](https://commons.wikimedia.org/wiki/File:Clouds_in_the_sky_landscape.jpg) oleh Aammell (CC0), dengan rona biru dan garis kontur dekoratif. Foto tidak mewakili kondisi live. Ilustrasi memudar ke latar bagian fitur; awan yang melintasi matahari dihapus hanya dari skyline landing.
+- Halaman utama dan alur akun memakai ilustrasi lanskap pesisir Jawa Timur. Lanskap beranda memudar ke bagian fitur. Status cuaca tetap disampaikan lewat data dan ilustrasi kondisi pada Hub Lingkungan.
 
 - Beranda menautkan pembacaan sensor, prakiraan, peringatan, dan AERO-BOT langsung dari daftar fitur. Tautan navigasi desktop tampil langsung di atas langit. Tombol masuk berbentuk pil, dan menu ponsel terbuka di atas panel solid.
-- Ikon antarmuka dan peta memakai garis membulat dengan ketebalan yang konsisten. Beranda, navigasi, dan halaman akun memakai tanda merek yang sama. Amber menyorot cuaca dan merah menyorot peringatan.
+- Ikon antarmuka dan peta memakai garis membulat dengan ketebalan yang konsisten. Beranda, navigasi, dan halaman akun memakai tanda merek yang sama.
 - Prakiraan berbagi permintaan untuk titik yang sama. Saat penyedia membatasi permintaan, API menunggu sebelum mencoba lagi dan dapat menampilkan prakiraan tersimpan hingga enam jam dengan waktu sumber yang jelas. Rilis memerlukan pembaruan API dan web.
 - Lapisan peta memakai satu kumpulan titik untuk cuaca dan satu untuk kualitas udara. Peta memakai ulang titik yang sama saat pengguna bergeser atau mengganti lapisan. Batas muatan peta menyisakan kuota Open-Meteo untuk prakiraan dan Hub.
 - Saat prakiraan per jam belum tersedia, Hub memakai prakiraan harian tersimpan yang masih berlaku untuk node acuan. Status dan tanggal prakiraan ditulis terpisah dari kondisi saat ini.
-- Tombol utama memakai emas dengan teks gelap. Navigasi aktif dan panel pengelola memakai kobalt. Kolom tanya AERO-BOT memakai permukaan putih dengan batas biru dan tombol Kirim yang mudah terlihat. Rilis ini mencakup API dan web.
+- Kobalt dan hijau limau dipakai untuk identitas antarmuka. Limau menyorot tindakan utama dan kobalt menandai navigasi aktif. Amber dan merah dipakai untuk status peringatan. Panel transparan kembali solid pada pengaturan kontras tinggi.
 - Cara kerja menampilkan tiga langkah dalam satu baris di desktop dan bertumpuk di ponsel. Area pengantar fokus pada judul dan deskripsi.
 - Ringkasan menampilkan pembacaan sensor dan satu ringkasan wilayah. Prakiraan lengkap dan Kabar Bencana tersedia di Cuaca & lingkungan. Menu Data & perangkat membuka riwayat, perangkat, dan fungsi pengelolaan sesuai hak akses.
 - Amber dipakai untuk cuaca dan Waspada. Merah dipakai untuk peringatan sensor dan Bahaya. Navigasi, daftar fitur, dan Ringkasan diperiksa di Chrome pada lebar 320, 390, 768, dan 1440 px. Warna status diuji dengan data contoh.
@@ -24,7 +24,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 - Ilustrasi prakiraan diukur dari area gambar yang terlihat. Cerah malam memakai bulan, cerah berawan memakai bulan dan awan, dan kartu harian memakai kondisi harian.
 - Area sambutan Tanya AERO-BOT memakai ilustrasi cuaca dan warna lembut sesuai topik saran.
 - Latar kartu prakiraan mengikuti waktu WIB. Kartu siang memakai rona langit cerah, dan kartu malam memakai biru laut yang lebih dalam.
-- Kabar Bencana memakai liputan ANTARA untuk kategori Gempa dan Longsor. Sumber dan tautan artikel tampil pada kartu. Peta pantauan banjir GDACS tetap tampil pada laporannya jika tersedia.
+- Kabar Bencana menggabungkan liputan ANTARA dalam filter Gempa & longsor. Jenis kejadian, sumber, dan tautan tetap tampil pada setiap kartu. Ringkasan BMKG memakai latar polos agar angka mudah dibaca.
 - BMKG menjadi rujukan parameter dan status tsunami. Kabar Bencana menautkan daftar resmi BMKG terpisah dari liputan ANTARA. Peta memakai umpan BMKG yang sama dengan ringkasan jika tersedia dan beralih ke data BMKG tersimpan saat umpan gagal. Siklon tetap ditampilkan dengan atribusi GDACS.
 - Penanda memakai bentuk pin dengan warna penuh. Pin AEROSENSE biru memuat logo resmi dan pin WATERSENSE hijau kebiruan memakai tetes air. Gempa merah mawar dan titik panas jingga. Peta dan legenda memakai bentuk dan warna yang sama. Pin bergerak berulang selama disorot kursor dan mengikuti pengaturan pengurangan gerak.
 - Label warna tampil pada zoom 11 ke atas. Zoom 8–10 menampilkan titik acuan kota atau kabupaten, sedangkan zoom 7 ke bawah menampilkan provinsi. Isi kotak mengikuti warna skala model dan teks menyesuaikan kontras. Jumlah dan jarak label menyesuaikan ukuran peta.
@@ -37,7 +37,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 - Landing, dasbor, Hub Lingkungan, chat, dan alur akun memakai permukaan dan kontrol yang seragam. Ilustrasi asli AEROSENSE dipakai untuk sensor, cuaca, kondisi lingkungan, dan maskot.
 - Panel AERO-BOT menunjukkan ekspresi melalui balon dialog, waktu baca, dan saran untuk titik sensor yang dipakai chat. Jika data tidak valid, maskot tampil sehat dengan catatan bahwa kondisi udara belum diketahui. Gelembung sensor serta animasi tangan pada pose sapaan memakai aset lama. Maskot berwarna amber saat waspada dan koral saat bahaya, termasuk ketika menyapa.
 - Header chat menampilkan status saat jawaban sedang disiapkan. Warna kondisi tetap pada ilustrasi dan balon dialog.
-- Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil.
+- Formulir daftar menyimpan detail profil sebagai bagian opsional. Halaman status email membedakan tautan kosong, gagal, dan berhasil. Template konfirmasi di `server/supabase/confirmation-email.html` menunggu pemasangan di Supabase dan uji pengiriman.
 - Build dan 122 tes lulus. Penanda, navigasi keyboard, dan rujukan gempa diuji di Chrome pada lebar 390 dan 1440 px, termasuk saat umpan BMKG kosong atau gagal. Langkah berikutnya: rilis API dan web, lalu periksa data BMKG di situs publik dan uji email konfirmasi.
 
 ## AERO-BOT (status terbaru)

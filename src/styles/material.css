@@ -23,18 +23,24 @@
   --sidebar-border: var(--border);
   --aero-link: oklch(44% .161 254);
   --aero-heading: oklch(39% .133 253);
-  --aero-focus-gold: oklch(86% .172 87);
-  --aero-focus-gold-hover: oklch(82% .166 83);
+  --aero-focus-lime: oklch(92% .19 122);
+  --aero-focus-lime-hover: oklch(86% .184 122);
+  --aero-lime-soft: oklch(96% .07 122);
+  --aero-lime-ink: oklch(34% .087 129);
   --aero-focus-ink: oklch(24% .084 257);
   --aero-cobalt: oklch(39% .162 264);
+  --aero-landscape-scene: url("../assets/images/east-java-sky.webp");
+  --aero-hero-text: oklch(99% .007 240);
+  --aero-hero-muted: oklch(95% .027 240);
   --aero-amber-ink: oklch(46% .112 64);
   --aero-amber-soft: oklch(95% .065 86);
   --aero-red-ink: oklch(44% .152 22);
   --aero-red-soft: oklch(94% .042 19);
-  --aero-atmosphere: linear-gradient(127deg, oklch(98% .017 230), oklch(94% .048 234) 49%, oklch(87% .078 241));
+  --aero-atmosphere: radial-gradient(ellipse at 94% 0%, oklch(86% .107 238 / .63), transparent 46%),
+    linear-gradient(152deg, oklch(97% .024 235), oklch(92% .058 240) 64%, oklch(94% .055 232));
   --aero-sheet: linear-gradient(143deg, oklch(100% 0 0 / .9), oklch(96% .035 231 / .62));
-  --aero-material: linear-gradient(119deg, oklch(99% .013 229 / .85), oklch(91% .066 233 / .67));
-  --aero-material-raised: linear-gradient(145deg, oklch(99.8% .005 235 / .97), oklch(95% .04 235 / .86));
+  --aero-material: linear-gradient(119deg, oklch(99% .013 229 / .76), oklch(91% .066 233 / .54));
+  --aero-material-raised: linear-gradient(145deg, oklch(99.8% .005 235 / .95), oklch(95% .04 235 / .79));
   --aero-glass-rim: oklch(56% .092 241 / .26);
   --aero-depth: 0 8px 24px oklch(33% .05 248 / .07);
   --aero-frame: 24px;
@@ -176,7 +182,10 @@ dialog.role-dialog {
 }
 .login-page .login-form-panel { background: var(--aero-material-raised); }
 .app-shell .wx-panel { --frame-inset: 16px; padding: var(--frame-inset); }
-.app-shell .wx-panel.wx-hazard-panel { --frame-inset: clamp(16px, 2vw, 24px); }
+.app-shell .wx-panel.wx-hazard-panel {
+  --frame-inset: clamp(16px, 2vw, 24px);
+  background: var(--card);
+}
 .app-shell .wx-panel :is(.wx-card, .disaster-card) { border-radius: max(4px, calc(var(--frame-radius) - var(--frame-inset))); }
 .app-shell .chat-workspace .live-chat > header {
   background: var(--aero-material-raised);
@@ -315,20 +324,6 @@ svg.lucide, .map-pin-glyph {
 .app-navigation .nav-tools summary::-webkit-details-marker { display: none; }
 .app-navigation .nav-tools summary:hover { background: var(--muted); }
 .app-navigation .nav-tools[open] summary svg { rotate: 180deg; }
-.app-shell .nav-entry[data-destination="/environment"] svg { color: var(--aero-amber-ink); }
-.app-shell .nav-entry.active[data-destination="/environment"] {
-  background: var(--aero-amber-soft);
-  color: var(--aero-amber-ink);
-}
-.app-shell .nav-entry.active[data-destination="/alerts"] {
-  background: var(--aero-red-soft);
-  color: var(--aero-red-ink);
-}
-.app-shell .nav-entry[data-destination="/alerts"] svg,
-.app-shell .app-topbar .topbar-alert-link {
-  color: var(--aero-red-ink);
-}
-.app-shell .app-topbar .topbar-alert-link:hover { background: var(--aero-red-soft); }
 .app-shell .insights-compact > .insights-heading { flex-wrap: wrap; gap: 4px 20px; }
 .app-shell .insights-compact > .insights-heading .insight-text-link {
   min-height: 44px;
@@ -451,14 +446,14 @@ svg.lucide, .map-pin-glyph {
   --landing-blue: var(--primary);
 }
 .landing-page .landing-management {
-  background: var(--aero-cobalt);
+  background: linear-gradient(128deg, var(--aero-cobalt) 20%, oklch(49% .162 249));
   border-color: transparent;
   color: white;
 }
 .landing-page .landing-management :is(h2, .landing-management-link) { color: white; }
 .landing-page .landing-management :is(p, .landing-management-details span) { color: #e1edff; }
 .landing-page .landing-management .landing-management-details p { border-color: rgb(255 255 255 / .22); }
-.landing-page .landing-management :is(.landing-management-details svg, .landing-management-details strong) { color: var(--aero-focus-gold); }
+.landing-page .landing-management :is(.landing-management-details svg, .landing-management-details strong) { color: var(--aero-focus-lime); }
 .landing-page .landing-workflow-steps li > span { color: var(--aero-link); }
 .landing-page .landing-management a:focus-visible { outline-color: white; }
 
@@ -466,14 +461,14 @@ svg.lucide, .map-pin-glyph {
   .app-shell .sensor-overview .sensor-hero .panel-link,
   .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
   .app-shell .chat-workspace .live-chat .chat-send:not(:disabled)) {
-  background-color: var(--aero-focus-gold);
+  background-color: var(--aero-focus-lime);
   color: var(--aero-focus-ink);
 }
 :is(.landing-page :is(.landing-hero, .landing-management) .landing-button, .login-page .login-submit,
   .app-shell .sensor-overview .sensor-hero .panel-link,
   .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link,
   .app-shell .chat-workspace .live-chat .chat-send):hover:not(:disabled) {
-  background-color: var(--aero-focus-gold-hover);
+  background-color: var(--aero-focus-lime-hover);
 }
 .app-shell .sensor-overview .sensor-node-controls .panel-link,
 .app-shell .weather-outlook .wx-today[data-day-period] .wx-today-link {
@@ -518,12 +513,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   border-color: var(--border);
   color: var(--muted-foreground);
 }
-.login-page .login-story:not([data-day-period="night"]) .login-story-copy { color: oklch(28% .062 251); }
-.login-story-copy strong {
-  color: var(--aero-amber-ink);
-  font-weight: inherit;
-}
-.login-story[data-day-period="night"] .login-story-copy strong { color: var(--aero-amber-soft); }
 .login-page .login-input input::placeholder, .app-shell .chat-workspace .live-chat > form input::placeholder {
   color: var(--muted-foreground);
   opacity: 1;
@@ -632,12 +621,35 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   }
   .app-shell .chat-workspace .live-messages:has(.chat-welcome) {
     background: var(--aero-landscape) right bottom / min(29rem, 90%) auto no-repeat,
+      radial-gradient(ellipse at 76% 14%, var(--aero-lime-soft), transparent 58%),
       var(--aero-sheet);
   }
-  .app-shell :is(.sensor-workspace .map-controls, .wx-hazard-panel, .nearby-location, .management-location) {
+  .app-shell :is(.sensor-workspace .map-controls, .nearby-location, .management-location) {
     background: linear-gradient(105deg, oklch(99% .014 230 / .82), oklch(96% .046 235 / .58)),
       url("../assets/images/land-contours.svg") right 46% / min(31rem, 64%) auto no-repeat,
       var(--aero-material);
+  }
+}
+
+.login-page .login-story {
+  overflow: hidden;
+  border: 1px solid oklch(88% .075 241 / .6);
+  background:
+    linear-gradient(180deg, oklch(31% .15 260 / .88), transparent 39%, transparent 56%, oklch(26% .12 259 / .91)),
+    var(--aero-landscape-scene) 60% center / cover no-repeat,
+    var(--aero-cobalt);
+}
+.login-page :is(.login-story p.login-story-copy, .login-story .login-brand) { color: var(--aero-hero-text); }
+.login-story-copy strong { color: var(--aero-focus-lime); font-weight: inherit; }
+.login-page .login-story .login-brand img { filter: brightness(0) invert(1); }
+.login-page .login-story .login-brand:focus-visible { outline-color: white; }
+
+@media (max-width: 767px) {
+  .login-page .login-story {
+    background:
+      linear-gradient(90deg, var(--aero-cobalt) 24%, oklch(38% .15 256 / .46) 78%),
+      var(--aero-landscape-scene) center 78% / cover no-repeat,
+      var(--aero-cobalt);
   }
 }
 
@@ -645,67 +657,66 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   position: relative;
   isolation: isolate;
   border-bottom: 0;
-}
-.landing-page .landing-hero-stage[data-day-period="day"] {
-  background: url("../assets/images/skyline-landing-sun.svg") right bottom / cover no-repeat, var(--aero-sky);
-}
-.landing-hero-stage .landing-hero { position: relative; z-index: 1; }
-.landing-hero-fade {
-  position: absolute;
-  inset: auto 0 0;
-  height: clamp(60px, 10vw, 146px);
-  z-index: 0;
-  background: linear-gradient(to bottom, transparent, var(--background));
-  pointer-events: none;
-}
-.landing-hero-stage::before,
-.landing-hero-stage::after,
-.landing-management::before {
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  content: "";
+  color: var(--aero-hero-text);
 }
 .landing-hero-stage::before {
-  inset: 0 0 0 25%;
-  background: url("../assets/images/cloud-landscape.jpg") 55% 62% / cover no-repeat;
-  filter: grayscale(1) sepia(.9) hue-rotate(159deg) saturate(1.45) brightness(1.24);
-  mask-image: linear-gradient(90deg, transparent, #000 61%);
-  opacity: .67;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - clamp(52px, 8vw, 120px)), transparent);
+  background:
+    linear-gradient(180deg, oklch(30% .15 260 / .82), transparent 24%),
+    linear-gradient(90deg, oklch(30% .15 260 / .94), oklch(36% .15 258 / .43) 47%, transparent 72%),
+    var(--aero-landscape-scene) center bottom / cover no-repeat,
+    var(--aero-cobalt);
 }
-.landing-hero-stage::after {
-  inset: 48% 0 0 42%;
-  background: url("../assets/images/land-contours.svg") right bottom / auto 100% no-repeat;
-  mask-image: linear-gradient(125deg, transparent 5%, #000 64%);
-  opacity: .52;
-}
-@supports (mask-composite: intersect) {
-  @media (min-width: 681px) {
-    .landing-hero-stage[data-day-period="day"]::before {
-      mask-image: linear-gradient(90deg, transparent, #000 61%),
-        linear-gradient(to bottom, transparent clamp(148px, 16vw, 245px), #000 56%);
-      mask-composite: intersect;
-    }
+.landing-hero-stage .landing-hero { position: relative; z-index: 1; }
+.landing-page .landing-hero-stage .landing-brand { color: var(--aero-hero-text); }
+.landing-hero-stage .landing-brand img { filter: brightness(0) invert(1); }
+.landing-page .landing-hero-copy > p { color: var(--aero-hero-muted); }
+.landing-page .landing-hero-copy h1 span { color: var(--aero-focus-lime); }
+.landing-page .landing-hero-stage :is(.landing-brand, .landing-button):focus-visible { outline-color: white; }
+
+@media (min-width: 761px) {
+  .landing-page .landing-hero-stage .landing-header nav a:not(.landing-nav-login) { color: var(--aero-hero-text); }
+  .landing-page .landing-hero-stage .landing-header nav a:focus-visible { outline-color: white; }
+  .landing-page .landing-header nav .landing-nav-login {
+    background: oklch(100% 0 0 / .92);
+    border-color: oklch(100% 0 0 / .36);
+    color: var(--aero-link);
   }
 }
-.landing-hero-stage[data-day-period="night"]::before {
-  filter: grayscale(1) sepia(1) hue-rotate(164deg) saturate(2) brightness(.57);
-  opacity: .56;
+
+@media (max-width: 760px) {
+  .landing-hero-stage::before {
+    background:
+      linear-gradient(180deg, var(--aero-cobalt) 0%, oklch(39% .16 253 / .87) 48%, transparent 84%),
+      var(--aero-landscape-scene) 74% bottom / cover no-repeat,
+      var(--aero-cobalt);
+  }
 }
-.landing-hero-stage[data-day-period="night"]::after { opacity: .38; }
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .login-page .login-story,
+  .landing-page .landing-hero-stage { background: var(--aero-cobalt); }
+  .landing-hero-stage::before { content: none; }
+}
+@media (forced-colors: active) {
+  .landing-hero-stage .landing-brand img,
+  .login-page .login-story .login-brand img { filter: none; }
+}
+
 .landing-management { position: relative; isolation: isolate; }
 .landing-management::before {
+  position: absolute;
   inset: 0 0 0 46%;
+  content: "";
+  pointer-events: none;
+  z-index: -1;
   border-radius: inherit;
   background: url("../assets/images/land-contours.svg") right center / cover no-repeat;
   mask-image: linear-gradient(90deg, transparent, #000);
   opacity: .16;
-}
-@media (max-width: 680px) {
-  .landing-hero-stage::before {
-    inset: 34% 0 0;
-    mask-image: linear-gradient(180deg, transparent, #000 65%);
-    background-position: 56% 73%;
-  }
-  .landing-hero-stage::after { inset: 65% 0 0 12%; }
 }

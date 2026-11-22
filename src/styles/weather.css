@@ -41,7 +41,7 @@
 }
 .wx-today.tone-clear,
 .wx-today.tone-partly {
-  background: linear-gradient(120deg, #fffaf0 0%, #f8ebd3 55%, #d9eef5 100%);
+  background: linear-gradient(120deg, oklch(97% .025 230), var(--aero-lime-soft) 55%, oklch(91% .055 235));
 }
 .wx-dateline {
   margin: 0;
@@ -301,8 +301,8 @@
   transition: translate 160ms ease, border-color 160ms ease;
 }
 .wx-card[data-day-period="morning"], .wx-card[data-day-period="afternoon"] {
-  --wx-light: oklch(95% 0.067 78);
-  --wx-horizon: oklch(92% 0.052 63 / 60%);
+  --wx-light: oklch(96% .073 121);
+  --wx-horizon: oklch(92% .054 121 / .6);
 }
 .wx-card[data-day-period="night"] {
   --wx-sky: oklch(78% 0.09 242);
@@ -337,9 +337,9 @@
   outline: 2px solid #0868dc;
   outline-offset: -2px;
 }
-.wx-detail-head.tone-clear, .wx-detail-head.tone-partly { background: #fbf4e6; }
+.wx-detail-head.tone-clear, .wx-detail-head.tone-partly { background: var(--aero-lime-soft); }
 .wx-detail-head.tone-fog { background: #eef2f3; }
-.wx-detail-head.tone-drizzle { background: #e8f4f3; }
+.wx-detail-head.tone-drizzle { background: var(--muted); }
 .wx-detail-head.tone-thunder,
 .wx-detail-head.tone-heavy-rain { background: #e9eff4; }
 .wx-day-name {

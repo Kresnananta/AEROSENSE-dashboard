@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { AeroMascot } from "@/components/environment/AeroMascot";
 import { useAuth } from "@/hooks/useAuth";
-import { useDayPeriod } from "@/hooks/useDayPeriod";
 import "@/styles/landing.css";
 
 const features = [
@@ -49,15 +48,13 @@ export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const { user } = useAuth();
-  const dayPeriod = useDayPeriod();
 
   return (
     <div className="landing-page">
       <a className="landing-skip" href="#konten">
         Lewati navigasi
       </a>
-      <div className="landing-hero-stage" data-day-period={dayPeriod}>
-        <span className="landing-hero-fade" aria-hidden="true" />
+      <div className="landing-hero-stage">
         <header
           className="landing-header landing-container"
           onKeyDown={(event) => {
@@ -99,9 +96,9 @@ export function LandingPage() {
             </Link>
           </nav>
         </header>
-        <section className="landing-hero landing-container" data-day-period={dayPeriod}>
+        <section className="landing-hero landing-container">
           <div className="landing-hero-copy">
-            <h1>Kenali udara dan cuaca di sekitar Anda.</h1>
+            <h1>Kenali <span>udara dan cuaca</span> di sekitar Anda.</h1>
             <p>
               Lihat pembacaan dari titik sensor, prakiraan hujan, dan peringatan lingkungan.
             </p>

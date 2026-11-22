@@ -41,8 +41,6 @@
 }
 .landing-hero-stage {
   width: 100%;
-  background: var(--aero-sensor-illustration);
-  border-bottom: 1px solid var(--aero-rim);
   margin-bottom: clamp(40px, 6vw, 78px);
 }
 .landing-header {
@@ -98,15 +96,6 @@
   display: none;
 }
 
-@media (min-width: 761px) {
-  .landing-hero-stage[data-day-period="night"] .landing-header nav a:not(.landing-nav-login) {
-    color: #eaf6ff;
-  }
-  .landing-hero-stage[data-day-period="night"] .landing-header nav a:focus-visible {
-    outline: 2px solid #eaf6ff;
-    outline-offset: 4px;
-  }
-}
 .landing-hero {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
@@ -246,13 +235,8 @@
 }
 
 .landing-feature-link[data-destination="/environment"] .landing-feature-icon {
-  background: var(--aero-amber-soft);
-  color: var(--aero-amber-ink);
-}
-
-.landing-feature-link[data-destination="/alerts"] .landing-feature-icon {
-  background: var(--aero-red-soft);
-  color: var(--aero-red-ink);
+  background: var(--aero-lime-soft);
+  color: var(--aero-lime-ink);
 }
 
 .landing-feature-copy {

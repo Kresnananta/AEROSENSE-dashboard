@@ -33,7 +33,7 @@
 .app-shell .chat-workspace .live-messages { min-height: 0; }
 .app-shell .chat-workspace .live-messages:has(.chat-welcome) {
   background:
-    radial-gradient(ellipse at 70% 0%, oklch(94% .064 78 / .66), transparent 52%),
+    radial-gradient(ellipse at 70% 0%, var(--aero-lime-soft), transparent 52%),
     radial-gradient(ellipse at 9% 18%, oklch(92% .055 223), transparent 56%), var(--card);
 }
 .chat-workspace .chat-welcome { padding-block: clamp(12px, 2.6vw, 32px); }
@@ -47,10 +47,8 @@
   border-color: var(--border);
   color: var(--foreground);
 }
-.chat-suggestions [data-topic="weather"] { --suggestion-fill: var(--aero-amber-soft); --suggestion-ink: var(--aero-amber-ink); }
-.chat-suggestions [data-topic="rain"] { --suggestion-fill: oklch(95% .038 241); --suggestion-ink: var(--aero-link); }
-.chat-suggestions [data-topic="activity"] { --suggestion-fill: oklch(96% .038 50); --suggestion-ink: oklch(46% .132 43); }
-.chat-suggestions [data-topic="air"] { --suggestion-fill: oklch(96% .042 169); --suggestion-ink: oklch(43% .104 158); }
+.chat-suggestions { --suggestion-fill: var(--muted); --suggestion-ink: var(--aero-link); }
+.chat-suggestions [data-topic="weather"] { --suggestion-fill: var(--aero-lime-soft); --suggestion-ink: var(--aero-lime-ink); }
 .chat-workspace .chat-welcome .chat-suggestions button svg { color: var(--suggestion-ink); }
 .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled) {
   background: color-mix(in oklch, var(--suggestion-fill), var(--suggestion-ink) 8%);
@@ -148,7 +146,7 @@
 .auth-result > p { color: var(--aero-muted); font-size: .9375rem; line-height: 1.55; }
 .auth-result-actions { display: grid; gap: 12px; width: 100%; margin-top: 4px; }
 .auth-result-actions .login-back { min-height: 44px; display: flex; align-items: center; justify-self: start; }
-.auth-result[data-result="confirmed"] .auth-status-icon { background: #def6ee; color: #14684e; }
+.auth-result[data-result="confirmed"] .auth-status-icon { background: var(--aero-lime-soft); color: var(--aero-lime-ink); }
 .auth-result[data-result="failed"] .auth-status-icon { background: #fff0dd; color: #894715; }
 @media (prefers-reduced-motion: no-preference) {
   .auth-result[data-result="checking"] .auth-status-icon svg { animation: auth-checking 1s linear infinite; }
