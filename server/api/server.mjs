@@ -71,7 +71,7 @@ async function request(url, options = {}) {
   }
   if (r.status === 204) return null;
   const text = await r.text();
-  return text ? JSON.parse(text) : null;
+  return text && options.format !== "text" ? JSON.parse(text) : text || null;
 }
 async function db(table, query = "", method = "GET", body, prefer = "return=representation") {
   return request(dbBase + table + (query ? "?" + query : ""), {

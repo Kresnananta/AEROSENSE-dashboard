@@ -171,33 +171,63 @@ export function parseCyclones(geo, now = Date.now()) {
   return out;
 }
 
-export function parseQuakes(data, now = Date.now()) {
+const QUAKE_WINDOW = 7 * 86400000;
+
+export function parseQuakes(data, now = Date.now(), earliest = now - QUAKE_WINDOW) {
   const rows = data?.Infogempa?.gempa;
   if (!Array.isArray(rows)) throw fail("Format BMKG berubah.", 502);
-  return rows
-    .map((g) => {
-      const [lat, lng] = String(g.Coordinates || "").split(",").map(Number);
-      const time = Date.parse(g.DateTime);
-      return {
-        id: "eq-" + g.DateTime,
-        latitude: lat,
-        longitude: lng,
-        magnitude: Number(String(g.Magnitude).replace(",", ".")),
-        depth: String(g.Kedalaman || "").slice(0, 20),
-        region: String(g.Wilayah || "").slice(0, 160),
-        potential: String(g.Potensi || "").slice(0, 160),
-        time: Number.isFinite(time) ? new Date(time).toISOString() : null,
-      };
-    })
-    .filter(
-      (q) =>
-        Number.isFinite(q.latitude) &&
-        Number.isFinite(q.longitude) &&
-        Number.isFinite(q.magnitude) &&
-        q.time &&
-        now - Date.parse(q.time) < 7 * 86400000,
-    )
-    .slice(0, 15);
+  return rows.flatMap((g) => {
+    const [lat, lng] = String(g?.Coordinates ?? "").split(",").map((part) => part.trim() ? Number(part) : NaN);
+    const time = Date.parse(g?.DateTime);
+    const magnitude = Number(String(g?.Magnitude).replace(",", "."));
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 ||
+        !Number.isFinite(time) || time > now || time < earliest ||
+        !Number.isFinite(magnitude) || magnitude < 5 || magnitude > 10.5) return [];
+    return [{
+      id: "eq-" + g.DateTime,
+      latitude: lat,
+      longitude: lng,
+      magnitude,
+      depth: String(g.Kedalaman || "").slice(0, 20),
+      region: String(g.Wilayah || "").slice(0, 160),
+      potential: String(g.Potensi || "").slice(0, 160),
+      time: new Date(time).toISOString(),
+    }];
+  }).sort((a, b) => b.time.localeCompare(a.time)).slice(0, 30);
+}
+
+function readBmkgPage(html, now) {
+  const embedded = typeof html === "string" &&
+    html.match(/<script\b[^>]*\bid=["']__NUXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i)?.[1];
+  const values = embedded ? JSON.parse(embedded) : null;
+  if (!Array.isArray(values)) throw fail("Format halaman BMKG berubah.", 502);
+  const feed = values.find((item) =>
+    typeof item?.identifier === "number" && Array.isArray(values[item.info]) &&
+    values[item.info].every((index) => values[values[index]?.event] === "Gempabumi"),
+  );
+  const entries = values[feed?.info];
+  if (!entries?.length || entries.length > 30) throw fail("Daftar nasional BMKG belum tersedia.", 502);
+
+  const rows = entries.map((index) => {
+    const row = values[index];
+    const date = String(values[row.date]).match(/^(\d{2})-(\d{2})-(\d{2}|\d{4})$/);
+    const clock = String(values[row.time]).match(/^(\d{2}:\d{2}:\d{2})\s+WIB$/);
+    const [lng, lat] = String(values[values[row.point]?.coordinates] ?? "").split(",");
+    if (!date || !clock || lat == null) throw fail("Format kejadian BMKG berubah.", 502);
+    const [, day, month, year] = date;
+    const timestamp = new Date(`${year.length === 2 ? "20" + year : year}-${month}-${day}T${clock[1]}+07:00`);
+    return {
+      Coordinates: `${lat},${lng}`,
+      DateTime: timestamp.toISOString().replace(".000Z", "+00:00"),
+      Magnitude: values[row.magnitude],
+      Kedalaman: values[row.depth],
+      Wilayah: values[row.area],
+      Potensi: values[row.potential],
+    };
+  });
+  const quakes = parseQuakes({ Infogempa: { gempa: rows } }, now, -Infinity);
+  if (quakes.length !== rows.length) throw fail("Sebagian data BMKG belum bisa dibaca.", 502);
+  return quakes;
 }
 
 const distanceKm = (a, b) => {
@@ -289,6 +319,7 @@ const FORECAST =
   "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_gusts_10m_max,uv_index_max" +
   "&timezone=Asia%2FJakarta&forecast_days=7";
 const GDACS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC";
+const BMKG_NATIONAL = "https://www.bmkg.go.id/gempabumi/gempabumi-m5";
 const BMKG_QUAKES = "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json";
 
 const FORECAST_TTL = 30 * 60_000;
@@ -357,12 +388,22 @@ export function weatherService({ request, now = Date.now, openMeteo = openMeteoR
       throw forecastUnavailable();
     }
   };
+  const nationalQuakes = async () => {
+    try {
+      const html = await request(BMKG_NATIONAL, { timeout: 4500, format: "text" });
+      return { records: readBmkgPage(html, now()), feed: "bmkg_web" };
+    } catch {
+      const data = await request(BMKG_QUAKES, { timeout: 3000 });
+      return { records: parseQuakes(data, now(), -Infinity), feed: "bmkg_json" };
+    }
+  };
+
   const hazards = () =>
     cached("hazards", 600000, async () => {
       const day = (ms) => new Date(ms).toISOString().slice(0, 10);
       const [tc, eq] = await Promise.allSettled([
         request(`${GDACS}&fromdate=${day(now() - 7 * 86400000)}&todate=${day(now() + 86400000)}`, { timeout: 8000 }),
-        request(BMKG_QUAKES, { timeout: 8000 }),
+        nationalQuakes(),
       ]);
       const read = (r, parse) => {
         try {
@@ -371,9 +412,13 @@ export function weatherService({ request, now = Date.now, openMeteo = openMeteoR
           return null;
         }
       };
+      const national = eq.status === "fulfilled" ? eq.value : null;
+      const earliest = now() - QUAKE_WINDOW;
       return {
         cyclones: read(tc, parseCyclones),
-        quakes: read(eq, parseQuakes),
+        quakes: national?.records.filter(({ time }) => Date.parse(time) >= earliest) ?? null,
+        national_quakes: national?.records ?? null,
+        quake_feed: national?.feed ?? null,
         sources: ["GDACS (siklon tropis)", "BMKG (gempa M5+)"],
         updated_at: new Date(now()).toISOString(),
       };

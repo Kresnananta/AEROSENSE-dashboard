@@ -136,6 +136,46 @@ test("service shares rounded coordinates and survives a failed hazard source", a
   assert.deepEqual(hz.quakes, []);
 });
 
+test("national BMKG list keeps older quakes and falls back to the open feed", async () => {
+  const values = [];
+  const add = (value) => values.push(value) - 1;
+  const earthquake = (date, magnitude) => add({
+    event: add("Gempabumi"), date: add(date), time: add("09:00:00 WIB"),
+    point: add({ coordinates: add("113.2,-8.1") }), magnitude: add(magnitude),
+    depth: add("10 km"), area: add("Jawa Timur"), potential: add("Tidak berpotensi tsunami"),
+  });
+  add({ identifier: add("history"), info: add([earthquake("12-11-26", 5.3), earthquake("20-10-26", 6)]) });
+  const html = '<script type="application/json" id="__NUXT_DATA__">' + JSON.stringify(values) + '</script>';
+  let clock = now;
+  let page = html;
+  const fallback = { Infogempa: { gempa: [
+    { DateTime: "2026-10-20T02:00:00+00:00", Coordinates: "-8.1,113.2", Magnitude: "6" },
+  ] } };
+  const service = weatherService({
+    now: () => clock,
+    request: async (url, { format }) => {
+      if (url.includes("gdacs.org")) return { features: [] };
+      return format === "text" ? page : fallback;
+    },
+  });
+
+  const live = await service.hazards();
+  assert.equal(live.quake_feed, "bmkg_web");
+  assert.deepEqual(live.national_quakes.map(({ magnitude }) => magnitude), [5.3, 6]);
+  assert.equal(live.quakes.length, 1);
+  assert.equal(live.quakes[0].time, "2026-11-12T02:00:00.000Z");
+  assert.equal(live.quakes[0].latitude, -8.1);
+  assert.equal(live.quakes[0].longitude, 113.2);
+  assert.equal(live.quakes[0].potential, "Tidak berpotensi tsunami");
+
+  page = "<html>Daftar belum tersedia</html>";
+  clock += 11 * 60_000;
+  const backup = await service.hazards();
+  assert.equal(backup.quake_feed, "bmkg_json");
+  assert.equal(backup.national_quakes.length, 1);
+  assert.deepEqual(backup.quakes, []);
+});
+
 test("forecast coalesces requests and serves fresh-time slices during provider limits", async () => {
   let clock = now;
   let calls = 0;
