@@ -159,10 +159,9 @@
   .robot-mood { display: grid; grid-template-columns: minmax(118px, 34%) minmax(0, 1fr); }
   .robot-mood-scene .aero-mascot { width: min(100%, 226px); }
 }
-@media (max-width: 420px) {
-  .robot-mood { grid-template-columns: minmax(104px, 33%) minmax(0, 1fr); }
-  .robot-mood-body { padding: 12px; }
-  .robot-mood-bubble { padding: 6px 8px; font-size: .8125rem; }
+@media (max-width: 767px) {
+  .app-shell[data-page="/aerobot"] .app-content { padding-inline: 10px; }
+  .chat-workspace > .robot-mood { display: none; }
 }
 
 .app-shell .chat-workspace .live-chat { min-height: 530px; }
@@ -207,8 +206,10 @@
 .register-profile[open] summary svg { transform: rotate(180deg); }
 .register-profile fieldset { min-inline-size: 0; margin-top: 0; }
 
-@media (max-width: 680px) {
-  .app-shell .chat-workspace .live-chat { min-height: 0; }
+@media (max-width: 767px) {
+  .app-shell .chat-workspace .live-chat { min-height: max(500px, calc(100dvh - var(--topbar-height, 66px) - 24px)); }
+  .app-shell .chat-workspace .live-messages { max-height: max(340px, 66dvh); }
+  .app-shell .chat-workspace .live-messages:has(.chat-welcome) { max-height: none; }
   .chat-workspace .chat-welcome .chat-suggestions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .chat-workspace .chat-welcome .chat-suggestions button { padding: 8px 9px; gap: 6px; }
 }

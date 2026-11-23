@@ -1286,6 +1286,26 @@
   .panel-metrics:not(:has(> div:nth-child(3))) {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
+  .insight-lead[data-category="weather"] .panel-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .insight-lead[data-category="weather"] .panel-metrics > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 12px;
+    padding: 10px 12px;
+  }
+  .insight-lead[data-category="weather"] .panel-metrics dt { font-size: .8125rem; }
+  .insight-lead[data-category="weather"] .panel-metrics dd {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    margin: 0;
+    font-size: 1.25rem;
+    white-space: nowrap;
+  }
+  .insight-lead[data-category="weather"] .panel-metrics dd small { margin: 0; }
   .panel-caption {
     font-size: 11px;
     padding-bottom: 15px;

@@ -308,6 +308,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             key={selected.category}
             className={`insight-lead panel-${scene} tone-${selected.tone}`}
             data-day-period={dayPeriod}
+            data-category={selected.category}
           >
             <Atmosphere />
             <div className="insight-message">
