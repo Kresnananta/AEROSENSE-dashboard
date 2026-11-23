@@ -27,8 +27,8 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(260px, 0.9fr);
   align-items: center;
-  gap: 8px 28px;
-  padding: 22px 28px 22px 18px;
+  gap: 18px 28px;
+  padding: 24px 28px 24px 18px;
   border-radius: 20px;
   background: var(--aero-sky-day, linear-gradient(108deg, #f3fafd, #d5edf9 58%, #aedaf2));
   overflow: hidden;
@@ -51,7 +51,7 @@
   font-variant-numeric: tabular-nums;
 }
 .wx-today h3 {
-  margin: 4px 0 2px;
+  margin: 8px 0 4px;
   font-size: clamp(22px, 2.4vw, 30px);
   font-weight: 800;
   letter-spacing: -0.025em;
@@ -67,7 +67,7 @@
   color: #11223d;
 }
 .wx-today-tip {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   max-width: 42ch;
   font-size: 13px;
   line-height: 1.55;
@@ -383,6 +383,7 @@
   color: #0759ae;
 }
 .wx-today-link {
+  margin-block-start: 16px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
