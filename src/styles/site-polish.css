@@ -30,7 +30,8 @@
   color: #095cbf;
 }
 .app-shell .chat-workspace .chat-header-icon { width: 44px; height: 44px; flex: 0 0 auto; object-fit: contain; border-radius: var(--aero-control-radius); background: #dceeff; }
-.app-shell .chat-workspace .live-messages { min-height: 0; }
+.app-shell .chat-workspace .live-messages { min-height: 0; scrollbar-width: none; }
+.app-shell .chat-workspace .live-messages::-webkit-scrollbar { display: none; }
 .app-shell .chat-workspace .live-messages:has(.chat-welcome) {
   background:
     radial-gradient(ellipse at 70% 0%, var(--aero-lime-soft), transparent 52%),
