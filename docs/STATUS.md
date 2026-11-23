@@ -13,6 +13,7 @@ Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditin
 - Saat prakiraan per jam belum tersedia, Hub memakai prakiraan harian tersimpan yang masih berlaku untuk node acuan. Status dan tanggal prakiraan ditulis terpisah dari kondisi saat ini.
 - Kobalt dan hijau limau dipakai untuk identitas antarmuka. Limau menyorot tindakan utama serta hover pada navigasi, daftar fitur, dan saran chat dan kobalt menandai navigasi aktif. Amber dan merah dipakai untuk status peringatan. Panel transparan kembali solid pada pengaturan kontras tinggi.
 - Cara kerja menampilkan tiga langkah dalam satu baris di desktop dan bertumpuk di ponsel. Area pengantar fokus pada judul dan deskripsi.
+- Di ponsel, kategori Hub Lingkungan tersedia lewat menu Topik. Kartu prakiraan hari ini menumpuk ilustrasi, teks, dan statistik agar teks mendapat lebar penuh.
 - Judul dan tindakan halaman memakai jarak yang konsisten dan dapat membungkus di layar sempit. Navigasi dasbor menyediakan tautan lewati ke konten utama untuk keyboard. Notis pembaruan prakiraan memakai limau.
 - Ringkasan menampilkan pembacaan sensor dan satu ringkasan wilayah. Prakiraan lengkap dan Kabar Bencana tersedia di Cuaca & lingkungan. Menu Data & perangkat membuka riwayat, perangkat, dan fungsi pengelolaan sesuai hak akses.
 - Amber dipakai untuk cuaca dan Waspada. Merah dipakai untuk peringatan sensor dan Bahaya. Navigasi, daftar fitur, dan Ringkasan diperiksa di Chrome pada lebar 320, 390, 768, dan 1440 px. Warna status diuji dengan data contoh.

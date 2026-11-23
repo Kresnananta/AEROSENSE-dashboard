@@ -347,6 +347,26 @@
 .insight-text-link:hover {
   text-decoration: underline;
 }
+.environment-topic-menu { display: none; }
+
+@media (max-width: 767px) {
+  .environment-nav .topic-vignette { display: none; }
+  .environment-topic-menu {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding-inline-start: 10px;
+    color: var(--muted-foreground);
+    font-size: .8125rem;
+    font-weight: 650;
+  }
+  .app-shell .environment-nav .environment-topic-menu .monitoring-select[data-slot="select-trigger"] {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .insight-topics {
   display: flex;
   flex-wrap: wrap;

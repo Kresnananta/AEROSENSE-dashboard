@@ -117,6 +117,16 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
     Object.entries(changes).forEach(([key, value]) => next.set(key, value));
     setParams(next, { replace: true });
   }
+  function selectTopic(topic: string) {
+    if (topic === category) return;
+    const bar = topicRail?.closest(".environment-nav");
+    const panel = bar?.parentElement?.querySelector(".insight-lead");
+    if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
+      panel.scrollIntoView({ block: "start" });
+    }
+    updateParams({ topic });
+  }
+
   function requestDeviceLocation() {
     setLocationError("");
     if (!navigator.geolocation) {
@@ -234,6 +244,15 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <div className="environment-nav">
           {actions}
+          <div className="environment-topic-menu">
+            <span>Topik</span>
+            <MonitoringSelect
+              label="Jenis informasi lingkungan"
+              value={category}
+              options={categories.map(({ id, label }) => ({ value: id, label }))}
+              onValueChange={selectTopic}
+            />
+          </div>
           <div className="scroll-vignette topic-vignette" {...topicEdges}>
             <div ref={topics} className="insight-topics" role="group" aria-label="Jenis informasi lingkungan">
               {categories.map((c) => (
@@ -241,15 +260,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
                   key={c.id}
                   data-topic={c.id}
                   aria-pressed={category === c.id}
-                  onClick={(event) => {
-                    if (c.id === category) return;
-                    const bar = event.currentTarget.closest(".environment-nav");
-                    const panel = bar?.parentElement?.querySelector(".insight-lead");
-                    if (bar && panel && panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) {
-                      panel.scrollIntoView({ block: "start" });
-                    }
-                    updateParams({ topic: c.id });
-                  }}
+                  onClick={() => selectTopic(c.id)}
                 >
                   <c.icon size={17} aria-hidden="true" />
                   {c.label}
