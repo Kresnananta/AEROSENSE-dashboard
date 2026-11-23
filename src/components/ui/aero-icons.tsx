@@ -64,7 +64,7 @@ export function CloudRainWind(props: IconProps) { return renderIcon(props, "M6.8
 export function CloudSnow(props: IconProps) { return renderIcon(props, "M6.8 13a4 4 0 0 1-.5-8 5 5 0 0 1 9.7.4 3.8 3.8 0 1 1 1 7.5H7 M12 15v7m-3-5.3 6 3.5m0-3.5-6 3.5"); }
 export function CloudSun(props: IconProps) {
   return renderIcon(props,
-    "M8 11a3 3 0 1 1 3-3 M8 2v1.5 M3.76 3.76l1.06 1.06 M2 8h1.5 M8 20a3.5 3.5 0 0 1 0-7c.5 0 .9.1 1.3.3A5 5 0 0 1 19 14.4a2.8 2.8 0 0 1 0 5.6Z",
+    "M12 8.5a3.5 3.5 0 1 1 6 2.45 M15.5 2v1.5 M10.9 3.9l1.06 1.06 M20.1 3.9l-1.06 1.06 M22 8.5h-1.5 M20.1 13.1l-1.06-1.06 M5.5 21a3.5 3.5 0 0 1 0-7c.45 0 .9.09 1.3.26a4.8 4.8 0 0 1 9 1.14A2.8 2.8 0 0 1 17 21Z",
   );
 }
 export function Download(props: IconProps) { return renderIcon(props, "M12 3.5v11m-4-3.7 4 4 4-4M4.5 15.5v3.4c0 .8.7 1.6 1.6 1.6h11.8c.9 0 1.6-.8 1.6-1.6v-3.4"); }
