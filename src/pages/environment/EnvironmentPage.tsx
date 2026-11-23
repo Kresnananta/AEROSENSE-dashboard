@@ -1,3 +1,4 @@
+import { filledGrid, sample, type Grid } from "@/lib/heat-grid";
 import { useEffect, useState } from "react";
 import { MonitoringSelect } from "@/components/shared/MonitoringSelect";
 import { Link, useSearchParams } from "react-router-dom";
@@ -105,6 +106,19 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
       ((selected?.category || category) === "soil" && f.category === "soil_profile"),
   );
   const highlights = selected ? environmentHighlights(selected, facts) : [];
+  const mapPoint = !compact && selected?.category === "air_quality" && node && validPoint(node) ? node : null;
+  const mapQuery = mapPoint ? new URLSearchParams({
+    layer: "pm25",
+    south: String(mapPoint.latitude - 0.21),
+    north: String(mapPoint.latitude + 0.21),
+    west: String(mapPoint.longitude - 0.21),
+    east: String(mapPoint.longitude + 0.21),
+  }) : null;
+  const mapAir = useLiveData<Grid>(mapQuery ? "/v1/heatmap?" + mapQuery : null, 600000, false);
+  const grid = mapAir.data;
+  const mapPm25 = mapPoint && grid
+    ? sample(grid, filledGrid(grid.values), mapPoint.latitude, mapPoint.longitude)
+    : null;
   const scene = selected ? conditionScene(selected, facts) : "cloudy";
   const forecastSummary = selected?.category === "weather" && selected.period === "forecast";
   const forecastSummaryDay = forecastSummary && selected.valid_at
@@ -354,6 +368,21 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
             )}
             <ConditionScene scene={scene} muted={!selected.available} />
           </article>
+          {mapPoint && (
+            <div className="insight-map-comparison">
+              <div>
+                <strong>PM2.5 per jam di peta</strong>
+                <p>
+                  {mapPm25 != null && Number.isFinite(mapPm25)
+                    ? `${Math.round(Math.max(0, mapPm25))} µg/m³ · ${dateLabel(grid?.valid_at)}${grid?.stale ? " · Data tersimpan" : ""}`
+                    : mapAir.loading ? "Memuat estimasi peta…" : "Estimasi peta belum tersedia."}
+                </p>
+              </div>
+              <Link className="insight-text-link" to={`/sensor-map?overlay=pm25&node_id=${encodeURIComponent(mapPoint.id)}`}>
+                Buka peta PM2.5 <ArrowUpRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+          )}
           {!compact && selected.category === "soil" && (
             <SoilHistory
               history={selectedFacts.find((f) => selected.fact_ids.includes(f.id))?.soil_history}
