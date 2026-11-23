@@ -34,7 +34,6 @@ import { useRobotPresence } from "@/hooks/useRobotPresence";
 import { presenceUrl, ROBOT_GREETING, type PresenceCommand } from "@/lib/robot-presence";
 import { startProcessingSound } from "@/lib/processing-sound";
 import { distanceKm, distanceLabel, validPoint, type GeoPoint } from "@/lib/nearby-nodes";
-import { WhatsAppEntry } from "@/components/live/WhatsAppEntry";
 
 import { ChatSide } from "@/components/aerobot/ChatSide";
 
@@ -432,7 +431,6 @@ export function ChatPanel() {
             <p>
               <Link to="/login">Masuk</Link> untuk memakai mode suara.
             </p>
-            <WhatsAppEntry />
           </div>
         )}
         {authError && (

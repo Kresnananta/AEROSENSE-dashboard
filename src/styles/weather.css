@@ -143,8 +143,8 @@
   margin-block-end: 12px;
   padding: 10px 16px;
   border-radius: 14px;
-  background: var(--aero-amber-soft);
-  color: var(--aero-amber-ink);
+  background: var(--aero-lime-soft);
+  color: var(--aero-lime-ink);
 }
 .wx-forecast-notice p {
   flex: 1 1 14rem;

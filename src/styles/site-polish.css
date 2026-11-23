@@ -165,8 +165,25 @@
 }
 
 .app-shell .chat-workspace .live-chat { min-height: 530px; }
-.app-shell .page-heading,
-.app-shell .live-heading { gap: 12px 20px; }
+.app-shell :is(.page-heading, .live-heading, .insights-heading) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+.app-shell .page-heading { margin-block-end: var(--section-gap); }
+.app-shell .page-heading-description { margin-block-start: 6px; font-size: .875rem; }
+.app-skip-link {
+  position: fixed;
+  inset: 8px auto auto 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: var(--aero-control-radius);
+  background: var(--aero-focus-lime);
+  color: var(--aero-focus-ink);
+}
+.app-skip-link:not(:focus) { clip-path: inset(50%); }
 .login-page .login-form-inner h1 { text-wrap: balance; letter-spacing: -.025em; }
 .login-page .login-input input { min-height: 44px; }
 .register-profile { margin-top: 20px; }

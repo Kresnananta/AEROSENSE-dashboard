@@ -58,6 +58,7 @@ function DashboardShell() {
       className={`app-shell flex min-h-screen bg-[#f3f8ff] text-[#11223D] ${DEMO_MODE ? "demo-shell" : ""}`}
       data-page={location.pathname}
     >
+      <a className="app-skip-link" href="#konten-utama">Lewati ke konten utama</a>
       {DEMO_MODE && <DemoBanner />}
       {!DEMO_MODE && <RoleRequestDialog />}
 
@@ -99,7 +100,7 @@ function DashboardShell() {
           menuOpen={mobileMenuOpen}
           onMenuClick={() => setMobileMenuOpen(true)}
         />
-        <main className="app-content flex-1">
+        <main id="konten-utama" tabIndex={-1} className="app-content flex-1">
           {chatVisited && (
             <div hidden={!onChat}>
               <Suspense fallback={null}>
