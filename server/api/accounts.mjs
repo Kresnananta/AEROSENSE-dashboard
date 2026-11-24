@@ -1,6 +1,7 @@
 const fail = (message, status = 400) => Object.assign(new Error(message), { status });
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const REQUESTABLE_ROLES = ["operator", "auditor", "admin"];
+const EDITABLE_ROLES = ["viewer", "robot", "operator", "auditor"];
 
 const text = (v, max) =>
   typeof v === "string"
@@ -124,7 +125,7 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
       return true;
     }
 
-    if (!["/v1/me", "/v1/me/profile", "/v1/me/role-request", "/v1/role-requests"].includes(path) &&
+    if (!["/v1/me", "/v1/me/profile", "/v1/me/role-request", "/v1/role-requests", "/v1/staff/members"].includes(path) &&
         !path.startsWith("/v1/role-requests/"))
       return false;
     const u = await user(req);
@@ -145,9 +146,15 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
       return true;
     }
 
-    if (path === "/v1/me/profile" && req.method === "PUT") {
+    if (path === "/v1/me/profile" && ["PUT", "PATCH"].includes(req.method)) {
       rate("profile:" + u.id, 10);
-      const clean = cleanProfile(await body(req), u.email);
+      const input = await body(req);
+      const previous = req.method === "PATCH" ? await ensureProfile(u) : null;
+      const clean = cleanProfile(previous ? { ...previous, ...input } : input, u.email);
+      if (previous && clean.address !== previous.address && !Object.hasOwn(input, "latitude")) {
+        clean.latitude = null;
+        clean.longitude = null;
+      }
       const [profile] = await db(
         "ae_profiles",
         "on_conflict=user_id",
@@ -177,6 +184,60 @@ export function accountRoutes({ db, one, rpc, user, send, filter, rawBody, rate,
         { status: "cancelled" },
       );
       send(res, 200, { cancelled: true });
+      return true;
+    }
+
+    let adminLocations = null;
+    if (path === "/v1/staff/members" && !(await isStaff(u.id))) {
+      adminLocations = new Set((await db(
+        "ae_members", "select=location_id&user_id=eq." + filter(u.id) + "&role=eq.admin",
+      )).map((member) => member.location_id));
+      if (!adminLocations.size) throw fail("Daftar anggota hanya untuk admin kawasan.", 403);
+    }
+
+    if (path === "/v1/staff/members" && req.method === "GET") {
+      const location = url.searchParams.get("location");
+      if (location && adminLocations && !adminLocations.has(location))
+        throw fail("Anda tidak mengelola kawasan ini.", 403);
+      const scope = adminLocations ? "&location_id=in.(" + [...adminLocations].map(filter).join(",") + ")" : "";
+      const [nodes, members] = await Promise.all([
+        db("ae_nodes", "select=location_id,name&order=name" + scope),
+        location && /^[a-zA-Z0-9_-]{1,40}$/.test(location)
+          ? db("ae_members", "select=user_id,role&location_id=eq." + filter(location))
+          : [],
+      ]);
+      const locations = new Map();
+      for (const node of nodes) if (!locations.has(node.location_id)) locations.set(node.location_id, node.name);
+      const ids = [...new Set(members.map((m) => m.user_id))];
+      const profiles = ids.length
+        ? await db("ae_profiles", "select=user_id,full_name,email&user_id=in.(" + ids.map(filter).join(",") + ")")
+        : [];
+      const names = new Map(profiles.map((p) => [p.user_id, p]));
+      send(res, 200, {
+        locations: [...locations].map(([id, name]) => ({ id, name })),
+        members: members.map((m) => ({
+          ...m,
+          name: names.get(m.user_id)?.full_name || names.get(m.user_id)?.email || m.user_id,
+          editable: m.user_id !== u.id && EDITABLE_ROLES.includes(m.role),
+        })),
+      }, { "Cache-Control": "no-store" });
+      return true;
+    }
+
+    if (path === "/v1/staff/members" && ["PATCH", "DELETE"].includes(req.method)) {
+      rate("staff-members:" + u.id, 30);
+      const p = await body(req);
+      if (!uuid.test(p.user_id || "") || !/^[a-zA-Z0-9_-]{1,40}$/.test(p.location_id || "") ||
+          !EDITABLE_ROLES.includes(p.current_role) ||
+          (req.method === "PATCH" && !EDITABLE_ROLES.includes(p.role)))
+        throw fail("Pilih anggota, lokasi, dan peran yang valid.");
+      if (adminLocations && !adminLocations.has(p.location_id)) throw fail("Anda tidak mengelola kawasan ini.", 403);
+      if (p.user_id === u.id) throw fail("Akses akun sendiri tidak dapat diubah di sini.", 403);
+      const query = "user_id=eq." + filter(p.user_id) + "&location_id=eq." + filter(p.location_id) +
+        "&role=eq." + filter(p.current_role);
+      const changed = await db("ae_members", query, req.method, req.method === "PATCH" ? { role: p.role } : undefined);
+      if (!changed?.length) throw fail("Akses telah berubah. Muat ulang daftar anggota.", 409);
+      send(res, 200, { saved: true });
       return true;
     }
 

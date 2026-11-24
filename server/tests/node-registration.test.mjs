@@ -62,3 +62,35 @@ test("node registration scopes locations, hides keys and preserves original read
   role = "viewer";
   await assert.rejects(run("POST"), { status: 403 });
 });
+
+test("operators can edit their node position but cannot change public visibility", async () => {
+  let role = "operator";
+  let location = "its";
+  let updated;
+  let payload = { name: "Sensor Timur", latitude: -7.28, longitude: 112.79 };
+  const route = nodeRoutes({
+    user: async () => ({ id: "operator" }), filter: encodeURIComponent, devices: {},
+    db: async (table, query, method, body) => {
+      if (table === "ae_members") return [{ location_id: "its", role }];
+      if (method === "PATCH") {
+        assert.match(query, /location_id=eq\.its/);
+        updated = body;
+        return [{ id: "node-01", ...body }];
+      }
+      return [{ location_id: location, public_read: true }];
+    },
+    rawBody: async () => Buffer.from(JSON.stringify(payload)), send: () => {}, rate: () => {},
+  });
+  const edit = () => route({ method: "PATCH" }, {}, new URL("http://test/v1/nodes/node-01"));
+  await edit();
+  assert.deepEqual(updated, payload);
+  payload = { ...payload, public_read: false, pm25_validated: true, gateway_id: "other" };
+  await assert.rejects(edit(), { status: 403 });
+  role = "admin";
+  await edit();
+  assert.deepEqual(updated, { name: payload.name, latitude: -7.28, longitude: 112.79, public_read: false });
+  location = "unassigned";
+  await assert.rejects(edit(), { status: 403 });
+  role = "auditor";
+  await assert.rejects(edit(), { status: 403 });
+});
