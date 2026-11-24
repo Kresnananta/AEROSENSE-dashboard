@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Plus, Loader2 } from "@/components/ui/aero-icons";
+import { ChevronDown, Plus, Loader2 } from "@/components/ui/aero-icons";
 import { useLiveData } from "@/hooks/useLiveData";
 import { api } from "@/services/api";
 import "./node-registration.css";
@@ -7,6 +7,7 @@ import "./node-registration.css";
 type Registration = {
   locations: { id: string; name: string; can_publish: boolean }[];
   gateways: string[];
+  nodes?: SensorSettings[];
 };
 
 function RegistrationChoice({
@@ -86,6 +87,7 @@ export function NodeRegistration({ onCreated }: { onCreated: (id: string) => voi
       form.reset();
       setOpen(false);
       setNotice(`${node.name} berhasil ditambahkan. Menunggu pembacaan dari gateway.`);
+      registration.refresh();
       onCreated(node.id);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Node belum dapat ditambahkan.");
@@ -104,6 +106,13 @@ export function NodeRegistration({ onCreated }: { onCreated: (id: string) => voi
         <Plus size={17} /> Tambah node
       </button>
       {notice && <p role="status">{notice}</p>}
+      {registration.data?.nodes?.length ? (
+        <SensorEditor
+          nodes={registration.data.nodes}
+          locations={locations}
+          onSaved={onCreated}
+        />
+      ) : null}
       {open && (
         <form onSubmit={submit} className="node-registration-form">
           <div>
@@ -216,5 +225,79 @@ export function NodeRegistration({ onCreated }: { onCreated: (id: string) => voi
         </form>
       )}
     </div>
+  );
+}
+
+
+type SensorSettings = {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  location_id: string;
+  public_read: boolean;
+};
+
+function SensorEditor({ nodes, locations, onSaved }: {
+  nodes: SensorSettings[];
+  locations: Registration["locations"];
+  onSaved: (id: string) => void;
+}) {
+  const [selected, setSelected] = useState("");
+  const [savedNodes, setSavedNodes] = useState<Record<string, SensorSettings>>({});
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const current = nodes.find((item) => item.id === selected) ?? nodes[0];
+  const node = savedNodes[current.id] ?? current;
+  const canPublish = locations.some((location) => location.id === node.location_id && location.can_publish);
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      const { node: updated } = await api.patch<{ node: SensorSettings }>("/v1/nodes/" + encodeURIComponent(node.id), {
+        name: data.get("name"),
+        latitude: Number(data.get("latitude")),
+        longitude: Number(data.get("longitude")),
+        ...(canPublish ? { public_read: data.has("public_read") } : {}),
+      });
+      setSavedNodes((items) => ({ ...items, [updated.id]: updated }));
+      setStatus("Pengaturan sensor tersimpan.");
+      onSaved(node.id);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Pengaturan belum tersimpan.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <details className="insight-disclosure">
+      <summary><span>Pengaturan sensor</span><ChevronDown size={16} aria-hidden="true" /></summary>
+      <div className="settings-form">
+        <label>Perangkat
+          <select value={node.id} disabled={busy} onChange={(event) => {
+            setSelected(event.target.value);
+            setStatus("");
+            setError("");
+          }}>
+            {nodes.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.id}</option>)}
+          </select>
+        </label>
+        <form key={node.id} className="settings-form" onSubmit={save}>
+          <fieldset disabled={busy}>
+            <label>Nama sensor<input name="name" defaultValue={node.name} required maxLength={100} /></label>
+            <label>Lintang<input name="latitude" type="number" step="any" min="-90" max="90" defaultValue={node.latitude} required /></label>
+            <label>Bujur<input name="longitude" type="number" step="any" min="-180" max="180" defaultValue={node.longitude} required /></label>
+            {canPublish && <label className="settings-check"><input type="checkbox" name="public_read" defaultChecked={node.public_read} /> Tampilkan sensor di peta publik</label>}
+          </fieldset>
+          <button className="live-button" disabled={busy}>{busy ? "Menyimpan…" : "Simpan sensor"}</button>
+          {status && <p role="status">{status}</p>}
+          {error && <p role="alert">{error}</p>}
+        </form>
+      </div>
+    </details>
   );
 }

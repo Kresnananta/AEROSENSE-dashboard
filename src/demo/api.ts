@@ -58,6 +58,9 @@ const jobs = new Map<
   string,
   { id: string; status: string; result: { text: string; denied: boolean } }
 >();
+const demoProfiles = new Map<string, Record<string, string>>();
+const demoMemberRoles = new Map<string, string>();
+const demoSensorChanges = new Map<string, { name: string; latitude: number; longitude: number; public_read?: boolean }>();
 const acknowledgements = new Set<string>();
 export async function demoRequest(
   endpoint: string,
@@ -96,7 +99,51 @@ export async function demoRequest(
     (n) => n.id === (url.searchParams.get("node_id") || body.node_id),
   );
   const manages = role === "admin" || role === "operator";
-  const nodes = demoNodes(role).map((n, i) => ({ ...n, rules: currentRules(i) }));
+  const nodes = demoNodes(role).map((n, i) => ({ ...n, ...demoSensorChanges.get(n.id), rules: currentRules(i) }));
+  if (p === "/v1/me") return {
+    profile: { full_name: account?.user_metadata.name, ...demoProfiles.get(account!.id) },
+    is_staff: role === "admin",
+    memberships: [{ location_id: "surabaya", role }],
+    role_request: null,
+  };
+  if (p === "/v1/me/profile" && options.method === "PATCH") {
+    demoProfiles.set(account!.id, { ...demoProfiles.get(account!.id), ...body });
+    return { profile: demoProfiles.get(account!.id) };
+  }
+  if (p === "/v1/staff/members") {
+    if (role !== "admin") throw new Error("Daftar anggota hanya untuk admin kawasan.");
+    const members = [
+      { user_id: "demo-admin", name: "Admin Demo", role: "admin", editable: false },
+      { user_id: "demo-operator", name: "Pengelola Demo", role: "operator", editable: true },
+      { user_id: "demo-warga", name: "Warga Demo", role: "viewer", editable: true },
+    ];
+    if (post) {
+      if (body.location_id !== "surabaya" || !members.some((member) => member.user_id === body.user_id && member.editable))
+        throw new Error("Akses anggota belum dapat diubah.");
+      demoMemberRoles.set(body.user_id, options.method === "DELETE" ? "" : body.role);
+      return { saved: true };
+    }
+    return { locations: [{ id: "surabaya", name: "Surabaya" }], members:
+      url.searchParams.get("location") === "surabaya"
+        ? members.map((member) => ({ ...member, role: demoMemberRoles.get(member.user_id) ?? member.role })).filter((member) => member.role)
+        : [] };
+  }
+  if (p === "/v1/nodes/registration" && !post) {
+    if (!manages) throw new Error("Akses pengelola diperlukan.");
+    return {
+      locations: [{ id: "surabaya", name: "Surabaya", can_publish: role === "admin" }],
+      gateways: [...new Set(nodes.map((node) => node.gateway_id))],
+      nodes: nodes.map((node) => ({ ...node, location_id: "surabaya", public_read: demoSensorChanges.get(node.id)?.public_read ?? true })),
+    };
+  }
+  if (options.method === "PATCH" && p.startsWith("/v1/nodes/")) {
+    const node = nodes.find((node) => node.id === p.split("/").at(-1));
+    if (!node || !manages || ("public_read" in body && role !== "admin")) throw new Error("Akses pengelola diperlukan.");
+    const { name, latitude, longitude, public_read } = body;
+    const updated = { name, latitude, longitude, public_read: public_read ?? demoSensorChanges.get(node.id)?.public_read ?? true };
+    demoSensorChanges.set(node.id, updated);
+    return { node: { ...node, ...updated, location_id: "surabaya" } };
+  }
   if (p === "/v1/actuators") {
     if (index < 0) throw new Error("Pilih lokasi sensor.");
     if (index > 1) return { actuators: [], can_manage: manages };

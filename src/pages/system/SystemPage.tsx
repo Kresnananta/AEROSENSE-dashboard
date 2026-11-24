@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useAccess } from "@/hooks/useAccess";
 import { DataState } from "@/components/shared/DataState";
+import { AccountPreferences } from "@/components/account/AccountPreferences";
 import { WhatsAppSettings } from "@/components/live/WhatsAppSettings";
 export function SystemPage() {
   const auth = useAuth(),
@@ -70,6 +71,7 @@ export function SystemPage() {
               </div>
             )}
           </section>
+          <AccountPreferences />
           <WhatsAppSettings />
         </>
       )}

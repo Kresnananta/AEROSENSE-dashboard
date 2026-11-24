@@ -2,6 +2,10 @@
 
 ## Tampilan web
 
+- Pengaturan akun menyediakan penyuntingan profil. Tim AEROSENSE dan admin kawasan dapat meninjau anggota, mengganti peran operasional, dan mencabut akses pada lingkup yang diizinkan. Akses akun sendiri dan peran admin tidak diubah melalui daftar anggota.
+- Pengelola dapat mengoreksi nama dan koordinat sensor. Admin lokasi dapat mengatur publikasi. Ambang dan kendali perangkat tetap lewat alur yang ada. Pengaturan infrastruktur, kredensial perangkat, dan penetapan tim pusat masih dikelola melalui proses pemasangan.
+- Judul, panel, dan formulir memakai jarak yang lebih lapang dengan tata letak satu kolom pada layar kecil. Rilis API dan web diperlukan. Skema basis data tidak berubah.
+
 - Peringatan sekitar mengelompokkan chat dan pengaturan langganan WhatsApp. Riwayat menampilkan grafik lebih dahulu, dengan ekspor dan rincian GRU dalam bagian yang dapat dibuka. Daftar perangkat menamai tautan detail. Laporan memisahkan hasil pemantauan dari pengaturan unduhan. Kelola kawasan menampilkan kendali perangkat sebelum antrean verifikasi untuk pengelola.
 - Daftar n8n memuat delapan workflow terbit. Dua uji manual dan dua draft perangkat tanpa pemanggil yang terlihat sudah diarsipkan. Ekspor draft ekspresi robot menghapus percabangan tanpa aksi. Riwayat eksekusi Jawaban website belum tersedia untuk mengukur durasi tahap Gemini dan antrean.
 

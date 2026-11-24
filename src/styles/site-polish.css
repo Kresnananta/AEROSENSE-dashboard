@@ -278,3 +278,112 @@
   .management-location > label { min-width: 0; }
   .app-shell .history-export { flex-basis: 100%; }
 }
+
+.app-shell {
+  --section-gap: clamp(20px, 2.5vw, 30px);
+}
+
+.app-shell :is(.page-heading, .live-heading, .insights-heading) {
+  column-gap: 20px;
+  row-gap: 12px;
+}
+
+.app-shell :is(.live-panel, .management-rules, .nearby-results) :is(h2, h3) {
+  text-wrap: balance;
+}
+
+.app-shell .settings-editor {
+  display: grid;
+  gap: 20px;
+  background: var(--card);
+}
+
+.settings-form {
+  display: grid;
+  gap: 16px;
+  padding-block-end: 8px;
+}
+
+.settings-editor .settings-form { padding-block-end: 0; }
+
+.settings-form fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+  min-inline-size: 0;
+}
+
+.settings-form label {
+  display: grid;
+  gap: 6px;
+  font-size: .875rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.settings-form :is(input:not([type="checkbox"]), select),
+.settings-members select {
+  width: 100%;
+  min-height: 44px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--input);
+  border-radius: var(--aero-frame-control);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.settings-form .settings-check {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.settings-form > button { justify-self: start; }
+.settings-form [role="alert"] { color: var(--aero-red-ink); }
+.settings-form [role="status"] { color: var(--aero-link); }
+
+.settings-members {
+  display: grid;
+  list-style: none;
+  padding: 0;
+}
+
+.settings-members li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-block: 12px;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.settings-members form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.app-shell .role-requests {
+  display: grid;
+  gap: 16px;
+}
+
+.app-shell .role-request {
+  padding-block: 16px;
+  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 600px) {
+  .settings-form fieldset,
+  .settings-members form { grid-template-columns: minmax(0, 1fr); }
+
+  .settings-members form,
+  .settings-form > button { width: 100%; }
+}
