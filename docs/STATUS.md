@@ -2,6 +2,10 @@
 
 ## Tampilan web
 
+- AERO-BOT menjalankan pengambilan cuaca, berita terkait, dan pencatatan konteks secara paralel. Chat membedakan pengiriman, antrean, dan pemrosesan, serta mencoba ulang pengecekan jawaban saat koneksi sesaat putus.
+- Peta mempertahankan lapisan terakhir selama zoom dan pan. Hanya tampilan terakhir yang menunggu permintaan berikutnya. API menampilkan data tersimpan sesuai batas usia sambil memperbaruinya di latar belakang.
+- Berikutnya, rilis API dan web, lalu ukur waktu antrean dan tahap Gemini pada eksekusi n8n produksi. Pengujian lokal memakai data contoh untuk layanan eksternal.
+
 - Daftar fitur beranda memakai satu panel dengan empat tautan berikon dan pembatas tipis. Tautan tersusun dua kolom di desktop dan satu kolom di ponsel. Label kondisi prakiraan ditebalkan. Ikon cuaca, sensor, peringatan, dan chat dirapikan pada set ikon bersama. Rilis web masih tertunda.
 
 - Bagian Cara kerja memakai ilustrasi lanskap sungai Surabaya. Navigasi, formulir akun, dan AERO-BOT memakai gradasi biru dan aksen limau yang konsisten. Animasi singkat pada saran chat dan tindakan mengikuti pengaturan pengurangan gerak. Rilis produksi masih tertunda.

@@ -142,17 +142,25 @@ export function heatmapRoutes({ send, rate, request, now = Date.now }) {
       }
     }
     const missing = points.filter(({ key }) => (cache.get(key)?.receivedAt ?? -Infinity) <= now() - POINT_TTL);
+    const canServeCached = points.every(({ key }) =>
+      (cache.get(key)?.receivedAt ?? -Infinity) > now() - POINT_MAX_AGE,
+    );
     if (missing.length) {
       const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").split(",")[0];
-      rate("heat:" + ip, 30);
       const newPoints = [...new Map(missing.filter(({ key }) => !pending.has(key)).map((point) => [point.key, point])).values()];
       if (newPoints.length) {
-        const update = load(layer.url, newPoints).finally(() => {
-          for (const { key } of newPoints) pending.delete(key);
-        });
-        for (const { key } of newPoints) pending.set(key, update);
+        try {
+          rate("heat:" + ip, 30);
+          const update = load(layer.url, newPoints).finally(() => {
+            for (const { key } of newPoints) pending.delete(key);
+          });
+          for (const { key } of newPoints) pending.set(key, update);
+        } catch (error) {
+          if (!canServeCached) throw error;
+        }
       }
-      await Promise.allSettled(new Set(missing.map(({ key }) => pending.get(key))));
+      const refresh = Promise.allSettled(new Set(missing.map(({ key }) => pending.get(key))));
+      if (!canServeCached) await refresh;
     }
     const samples = points.map(({ key }) => cache.get(key));
     if (samples.some((sample) => !sample || sample.receivedAt <= now() - POINT_MAX_AGE))

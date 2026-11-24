@@ -75,17 +75,22 @@ function render(map: LeafletMap, g: Grid, v: number[][], key: HeatLayerKey) {
   const top = map.project([g.south + (g.rows - 1) * g.step, g.west], 0).y;
   const bottom = map.project([g.south, g.west], 0).y;
 
+  const columns = Array.from({ length: W }, (_, x) => {
+    const gx = (x / (W - 1)) * (g.cols - 1);
+    const j = Math.min(Math.floor(gx), g.cols - 2);
+    const tx = gx - j;
+    const rows = v.map((_, r) => interp(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx));
+    return { gx, rows };
+  });
+
   for (let y = 0; y < H; y++) {
     const lat = map.unproject([0, top + ((bottom - top) * y) / (H - 1)], 0).lat;
     const gy = Math.max(0, Math.min(g.rows - 1, (lat - g.south) / g.step));
     const i = Math.min(Math.floor(gy), g.rows - 2),
       ty = gy - i;
     for (let x = 0; x < W; x++) {
-      const gx = (x / (W - 1)) * (g.cols - 1);
-      const j = Math.min(Math.floor(gx), g.cols - 2),
-        tx = gx - j;
-      const rowAt = (r: number) => interp(at(r, j - 1), at(r, j), at(r, j + 1), at(r, j + 2), tx);
-      const value = interp(rowAt(i - 1), rowAt(i), rowAt(i + 1), rowAt(i + 2), ty);
+      const { gx, rows } = columns[x];
+      const value = interp(rows[Math.max(0, i - 1)], rows[i], rows[i + 1], rows[Math.min(g.rows - 1, i + 2)], ty);
       const alphaRatio = coverage(g, key, value, gy, gx);
       const o = (y * W + x) * 4;
       if (alphaRatio <= 0.01) {
@@ -656,6 +661,7 @@ export function HeatField({
     const cache: CachedField[] = [];
     let active: CachedField | null = null;
     let failed = false;
+    let refreshQueued = false;
     let pending: { controller: AbortController; bounds: Overlay["bounds"]; zoom: number } | null = null;
     let timer: ReturnType<typeof setTimeout>;
     setSnapshot(null);
@@ -700,6 +706,7 @@ export function HeatField({
     };
     const stopTimer = () => clearTimeout(timer);
     const load = () => {
+      refreshQueued = false;
       relabel();
       stopTimer();
       const view = clip(map.getBounds());
@@ -709,17 +716,18 @@ export function HeatField({
         entry.expires > Date.now() && zoom <= entry.field.zoom + 1 && containsView(entry.field.covers, view),
       );
       if (cached) {
-        stopPending();
         show(cached);
         return;
       }
-      if (pending && zoom <= pending.zoom + 1 && containsView(pending.bounds, view)) return;
+      if (pending) {
+        refreshQueued = zoom > pending.zoom + 1 || !containsView(pending.bounds, view);
+        return;
+      }
 
       timer = setTimeout(async () => {
         const b = clip(map.getBounds().pad(0.6));
         if (!b) return;
         const zoom = map.getZoom();
-        stopPending();
         const controller = new AbortController();
         pending = { controller, zoom, bounds: [[b.s, b.w], [b.n, b.e]] };
         const qs = new URLSearchParams({
@@ -749,10 +757,10 @@ export function HeatField({
           };
           const current = clip(map.getBounds());
           const coversCurrent = current && containsView(bounds, current) && map.getZoom() <= zoom + 1;
-          if (!active || coversCurrent) show(entry);
+          if (coversCurrent || (!active && !refreshQueued)) show(entry);
           else remember(entry);
         } catch (e) {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted || refreshQueued) return;
           failed = true;
           info.current({
             source: active?.field.g.source ?? "",
@@ -761,12 +769,19 @@ export function HeatField({
               : e instanceof Error ? e.message : "Heatmap belum tersedia.",
           });
         } finally {
-          if (pending?.controller === controller) pending = null;
+          if (pending?.controller === controller) {
+            pending = null;
+            if (refreshQueued) load();
+          }
         }
-      }, 300);
+      }, active ? 250 : 100);
     };
     load();
-    map.on("movestart zoomstart", stopTimer);
+    const onMoveStart = () => {
+      refreshQueued = false;
+      stopTimer();
+    };
+    map.on("movestart zoomstart", onMoveStart);
     map.on("moveend resize", load);
     map.on("layeradd layerremove", relabelOnLayer);
     map.on("popupopen popupclose tooltipopen tooltipclose", relabel);
@@ -774,7 +789,7 @@ export function HeatField({
       stopTimer();
       stopPending();
       cancelAnimationFrame(layoutFrame);
-      map.off("movestart zoomstart", stopTimer);
+      map.off("movestart zoomstart", onMoveStart);
       map.off("moveend resize", load);
       map.off("layeradd layerremove", relabelOnLayer);
       map.off("popupopen popupclose tooltipopen tooltipclose", relabel);

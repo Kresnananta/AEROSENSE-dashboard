@@ -90,3 +90,30 @@ test("a provider quota limit pauses both map and forecast calls while retaining 
   await assert.rejects(forecasts.outlook(-7.28, 112.79), { status: 503 });
   assert.equal(calls, 2);
 });
+
+test("stale map data comes back immediately while one refresh replaces it", { timeout: 2_000 }, async () => {
+  let clock = 0;
+  let calls = 0;
+  const updated = Promise.withResolvers();
+  const map = api(async (url) => {
+    const rows = modelRows(url);
+    if (++calls === 1) return rows;
+    await updated.promise;
+    return rows.map(({ current }) => ({ current: { ...current, temperature_2m: 31 } }));
+  }, () => clock);
+
+  await map("temperature");
+  clock += 31 * 60_000;
+  try {
+    const [temperature, rain] = await Promise.all([map("temperature"), map("rain")]);
+    assert.equal(temperature.stale, true);
+    assert.equal(temperature.values[0][0], 30);
+    assert.equal(rain.stale, true);
+    assert.equal(calls, 2);
+  } finally {
+    updated.resolve();
+  }
+  await new Promise((done) => setImmediate(done));
+  assert.equal((await map("temperature")).values[0][0], 31);
+  assert.equal(calls, 2);
+});

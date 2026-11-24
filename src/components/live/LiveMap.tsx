@@ -384,6 +384,7 @@ export function LiveMap({
             key="street-base"
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             noWrap
+            updateWhenZooming={false}
             keepBuffer={3}
             className="live-map-tiles"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -395,6 +396,7 @@ export function LiveMap({
               url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
               maxNativeZoom={12}
               noWrap
+              updateWhenZooming={false}
               keepBuffer={3}
               className="heat-basemap"
               attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
@@ -406,6 +408,7 @@ export function LiveMap({
                 url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
                 maxNativeZoom={16}
                 noWrap
+                updateWhenZooming={false}
                 keepBuffer={3}
                 pane="heatLabelsPane"
               />
