@@ -9,7 +9,7 @@
 .live-map-tiles {
   filter: saturate(0.58) contrast(0.87) brightness(1.07);
 }
-.heat-basemap { filter: contrast(0.83) brightness(1.07); }
+.heat-basemap { filter: brightness(0.93) contrast(1.15); }
 .live-map .leaflet-control-attribution {
   padding: 2px 8px;
   border-radius: 8px 0 0;
@@ -422,13 +422,13 @@
 
 .live-map .leaflet-heat-pane {
   mix-blend-mode: multiply;
-  opacity: 0.82;
+  opacity: 0.44;
 }
 
 .live-map[data-heat="rain"] .leaflet-heat-pane,
 .live-map[data-heat="cloud"] .leaflet-heat-pane {
   mix-blend-mode: normal;
-  opacity: 0.84;
+  opacity: 0.68;
 }
 
 .heat-label {

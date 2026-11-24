@@ -396,7 +396,6 @@ export function LiveMap({
               maxNativeZoom={12}
               noWrap
               keepBuffer={3}
-              opacity={0.66}
               className="heat-basemap"
               attribution='Tiles &copy; <a href="https://www.esri.com/">Esri</a> &mdash; Esri, HERE, Garmin, &copy; OpenStreetMap contributors'
             />
@@ -408,7 +407,6 @@ export function LiveMap({
                 maxNativeZoom={16}
                 noWrap
                 keepBuffer={3}
-                opacity={0.82}
                 pane="heatLabelsPane"
               />
             </Pane>
