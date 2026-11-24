@@ -732,3 +732,94 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   mask-image: linear-gradient(90deg, transparent, #000);
   opacity: .16;
 }
+
+:root {
+  --aero-wind-trails: url("../assets/images/wind-trails.svg");
+  --aero-response-ease: cubic-bezier(.22, .8, .3, 1);
+}
+
+.landing-page .landing-feature-list {
+  gap: 12px;
+}
+
+.landing-page .landing-feature-list > li {
+  min-width: 0;
+  border-block-start: 0;
+}
+
+.landing-page .landing-feature-link {
+  height: 100%;
+  min-height: 104px;
+  padding: clamp(12px, 2vw, 20px);
+  border: 1px solid var(--aero-glass-rim);
+  border-radius: var(--aero-frame);
+  background-color: var(--card);
+}
+
+.landing-page .landing-feature-link:is(:hover, :focus-visible) {
+  background-color: var(--aero-lime-soft);
+  border-color: var(--aero-lime-ink);
+}
+
+.landing-page .landing-feature-icon {
+  border-radius: calc(var(--aero-frame) / 2);
+}
+
+.app-shell .chat-workspace .chat-welcome .chat-suggestions button {
+  text-align: start;
+  text-wrap: pretty;
+}
+
+.app-shell .chat-workspace .live-chat > header {
+  border-bottom-color: var(--aero-glass-rim);
+}
+
+@media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+  .landing-page .landing-feature-link {
+    background-color: transparent;
+    background-image: var(--aero-sheet);
+  }
+
+  .landing-page .landing-feature-link:is(:hover, :focus-visible) {
+    background-image: none;
+  }
+
+  .landing-hero-stage .landing-hero-art {
+    background: var(--aero-wind-trails) center 58% / contain no-repeat;
+  }
+
+  .login-page .login-story {
+    background:
+      linear-gradient(180deg, oklch(31% .15 260 / .88), transparent 39%, transparent 56%, oklch(26% .12 259 / .91)),
+      var(--aero-wind-trails) center 44% / 100% auto no-repeat,
+      var(--aero-landscape-scene) 60% center / cover no-repeat,
+      var(--aero-cobalt);
+  }
+
+  .app-shell .chat-workspace .live-chat > header {
+    background: var(--aero-wind-trails) right 44% / min(19rem, 60%) auto no-repeat,
+      linear-gradient(105deg, var(--card), var(--accent));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .landing-page .landing-feature-link {
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .landing-feature-link > svg {
+    transition: transform 180ms var(--aero-response-ease);
+  }
+
+  .landing-feature-link:is(:hover, :focus-visible) > svg {
+    transform: translate(3px, -2px);
+  }
+
+  .landing-hero-mascot .mascot-pose {
+    transition: scale 320ms var(--aero-response-ease);
+  }
+
+  .landing-hero-art:hover .landing-hero-mascot .mascot-pose {
+    scale: 1.035;
+  }
+}

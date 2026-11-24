@@ -2,6 +2,8 @@
 
 ## Tampilan web
 
+- Beranda memakai kartu fitur yang lebih rapat dengan sorotan limau saat dipilih. Ilustrasi garis angin menghubungkan beranda, halaman akun, dan header percakapan. Gerak tambahan mengikuti preferensi pengurangan gerak. Pemeriksaan rilis produksi masih tertunda.
+
 Branch fix memuat pembaruan web, API, dan integrasi AERO-BOT terbaru untuk ditinjau dan diuji bersama.
 
 - Halaman utama dan alur akun memakai ilustrasi lanskap pesisir Jawa Timur. Lanskap beranda memudar ke bagian fitur. Cahaya lembut di belakang maskot memperjelas siluetnya. Status cuaca tetap disampaikan lewat data dan ilustrasi kondisi pada Hub Lingkungan.
