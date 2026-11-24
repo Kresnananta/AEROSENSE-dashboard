@@ -833,7 +833,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 :root {
-  --aero-blue-wash: linear-gradient(128deg, oklch(99% .008 239), oklch(92% .062 237));
+  --aero-blue-wash: linear-gradient(120deg, oklch(99% .009 237) 12%, oklch(91% .072 235));
   --aero-lime-wash: linear-gradient(128deg, oklch(99% .008 239) 20%, var(--aero-lime-soft));
   --aero-deep-sky: linear-gradient(125deg, oklch(32% .14 264), oklch(48% .17 253));
 }
@@ -915,7 +915,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
       var(--aero-blue-wash);
   }
 
-  .app-shell .sensor-overview .aero-assist {
+  .app-shell .sensor-overview .aero-assist:is(.assist-pending, .assist-calm) {
     background-image: var(--aero-wind-trails), var(--aero-blue-wash);
     background-size: contain, cover;
     background-position: center, center;
@@ -923,7 +923,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   }
 }
 
-@media (min-width: 440px) and (forced-colors: none) {
+@media (min-width: 360px) and (forced-colors: none) {
   .landing-page .landing-feature-link:is([data-destination="/dashboard"], [data-destination="/environment"], [data-destination="/aerobot"]) {
     grid-template-columns: minmax(0, 1fr) clamp(76px, 13vw, 166px);
     min-height: clamp(148px, 16vw, 218px);
@@ -965,5 +965,116 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 
   .app-shell .wx-card:is(:hover, :focus-visible) .wx-art {
     scale: 1.055;
+  }
+}
+
+.landing-workflow .landing-workflow-intro {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+  min-height: clamp(160px, 22vw, 290px);
+  padding: clamp(20px, 4vw, 52px);
+  border-radius: var(--aero-frame-hero);
+  background-color: var(--aero-cobalt);
+  color: white;
+}
+
+.landing-workflow .landing-workflow-intro h2 { color: inherit; }
+.landing-workflow .landing-workflow-intro p {
+  max-width: 28ch;
+  margin: 0;
+  color: var(--aero-hero-muted);
+}
+
+.landing-workflow .landing-workflow-steps li {
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.landing-page .landing-workflow-steps li > .landing-step-number {
+  background-color: var(--aero-focus-lime);
+  color: var(--aero-focus-ink);
+}
+
+.app-shell .app-sidebar .nav-entry.active svg {
+  color: var(--aero-focus-lime);
+}
+
+@media (prefers-contrast: no-preference) and (forced-colors: none) {
+  .landing-workflow .landing-workflow-intro {
+    --workflow-shade: linear-gradient(90deg, oklch(24% .12 263 / .94), oklch(28% .13 258 / .72) 39%, transparent 78%);
+    background-image: var(--workflow-shade), url("/assets/environment/surabaya-river.webp");
+    background-position: center, center 71%;
+    background-size: cover;
+  }
+}
+
+@media (max-width: 520px) and (prefers-contrast: no-preference) and (forced-colors: none) {
+  .landing-workflow .landing-workflow-intro {
+    --workflow-shade: linear-gradient(90deg, oklch(24% .12 263 / .96), oklch(28% .13 258 / .68) 66%, oklch(28% .13 258 / .22));
+    background-position: center, 63% 58%;
+  }
+}
+
+@media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
+  .app-shell .app-sidebar {
+    background: linear-gradient(155deg, var(--card) 25%, var(--background) 100%);
+  }
+
+  .app-shell .nearby-map-panel,
+  .login-page .login-form-panel {
+    background: var(--aero-blue-wash);
+  }
+
+  .app-shell .chat-workspace .live-messages:has(.chat-welcome) {
+    background: var(--aero-landscape) right bottom / min(31rem, 90%) auto no-repeat,
+      linear-gradient(152deg, var(--card) 15%, var(--aero-lime-soft) 58%, var(--accent));
+  }
+}
+
+.app-shell .weather-outlook .wx-card-arrow {
+  inset: auto 10px 10px auto;
+  box-sizing: content-box;
+  padding: 4px;
+}
+
+.app-shell .weather-outlook .wx-card:is(:hover, :focus-visible) {
+  border-color: var(--aero-link);
+}
+
+@media (max-width: 760px) {
+  .landing-page .landing-feature-list .landing-feature-link { padding: 14px; }
+
+  .app-shell .chat-workspace .live-chat:has(.chat-welcome) { min-height: 0; }
+  .app-shell .chat-workspace .chat-welcome { padding-block: 20px 28px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chat-workspace .chat-welcome-heading {
+    animation: aero-mascot-arrive 320ms var(--aero-response-ease) both;
+  }
+
+  .chat-workspace .chat-suggestions button {
+    animation: aero-mascot-arrive 280ms var(--aero-response-ease) both;
+  }
+
+  .chat-workspace .chat-suggestions button:nth-child(2) { animation-delay: 40ms; }
+  .chat-workspace .chat-suggestions button:nth-child(3) { animation-delay: 80ms; }
+  .chat-workspace .chat-suggestions button:nth-child(4) { animation-delay: 120ms; }
+
+  .app-shell .wx-card-arrow {
+    transition: translate 160ms var(--aero-response-ease), background-color 150ms ease-out;
+  }
+
+  .app-shell .wx-card:is(:hover, :focus-visible) .wx-card-arrow { translate: 2px 0; }
+
+  .landing-page .landing-button svg,
+  .login-page .login-submit svg {
+    transition: translate 180ms var(--aero-response-ease);
+  }
+
+  .landing-page .landing-button:is(:hover, :focus-visible) svg,
+  .login-page .login-submit:is(:hover, :focus-visible):not(:disabled) svg {
+    translate: 3px 0;
   }
 }

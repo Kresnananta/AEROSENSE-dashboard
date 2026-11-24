@@ -2,6 +2,8 @@
 
 ## Tampilan web
 
+- Bagian Cara kerja memakai ilustrasi lanskap sungai Surabaya. Navigasi, formulir akun, dan AERO-BOT memakai gradasi biru dan aksen limau yang konsisten. Animasi singkat pada saran chat dan tindakan mengikuti pengaturan pengurangan gerak. Rilis produksi masih tertunda.
+
 - Ilustrasi perangkat pada Ringkasan diperbesar dan diturunkan di desktop. Pembaruan menunggu rilis web.
 
 - Kartu fitur beranda memakai ilustrasi sensor, cuaca, dan AERO-BOT. Gradasi biru dan aksen limau dipakai kembali pada kartu, tindakan, serta tampilan chat. Animasi pembuka dan sorotan kartu mengikuti preferensi pengurangan gerak. Rilis produksi masih tertunda.
