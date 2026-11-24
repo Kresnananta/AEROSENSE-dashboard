@@ -326,7 +326,7 @@ export function EnvironmentPage({ compact = false }: { compact?: boolean }) {
           >
             <Atmosphere />
             <div className="insight-message">
-              <span className={`insight-status ${selected.available ? "" : "status-pending"}`}>
+              <span className={`insight-status ${!selected.available ? "status-pending" : selected.period === "current" && !forecastSummary ? "status-estimate" : ""}`}>
                 {forecastSummary ? "Ringkasan prakiraan" : selected.available ? periodLabel[selected.period] : "Menunggu pembaruan"}
               </span>
               <h2>{weatherUnavailable ? "Informasi cuaca belum tersedia" : forecastSummary ? "Perkiraan cuaca hari ini" : selected.title}</h2>

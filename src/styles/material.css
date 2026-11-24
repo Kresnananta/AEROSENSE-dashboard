@@ -351,6 +351,14 @@ svg.aero-icon, .map-pin-glyph {
   border-radius: 8px;
   padding: 4px 8px;
 }
+.app-shell .environment-hub .insight-lead[data-day-period] .insight-status.status-estimate {
+  color: var(--aero-focus-ink);
+  background: var(--aero-focus-lime);
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
 @media (max-width: 767px) {
   #mobile-navigation .app-sidebar { max-width: calc(100vw - 60px); }
   .app-shell .app-topbar { gap: 8px; }
