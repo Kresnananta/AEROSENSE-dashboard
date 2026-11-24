@@ -54,62 +54,6 @@
       }
     },
     {
-      "id": "85d8c65a-6273-4929-91b8-480a5280b45e",
-      "name": "Transisi diizinkan",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        760,
-        160
-      ],
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "d327e533-87df-4400-abfe-6d14839d9d9f",
-              "leftValue": "={{ $json.execute }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "7c9d47dc-32df-4024-a723-a9e0334671f3",
-      "name": "Rencana untuk caller",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        1020,
-        80
-      ],
-      "parameters": {}
-    },
-    {
-      "id": "32b28691-0b97-417d-9639-d82367d8be32",
-      "name": "Event ditahan",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        1020,
-        300
-      ],
-      "parameters": {}
-    },
-    {
       "id": "ce398115-eaa3-497a-9578-f762b12fa078",
       "name": "Kontrak interaksi robot",
       "type": "n8n-nodes-base.stickyNote",
@@ -153,35 +97,6 @@
         [
           {
             "node": "Rencanakan wake dan ekspresi",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Rencanakan wake dan ekspresi": {
-      "main": [
-        [
-          {
-            "node": "Transisi diizinkan",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Transisi diizinkan": {
-      "main": [
-        [
-          {
-            "node": "Rencana untuk caller",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Event ditahan",
             "type": "main",
             "index": 0
           }

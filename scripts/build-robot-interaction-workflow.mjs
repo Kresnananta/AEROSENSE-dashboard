@@ -46,29 +46,6 @@ add(
   2,
 );
 add(
-  "Transisi diizinkan",
-  "if",
-  {
-    conditions: {
-      options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 2 },
-      conditions: [
-        {
-          id: randomUUID(),
-          leftValue: "={{ $json.execute }}",
-          rightValue: true,
-          operator: { type: "boolean", operation: "true", singleValue: true },
-        },
-      ],
-      combinator: "and",
-    },
-    options: {},
-  },
-  [760, 160],
-  2.2,
-);
-add("Rencana untuk caller", "noOp", {}, [1020, 80]);
-add("Event ditahan", "noOp", {}, [1020, 300]);
-add(
   "Kontrak interaksi robot",
   "stickyNote",
   {
@@ -79,18 +56,11 @@ add(
   },
   [210, -430],
 );
-const connections = {};
-const link = (from, to, branch = 0) => {
-  connections[from] ??= { main: [] };
-  connections[from].main[branch] ??= [];
-  connections[from].main[branch].push({ node: to, type: "main", index: 0 });
+const connections = {
+  "Dipanggil workflow robot": { main: [[{ node: "Rencanakan wake dan ekspresi", type: "main", index: 0 }]] },
+  "Uji simulasi tanpa perangkat": { main: [[{ node: "Contoh event interaksi", type: "main", index: 0 }]] },
+  "Contoh event interaksi": { main: [[{ node: "Rencanakan wake dan ekspresi", type: "main", index: 0 }]] },
 };
-link("Dipanggil workflow robot", "Rencanakan wake dan ekspresi");
-link("Uji simulasi tanpa perangkat", "Contoh event interaksi");
-link("Contoh event interaksi", "Rencanakan wake dan ekspresi");
-link("Rencanakan wake dan ekspresi", "Transisi diizinkan");
-link("Transisi diizinkan", "Rencana untuk caller");
-link("Transisi diizinkan", "Event ditahan", 1);
 await writeFile(
   new URL("../n8n/robot-interaction.workflow.json", import.meta.url),
   JSON.stringify(
