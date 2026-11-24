@@ -673,13 +673,11 @@ async function nativeRefresh(j, p) {
     gru: r.gru ?? null,
     quality: r.quality ?? {},
   }));
-  await stage(j, { context: rows, snapshot_at: new Date().toISOString() });
 
-  let outlook_facts = [];
   const spot = rows.find((r) => Number.isFinite(r.latitude) && Number.isFinite(r.longitude));
-  if (spot)
+  const outlookFacts = async () => {
+    if (!spot) return [];
     try {
-
       const hub = await one(
         "ae_environment_areas",
         "source_node_id=eq." + filter(spot.node_id) + "&enabled=eq.true&select=id",
@@ -689,14 +687,15 @@ async function nativeRefresh(j, p) {
         weather.outlook(spot.latitude, spot.longitude).catch(() => null),
         weather.hazards().catch(() => null),
       ]);
-      if (hub?.id) outlook_facts = weatherFacts(wx, hz, area);
+      return hub?.id ? weatherFacts(wx, hz, area) : [];
     } catch {
-
+      return [];
     }
-  let disaster_news = [];
-  if (/berita|kabar|bencana|karhutla|indonesia/i.test(j.stage.text || "")) {
+  };
+  const disasterFacts = async () => {
+    if (!/berita|kabar|bencana|karhutla|indonesia/i.test(j.stage.text || "")) return [];
     try {
-      disaster_news = (await news.read()).items
+      return (await news.read()).items
         .filter((i) => !i.stale)
         .slice(0, 3)
         .map((i) => ({
@@ -717,9 +716,14 @@ async function nativeRefresh(j, p) {
           role: "supplementary",
         }));
     } catch {
-
+      return [];
     }
-  }
+  };
+  const [outlook_facts, disaster_news] = await Promise.all([
+    outlookFacts(),
+    disasterFacts(),
+    stage(j, { context: rows, snapshot_at: new Date().toISOString() }),
+  ]);
   return {
     id: j.id,
     lease_token: j.lease_token,
@@ -1191,9 +1195,9 @@ const server = http.createServer(async (req, res) => {
             filter(url.searchParams.get("id")) +
             "&owner_id=eq." +
             u.id +
-            "&kind=in.(web_chat,robot_chat)",
+            "&kind=in.(web_chat,robot_chat)&select=id,status,result,node_ids:body->node_ids",
         );
-        if (j) for (const node of j.body.node_ids || []) await reader(u, node);
+        if (j) await Promise.all((j.node_ids || j.body?.node_ids || []).map((node) => reader(u, node)));
         return j
           ? send(res, 200, {
               id: j.id,

@@ -229,6 +229,7 @@ export function ChatPanel() {
   }, [busy, voice.preparingSpeech, handsFree.active]);
   const [error, setError] = useState("");
   const [pollRun, setPollRun] = useState(0);
+  const [replyStatus, setReplyStatus] = useState<"pending" | "running" | "slow">("pending");
   const sending = useRef(false);
   const submission = useRef<{ scope: string; key: string } | null>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -267,11 +268,15 @@ export function ChatPanel() {
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     const started = Date.now();
+    let connectionRetries = 0;
+    setReplyStatus("pending");
     setBusy(true);
     setError("");
     async function poll() {
+      const timeout = AbortSignal.timeout(8_000);
       try {
-        const job = await chatService.result(pending!, controller.signal);
+        const job = await chatService.result(pending!, AbortSignal.any([controller.signal, timeout]));
+        connectionRetries = 0;
         if (controller.signal.aborted) return;
         const spoken = voiceJobs.current.get(job.id);
         if (job.status === "done") {
@@ -326,9 +331,17 @@ export function ChatPanel() {
           );
         }
 
-        timer = setTimeout(poll, 700);
+        const elapsed = Date.now() - started;
+        setReplyStatus(elapsed >= 10_000 ? "slow" : job.status === "running" ? "running" : "pending");
+        timer = setTimeout(poll, elapsed < 5_000 ? 600 : elapsed < 15_000 ? 1_400 : 2_800);
       } catch (e) {
         if (!controller.signal.aborted) {
+          if ((timeout.aborted || e instanceof TypeError) && connectionRetries < 2 && Date.now() - started < 120_000) {
+            connectionRetries += 1;
+            setReplyStatus("slow");
+            timer = setTimeout(poll, 800 * connectionRetries);
+            return;
+          }
           setBusy(false);
           setError(e instanceof Error ? e.message : "Koneksi terputus. Cek jawaban lagi.");
         }
@@ -360,6 +373,7 @@ export function ChatPanel() {
     if (!fromVoice && (voice.recording || voice.transcribing)) return null;
     voice.stopSpeaker();
     sending.current = true;
+    setReplyStatus("pending");
     setBusy(true);
     setError("");
     const sender = user?.id;
@@ -565,8 +579,11 @@ export function ChatPanel() {
             </div>
           ))}
           {busy && (
-            <p className="chat-progress">
-              <Loader2 size={16} className="animate-spin" /> AERO-BOT sedang menyiapkan jawaban…
+            <p className="chat-progress" role="status">
+              <Loader2 size={16} className="motion-safe:animate-spin" />
+              {replyStatus === "slow" ? "Jawaban masih diproses…" :
+                replyStatus === "running" ? "AERO-BOT menyiapkan jawaban…" :
+                pending ? "Pertanyaan diterima…" : "Mengirim pertanyaan…"}
             </p>
           )}
           <div ref={end} />
