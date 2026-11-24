@@ -6,7 +6,6 @@ import {
   LockKeyhole,
   MapPin,
   Save,
-  Settings2,
   ArrowUpRight,
   Loader2,
 } from "@/components/ui/aero-icons";
@@ -239,7 +238,6 @@ export function ManagementPage() {
     <section className="management-page">
       <header className="live-heading">
         <h1>Kelola kawasan</h1>
-        <Settings2 size={27} aria-hidden="true" />
       </header>
       {auth.isLoading || (auth.user && dashboard.loading && !dashboard.data) ? (
         <DataState loading />
@@ -254,7 +252,7 @@ export function ManagementPage() {
           </Link>
         </div>
       ) : null}
-      {auth.user && <RoleRequestsPanel />}
+      {auth.user && !canManage && <RoleRequestsPanel />}
       {!auth.user || auth.isLoading || (auth.user && dashboard.loading && !dashboard.data) ? null : dashboard.error ? (
         <DataState error={dashboard.error} retry={dashboard.refresh} />
       ) : !node ? (
@@ -399,6 +397,7 @@ export function ManagementPage() {
           </div>
         </>
       )}
+      {auth.user && canManage && <RoleRequestsPanel />}
     </section>
   );
 }

@@ -216,3 +216,65 @@
 @media (max-width: 350px) {
   .chat-workspace .chat-welcome .chat-suggestions { grid-template-columns: minmax(0, 1fr); }
 }
+
+.app-shell :is(.page-heading, .live-heading, .insights-heading) > div { min-width: 0; }
+.app-shell :is(.page-heading, .live-heading, .insights-heading) > button { flex-shrink: 0; }
+.app-shell :is(.page-heading, .live-heading, .insights-heading) h1 { overflow-wrap: anywhere; }
+
+.app-shell .sensor-workspace .sensor-toolbar {
+  margin-block-end: 8px;
+  padding: 12px 16px;
+}
+.app-shell .sensor-workspace .sensor-location {
+  margin-block-end: 16px;
+  padding-inline: 4px;
+  color: var(--muted-foreground);
+}
+
+.app-shell .history-export {
+  position: relative;
+  justify-self: start;
+}
+.history-export summary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  color: var(--aero-link);
+  font-size: .875rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.history-export summary::-webkit-details-marker { display: none; }
+.history-export[open] summary svg { rotate: 180deg; }
+.history-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-block-end: 8px;
+}
+.app-shell .model-disclosure {
+  margin-block-start: 20px;
+  border: 0;
+  border-block-start: 1px solid var(--border);
+  border-radius: 0;
+  background: none;
+}
+.app-shell .model-disclosure summary { color: var(--aero-link); }
+
+.app-shell[data-page="/nodes"] .live-table td:last-child a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  white-space: nowrap;
+  font-weight: 700;
+  color: var(--aero-link);
+}
+
+@media (max-width: 600px) {
+  .app-shell .sensor-toolbar :is(label, .monitoring-select),
+  .management-location > label { min-width: 0; }
+  .app-shell .history-export { flex-basis: 100%; }
+}

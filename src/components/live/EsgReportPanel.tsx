@@ -125,38 +125,7 @@ export function EsgReportPanel({
               : "Menunggu riwayat pembacaan node."}
           </p>
         </div>
-        <div className="esg-report-actions">
-          <button className="live-button" type="button" onClick={exportPdf} disabled={disabled}>
-            {busy === "pdf" ? (
-              <Loader2 size={15} className="animate-spin" />
-            ) : (
-              <FileText size={15} />
-            )}
-            Unduh PDF laporan
-          </button>
-          <button
-            className="live-button secondary"
-            type="button"
-            disabled={disabled}
-            onClick={() =>
-              downloadCsv(readingsCsv(node, readings, true), `aerosense-pembacaan-${node.id}.csv`)
-            }
-          >
-            <Download size={15} />
-            Unduh CSV
-          </button>
-        </div>
       </div>
-
-      <label className="esg-recipient">
-        Perusahaan penerima
-        <input
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
-          maxLength={160}
-          placeholder="Nama perusahaan (opsional)"
-        />
-      </label>
 
       {preview && c ? (
         <>
@@ -278,6 +247,39 @@ export function EsgReportPanel({
             : "Belum ada pembacaan untuk dilaporkan pada node ini."}
         </p>
       )}
+      <section className="esg-report-export" aria-labelledby="report-export-title">
+        <h3 id="report-export-title">Unduh laporan</h3>
+        <label className="esg-recipient">
+          Perusahaan penerima
+          <input
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            maxLength={160}
+            placeholder="Nama perusahaan (opsional)"
+          />
+        </label>
+        <div className="esg-report-actions">
+          <button className="live-button" type="button" onClick={exportPdf} disabled={disabled}>
+            {busy === "pdf" ? (
+              <Loader2 size={15} className="animate-spin" />
+            ) : (
+              <FileText size={15} />
+            )}
+            Unduh PDF laporan
+          </button>
+          <button
+            className="live-button secondary"
+            type="button"
+            disabled={disabled}
+            onClick={() =>
+              downloadCsv(readingsCsv(node, readings, true), `aerosense-pembacaan-${node.id}.csv`)
+            }
+          >
+            <Download size={15} />
+            Unduh CSV
+          </button>
+        </div>
+      </section>
       {status && (
         <p className="esg-report-status" role="status">
           {status}

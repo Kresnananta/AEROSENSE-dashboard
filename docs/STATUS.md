@@ -2,6 +2,9 @@
 
 ## Tampilan web
 
+- Peringatan sekitar mengelompokkan chat dan pengaturan langganan WhatsApp. Riwayat menampilkan grafik lebih dahulu, dengan ekspor dan rincian GRU dalam bagian yang dapat dibuka. Daftar perangkat menamai tautan detail. Laporan memisahkan hasil pemantauan dari pengaturan unduhan. Kelola kawasan menampilkan kendali perangkat sebelum antrean verifikasi untuk pengelola.
+- Daftar n8n memuat delapan workflow terbit. Dua uji manual dan dua draft perangkat tanpa pemanggil yang terlihat sudah diarsipkan. Ekspor draft ekspresi robot menghapus percabangan tanpa aksi. Riwayat eksekusi Jawaban website belum tersedia untuk mengukur durasi tahap Gemini dan antrean.
+
 - AERO-BOT menjalankan pengambilan cuaca, berita terkait, dan pencatatan konteks secara paralel. Chat membedakan pengiriman, antrean, dan pemrosesan, serta mencoba ulang pengecekan jawaban saat koneksi sesaat putus.
 - Peta mempertahankan lapisan terakhir selama zoom dan pan. Hanya tampilan terakhir yang menunggu permintaan berikutnya. API menampilkan data tersimpan sesuai batas usia sambil memperbaruinya di latar belakang.
 - Berikutnya, rilis API dan web, lalu ukur waktu antrean dan tahap Gemini pada eksekusi n8n produksi. Pengujian lokal memakai data contoh untuk layanan eksternal.

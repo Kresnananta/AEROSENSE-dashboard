@@ -206,3 +206,27 @@
   border: 1px solid #dce8f5;
   border-radius: var(--aero-card-radius, 16px);
 }
+
+.esg-report-export {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--border);
+}
+
+.esg-report-export h3 {
+  margin: 0;
+  color: var(--aero-heading);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.app-shell .esg-report-export .live-button:first-child:not(:disabled) {
+  background: var(--aero-focus-lime);
+  color: var(--aero-focus-ink);
+}
+
+.app-shell .esg-report-export .live-button:first-child:hover:not(:disabled) {
+  background: var(--aero-focus-lime-hover);
+}

@@ -8,22 +8,24 @@ export function AlertsPage() {
   return (
     <div className="app-section-stack">
       <NearbyAlerts />
-      <section className="wa-alert-entry" aria-label="AEROSENSE di WhatsApp">
-        <div>
-          <h2>AEROSENSE di WhatsApp</h2>
-          <p>Terima peringatan atau tanya AERO-BOT.</p>
+      <section className="wa-alert-entry" aria-labelledby="alert-whatsapp-title">
+        <div className="wa-alert-header">
+          <div>
+            <h2 id="alert-whatsapp-title">Peringatan lewat WhatsApp</h2>
+            <p>Terima peringatan sensor atau tanya AERO-BOT.</p>
+          </div>
+          <WhatsAppEntry />
         </div>
-        <WhatsAppEntry />
+        {user && (
+          <details className="insight-disclosure wa-subscription">
+            <summary>
+              <span>Atur langganan WhatsApp</span>
+              <ChevronDown size={16} aria-hidden="true" />
+            </summary>
+            <WhatsAppSettings embedded />
+          </details>
+        )}
       </section>
-      {user && (
-        <details className="insight-disclosure wa-subscription">
-          <summary>
-            <span>Atur langganan WhatsApp</span>
-            <ChevronDown size={16} aria-hidden="true" />
-          </summary>
-          <WhatsAppSettings embedded />
-        </details>
-      )}
     </div>
   );
 }

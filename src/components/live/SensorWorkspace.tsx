@@ -286,7 +286,6 @@ export function SensorWorkspace({
           }}
         />
       )}
-      {mode === "report" && <MonitoringScope />}
       {isLoading ? (
         <DataState loading />
       ) : dashboard.error ? (
@@ -508,7 +507,8 @@ export function SensorWorkspace({
                               to={"/nodes/" + encodeURIComponent(n.id)}
                               aria-label={"Detail " + n.name}
                             >
-                              <ArrowUpRight size={18} />
+                              <span>Lihat sensor</span>
+                              <ArrowUpRight size={15} aria-hidden="true" />
                             </Link>
                           </td>
                         </tr>
@@ -518,14 +518,17 @@ export function SensorWorkspace({
                 </div>
               )}
               {mode === "report" && (
-                <EsgReportPanel
-                  node={node}
-                  readings={readings}
-                  alerts={alerts.data?.alerts || []}
-                  scope={dashboard.data?.report_scope}
-                  userEmail={user?.email}
-                  loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)}
-                />
+                <>
+                  <EsgReportPanel
+                    node={node}
+                    readings={readings}
+                    alerts={alerts.data?.alerts || []}
+                    scope={dashboard.data?.report_scope}
+                    userEmail={user?.email}
+                    loading={(history.loading && !history.data) || (alerts.loading && !alerts.data)}
+                  />
+                  <MonitoringScope />
+                </>
               )}
               {["detail", "analytics"].includes(mode) && (
                 <section className="live-panel">
@@ -534,31 +537,36 @@ export function SensorWorkspace({
                       <h2>{modelView ? "Pembacaan & model" : "Riwayat 24 jam"}</h2>
                     </div>
                     {modelView && (
-                      <div className="history-export">
-                        <button
-                          className="live-button secondary"
-                          onClick={() =>
-                            node &&
-                            downloadCsv(
-                              readingsCsv(node, readings, true),
-                              `aerosense-pembacaan-${node.id}.csv`,
-                            )
-                          }
-                          disabled={!user || !readings.length || history.loading || !!history.error}
-                        >
-                          <Download size={15} />
-                          Unduh CSV
-                        </button>
-                        <button
-                          className="live-button secondary"
-                          onClick={exportReadings}
-                          disabled={!user || !readings.length || history.loading || !!history.error}
-                          title={!user ? "Masuk untuk mengekspor data" : undefined}
-                        >
-                          <Download size={15} />
-                          Ekspor JSON
-                        </button>
-                      </div>
+                      <details className="history-export">
+                        <summary>
+                          Ekspor data <ChevronDown size={15} aria-hidden="true" />
+                        </summary>
+                        <div className="history-export-actions">
+                          <button
+                            className="live-button secondary"
+                            onClick={() =>
+                              node &&
+                              downloadCsv(
+                                readingsCsv(node, readings, true),
+                                `aerosense-pembacaan-${node.id}.csv`,
+                              )
+                            }
+                            disabled={!user || !readings.length || history.loading || !!history.error}
+                          >
+                            <Download size={15} />
+                            Unduh CSV
+                          </button>
+                          <button
+                            className="live-button secondary"
+                            onClick={exportReadings}
+                            disabled={!user || !readings.length || history.loading || !!history.error}
+                            title={!user ? "Masuk untuk mengekspor data" : undefined}
+                          >
+                            <Download size={15} />
+                            Ekspor JSON
+                          </button>
+                        </div>
+                      </details>
                     )}
                   </div>
                   {history.error ? (
@@ -592,7 +600,11 @@ export function SensorWorkspace({
                     </>
                   )}
                   {!modelView ? null : node.latest?.gru ? (
-                    <>
+                    <details className="insight-disclosure model-disclosure">
+                      <summary>
+                        <span>Rincian model GRU</span>
+                        <ChevronDown size={16} aria-hidden="true" />
+                      </summary>
                       <dl className="model-details">
                         <div>
                           <dt>Model</dt>
@@ -669,7 +681,7 @@ export function SensorWorkspace({
                           {dateLabel(node.latest.gru.processed_at)}
                         </time>
                       </p>
-                    </>
+                    </details>
                   ) : (
                     <p className="live-notice">Belum ada hasil GRU untuk pembacaan terbaru.</p>
                   )}
