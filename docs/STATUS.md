@@ -2,6 +2,8 @@
 
 ## Tampilan web
 
+- Ilustrasi perangkat pada Ringkasan diperbesar dan diturunkan di desktop. Pembaruan menunggu rilis web.
+
 - Kartu fitur beranda memakai ilustrasi sensor, cuaca, dan AERO-BOT. Gradasi biru dan aksen limau dipakai kembali pada kartu, tindakan, serta tampilan chat. Animasi pembuka dan sorotan kartu mengikuti preferensi pengurangan gerak. Rilis produksi masih tertunda.
 
 - Peta menampilkan ubin jalan dan nama tempat dengan opasitas penuh. Lapisan warna dibuat lebih ringan, dengan intensitas terpisah untuk hujan dan awan. Pemeriksaan di produksi menunggu rilis web.

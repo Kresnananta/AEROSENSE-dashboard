@@ -1213,6 +1213,12 @@ input {
     max-width: 360px;
   }
 }
+@media (min-width: 1024px) {
+  .app-shell .sensor-hero .scene-sensor .scene-art {
+    scale: 1.05;
+    translate: 0 22px;
+  }
+}
 @media (max-width: 600px) {
   .app-shell .sensor-hero > .condition-scene.scene-sensor {
     width: min(100%, 164px);
