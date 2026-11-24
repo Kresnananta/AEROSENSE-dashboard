@@ -38,7 +38,7 @@ export function ArrowUp(props: IconProps) { return renderIcon(props, "M12 20V4m-
 export function ArrowUpRight(props: IconProps) { return renderIcon(props, "M5.5 18.5 18.5 5.5m-8 0h8v8"); }
 export function Bell(props: IconProps) {
   return renderIcon(props,
-    "M4 17.6c1.8-1.6 2.4-3 2.4-6.1V9a5.6 5.6 0 0 1 11.2 0v2.5c0 3.1.6 5 2.4 6.1H4Zm5.7 2.9a2.9 2.9 0 0 0 4.6 0 M12 2v1.4", "M12 4c-3.4 0-5 2.1-5 5v4h5Z",
+    "M4.5 17.5h15a8.5 8.5 0 0 1-2-5.8V9a5.5 5.5 0 0 0-11 0v2.7a8.5 8.5 0 0 1-2 5.8Z M9.8 20.5a2.5 2.5 0 0 0 4.4 0 M12 2v1.5", "M12 4c-3.4 0-5 2.1-5 5v4h5Z",
   );
 }
 export function Building2(props: IconProps) { return renderIcon(props, "M4 21V8l9-4v17M2.5 21h19M13 10h6.5v11M7.5 10.5h2m-2 4h2m-2 4h2m6.5-5h.8m-.8 4h.8", "M4 8l9-4v4L4 12Z"); }
@@ -53,18 +53,18 @@ export function Clock3(props: IconProps) {
     "M20.6 12A8.6 8.6 0 1 1 12 3.4a8.6 8.6 0 0 1 8.6 8.6ZM12 6.7v5.5h4.1 M6 4l1.2-1.2", "M12 3.4V12h8.6A8.6 8.6 0 0 0 12 3.4Z",
   );
 }
-export function CloudLightning(props: IconProps) { return renderIcon(props, "M8 15H7a4.4 4.4 0 0 1-.9-8.7 5.6 5.6 0 0 1 10.8-.6 4.5 4.5 0 0 1 .7 9H16 M12 11l-3 5h3l-2 5 5-6h-3Z"); }
+export function CloudLightning(props: IconProps) { return renderIcon(props, "M7.5 14H7a4 4 0 0 1-.6-8 5.2 5.2 0 0 1 10 .4A3.9 3.9 0 1 1 17 14h-.5 M12.5 11 9 16h3.2L11 22l4.4-6.8H12Z"); }
 export function CloudOff(props: IconProps) { return renderIcon(props, "m3 3 18 18 M8 16H6.8a4.5 4.5 0 0 1-2.2-8.5 M8.4 5.6a5.6 5.6 0 0 1 8.3 1.1 4.7 4.7 0 0 1 3.5 7.4"); }
 export function CloudRain(props: IconProps) {
   return renderIcon(props,
-    "M7 13.5a4 4 0 0 1-.7-8 5.1 5.1 0 0 1 9.7.4 3.9 3.9 0 1 1 1 7.6H7Zm1 3.2-1 3.1m5-2.7-1 3.2m5-3.6-1 3.1", "M5 11h14l-2 2.5H7Z",
+    "M7 14a4 4 0 0 1-.6-8 5.2 5.2 0 0 1 10 .4A3.9 3.9 0 1 1 17 14H7Z M7.5 17.5 6.4 20 M12.5 17.5 11.4 20 M17.5 17.5 16.4 20", "M5 11h14l-2 3H7Z",
   );
 }
 export function CloudRainWind(props: IconProps) { return renderIcon(props, "M6.8 13a4 4 0 0 1-.5-8 5 5 0 0 1 9.7.4 3.8 3.8 0 1 1 1 7.5h-3.5M7 16l-1 3m4-2h10m-6 4h5"); }
 export function CloudSnow(props: IconProps) { return renderIcon(props, "M6.8 13a4 4 0 0 1-.5-8 5 5 0 0 1 9.7.4 3.8 3.8 0 1 1 1 7.5H7 M12 15v7m-3-5.3 6 3.5m0-3.5-6 3.5"); }
 export function CloudSun(props: IconProps) {
   return renderIcon(props,
-    "M12 8.5a3.5 3.5 0 1 1 6 2.45 M15.5 2v1.5 M10.9 3.9l1.06 1.06 M20.1 3.9l-1.06 1.06 M22 8.5h-1.5 M20.1 13.1l-1.06-1.06 M5.5 21a3.5 3.5 0 0 1 0-7c.45 0 .9.09 1.3.26a4.8 4.8 0 0 1 9 1.14A2.8 2.8 0 0 1 17 21Z",
+    "M11.8 8a3.3 3.3 0 1 1 6.5 .8 M15.1 1.9v1.4 M10.8 3.7l1 1 M19.4 3.7l-1 1 M21.2 8h-1.4 M19.4 12.3l-1-1 M6.3 21a3.4 3.4 0 0 1-.1-6.8 4.8 4.8 0 0 1 8.9.7 3.1 3.1 0 1 1 .9 6.1H6.3Z",
   );
 }
 export function Download(props: IconProps) { return renderIcon(props, "M12 3.5v11m-4-3.7 4 4 4-4M4.5 15.5v3.4c0 .8.7 1.6 1.6 1.6h11.8c.9 0 1.6-.8 1.6-1.6v-3.4"); }
@@ -142,7 +142,7 @@ export function MapPin(props: IconProps) {
 export function Menu(props: IconProps) { return renderIcon(props, "M5 6.8h14M5 12h10M5 17.2h14"); }
 export function MessageCircle(props: IconProps) {
   return renderIcon(props,
-    "M20.5 11.5a8.7 8.7 0 0 1-8.7 8.2 9.4 9.4 0 0 1-3.4-.6L4 20l.9-4a7.7 7.7 0 0 1-1.4-4.5 8.5 8.5 0 0 1 17 0Zm-12-.7h7.5m-7.5 3.4h4.1", "M5 15.5c3.4 2 7.4 2.9 12.4 1.9-2.3 2.4-5.6 2.6-9 1.6l-4.4 1Z",
+    "M20.5 11.4a8.5 8 0 0 1-11.9 7.4L4 20l1.1-4.1a8.5 8 0 1 1 15.4-4.5Z M8.6 10h6.8m-6.8 3.2h4.4", "M5.1 15.9c3.7 1.7 8.4 2 12.4 1.3a8.5 8 0 0 1-8.9 1.6L4 20Z",
   );
 }
 export function Mic(props: IconProps) {
@@ -168,7 +168,7 @@ export function Play(props: IconProps) { return renderIcon(props, "M8 5.4 19 12 
 export function Plus(props: IconProps) { return renderIcon(props, "M5 12h14M12 5v14"); }
 export function Radio(props: IconProps) {
   return renderIcon(props,
-    "M4.7 17.4a8 8 0 0 1 0-10.8m3 8.3a4.5 4.5 0 0 1 0-5.8m8.6 0a4.5 4.5 0 0 1 0 5.8m3-8.3a8 8 0 0 1 0 10.8M12 10l2 2-2 2-2-2 2-2Z", "M12 10l2 2-2 2-2-2Z",
+    "M4.6 17.3a8.8 8.8 0 0 1 0-10.6m3 8.3a5 5 0 0 1 0-6m8.8 0a5 5 0 0 1 0 6m3-8.3a8.8 8.8 0 0 1 0 10.6 M12 9.8l2.2 2.2-2.2 2.2L9.8 12 12 9.8Z", "M12 9.8l2.2 2.2-2.2 2.2L9.8 12Z",
   );
 }
 export function RefreshCw(props: IconProps) { return renderIcon(props, "M19.8 9a8.2 8.2 0 0 0-13-3L4.4 8.4m0-4.2v4.2h4.2m-4.4 6.4a8.2 8.2 0 0 0 13 3l2.4-2.4m0 4.3v-4.3h-4.2"); }

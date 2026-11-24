@@ -2,6 +2,8 @@
 
 ## Tampilan web
 
+- Daftar fitur beranda memakai satu panel dengan empat tautan berikon dan pembatas tipis. Tautan tersusun dua kolom di desktop dan satu kolom di ponsel. Label kondisi prakiraan ditebalkan. Ikon cuaca, sensor, peringatan, dan chat dirapikan pada set ikon bersama. Rilis web masih tertunda.
+
 - Bagian Cara kerja memakai ilustrasi lanskap sungai Surabaya. Navigasi, formulir akun, dan AERO-BOT memakai gradasi biru dan aksen limau yang konsisten. Animasi singkat pada saran chat dan tindakan mengikuti pengaturan pengurangan gerak. Rilis produksi masih tertunda.
 
 - Ilustrasi perangkat pada Ringkasan diperbesar dan diturunkan di desktop. Pembaruan menunggu rilis web.

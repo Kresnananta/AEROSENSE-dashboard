@@ -211,8 +211,7 @@ dialog.role-dialog {
 .app-shell .nav-entry.active { color: white; background: var(--aero-cobalt); }
 @media (hover: hover) {
   .app-shell .nav-entry:not(.active):hover,
-  .app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled),
-  .landing-page .landing-feature-link:hover {
+  .app-shell .chat-workspace .chat-welcome .chat-suggestions button:hover:not(:disabled) {
     background: var(--aero-focus-lime);
     color: var(--aero-focus-ink);
   }
@@ -746,33 +745,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   --aero-response-ease: cubic-bezier(.22, .8, .3, 1);
 }
 
-.landing-page .landing-feature-list {
-  gap: 12px;
-}
-
-.landing-page .landing-feature-list > li {
-  min-width: 0;
-  border-block-start: 0;
-}
-
-.landing-page .landing-feature-link {
-  height: 100%;
-  min-height: 104px;
-  padding: clamp(12px, 2vw, 20px);
-  border: 1px solid var(--aero-glass-rim);
-  border-radius: var(--aero-frame);
-  background-color: var(--card);
-}
-
-.landing-page .landing-feature-link:is(:hover, :focus-visible) {
-  background-color: var(--aero-lime-soft);
-  border-color: var(--aero-lime-ink);
-}
-
-.landing-page .landing-feature-icon {
-  border-radius: calc(var(--aero-frame) / 2);
-}
-
 .app-shell .chat-workspace .chat-welcome .chat-suggestions button {
   text-align: start;
   text-wrap: pretty;
@@ -783,15 +755,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
-  .landing-page .landing-feature-link {
-    background-color: transparent;
-    background-image: var(--aero-sheet);
-  }
-
-  .landing-page .landing-feature-link:is(:hover, :focus-visible) {
-    background-image: none;
-  }
-
   .landing-hero-stage .landing-hero-art {
     background: var(--aero-wind-trails) center 58% / contain no-repeat;
   }
@@ -811,18 +774,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 @media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  .landing-page .landing-feature-link {
-    transition: background-color 150ms ease-out, border-color 150ms ease-out;
-  }
-
-  .landing-feature-link > svg {
-    transition: transform 180ms var(--aero-response-ease);
-  }
-
-  .landing-feature-link:is(:hover, :focus-visible) > svg {
-    transform: translate(3px, -2px);
-  }
-
   .landing-hero-mascot .mascot-pose {
     transition: scale 320ms var(--aero-response-ease);
   }
@@ -834,40 +785,7 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 
 :root {
   --aero-blue-wash: linear-gradient(120deg, oklch(99% .009 237) 12%, oklch(91% .072 235));
-  --aero-lime-wash: linear-gradient(128deg, oklch(99% .008 239) 20%, var(--aero-lime-soft));
   --aero-deep-sky: linear-gradient(125deg, oklch(32% .14 264), oklch(48% .17 253));
-}
-
-.landing-page .landing-feature-list {
-  gap: clamp(10px, 1.5vw, 20px);
-}
-
-.landing-page .landing-feature-link {
-  position: relative;
-  isolation: isolate;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  align-items: start;
-  gap: 12px 16px;
-  overflow: clip;
-}
-
-.landing-feature-link > .landing-feature-icon {
-  grid-column: 1;
-  justify-self: start;
-}
-
-.landing-feature-link > .landing-feature-copy { grid-column: 1; }
-.landing-feature-link > svg { position: absolute; inset: 14px 14px auto auto; z-index: 1; }
-
-.landing-feature-link[data-destination="/dashboard"] {
-  --feature-art: url("/assets/environment/sensor-node-v3.webp");
-}
-.landing-feature-link[data-destination="/environment"] {
-  --feature-art: url("/assets/environment/pearl/partly-cloudy.webp");
-}
-.landing-feature-link[data-destination="/aerobot"] {
-  --feature-art: url("/assets/aerobot/falcon/welcome.webp");
 }
 
 .landing-workflow-steps .landing-step-number {
@@ -894,18 +812,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 @media (prefers-reduced-transparency: no-preference) and (prefers-contrast: no-preference) and (forced-colors: none) {
-  .landing-page .landing-feature-link {
-    background-image: var(--aero-blue-wash);
-  }
-
-  .landing-page .landing-feature-link[data-destination="/environment"] {
-    background-image: var(--aero-lime-wash);
-  }
-
-  .landing-page .landing-feature-link:is(:hover, :focus-visible) {
-    background-image: var(--aero-lime-wash);
-  }
-
   .landing-page .landing-management {
     background: var(--aero-deep-sky);
   }
@@ -923,23 +829,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   }
 }
 
-@media (min-width: 360px) and (forced-colors: none) {
-  .landing-page .landing-feature-link:is([data-destination="/dashboard"], [data-destination="/environment"], [data-destination="/aerobot"]) {
-    grid-template-columns: minmax(0, 1fr) clamp(76px, 13vw, 166px);
-    min-height: clamp(148px, 16vw, 218px);
-  }
-
-  .landing-feature-link:where([data-destination="/dashboard"], [data-destination="/environment"], [data-destination="/aerobot"])::after {
-    grid-area: 1 / 2 / 3 / 3;
-    align-self: center;
-    width: 100%;
-    aspect-ratio: 1;
-    content: "";
-    background: var(--feature-art) center / contain no-repeat;
-    pointer-events: none;
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .landing-hero-mascot .mascot-pose { animation: aero-mascot-arrive 650ms var(--aero-response-ease) both; }
   .landing-hero-copy .landing-actions { animation: aero-mascot-arrive 420ms var(--aero-response-ease) 90ms both; }
@@ -947,24 +836,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   @keyframes aero-mascot-arrive {
     from { opacity: .7; translate: 0 10px; }
     to { opacity: 1; translate: 0 0; }
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) and (hover: hover) {
-  .landing-feature-link::after {
-    transition: transform 300ms var(--aero-response-ease);
-  }
-
-  .landing-feature-link:is(:hover, :focus-visible)::after {
-    transform: translateY(-4px) rotate(-4deg);
-  }
-
-  .app-shell .wx-card .wx-art {
-    transition: scale 220ms var(--aero-response-ease);
-  }
-
-  .app-shell .wx-card:is(:hover, :focus-visible) .wx-art {
-    scale: 1.055;
   }
 }
 
@@ -1043,8 +914,6 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
 }
 
 @media (max-width: 760px) {
-  .landing-page .landing-feature-list .landing-feature-link { padding: 14px; }
-
   .app-shell .chat-workspace .live-chat:has(.chat-welcome) { min-height: 0; }
   .app-shell .chat-workspace .chat-welcome { padding-block: 20px 28px; }
 }
@@ -1061,6 +930,9 @@ dialog.role-dialog h2, .wa-start-dialog :is(.wa-start-title, .wa-start-descripti
   .chat-workspace .chat-suggestions button:nth-child(2) { animation-delay: 40ms; }
   .chat-workspace .chat-suggestions button:nth-child(3) { animation-delay: 80ms; }
   .chat-workspace .chat-suggestions button:nth-child(4) { animation-delay: 120ms; }
+
+  .app-shell .wx-card .wx-art { transition: scale 220ms var(--aero-response-ease); }
+  .app-shell .wx-card:is(:hover, :focus-visible) .wx-art { scale: 1.055; }
 
   .app-shell .wx-card-arrow {
     transition: translate 160ms var(--aero-response-ease), background-color 150ms ease-out;
